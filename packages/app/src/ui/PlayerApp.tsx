@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wallet";
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
-import { loadProfile, characterOf, type Profile } from "../lib/profile";
+import { loadProfile, clearProfile, characterOf, type Profile } from "../lib/profile";
 import { Intro } from "./Intro";
 import { Village } from "./Village";
 import { Ledger } from "./Ledger";
@@ -114,6 +114,8 @@ export function PlayerApp() {
   const [copied, setCopied] = useState(false);
   const logout = async () => {
     await wallet?.destroy();
+    clearProfile(); // back to the intro — name and villager are chosen fresh
+    setProfile(null);
     setWallet(null);
     setBalances(null);
     setSteps(null);
@@ -177,6 +179,11 @@ export function PlayerApp() {
             You need the Freighter extension, set to <b>Testnet</b>. Freighter signs your
             transactions; a signed message derives your confidential key. Nothing secret leaves
             your browser.
+          </p>
+          <p className="dim">
+            Your budget and registration live on-chain, per account — to play as a{" "}
+            <i>different</i> villager, switch accounts in the Freighter extension before
+            connecting.
           </p>
           <button className="primary" onClick={connect} disabled={busy !== null}>
             Connect your wallet
