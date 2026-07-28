@@ -26,7 +26,7 @@ import { H, ecdh, scalarMul, type Point } from "../crypto/grumpkin.js";
 import { frMod } from "../crypto/field.js";
 import { DOMAIN } from "../crypto/constants.js";
 import { spongeSqueeze2, decryptWithDomain } from "../crypto/poseidon2.js";
-import type { TransferEvent, WithdrawEvent } from "../chain/events.js";
+import type { TransferEvent, WithdrawEvent } from "../chain/event-shapes.js";
 
 /** What the sender's auditor learns from one transfer (§8.1, T_a5–T_a8). */
 export interface AuditedSenderChannel {

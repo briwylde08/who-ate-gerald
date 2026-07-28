@@ -27,7 +27,7 @@ import {
   type EventDataAccessor,
   type EventRef,
   type FetchEventsResult,
-} from "./events.js";
+} from "./event-shapes.js";
 
 export interface IndexerConfig {
   /** Base URL of the indexer Worker, e.g. `https://confidential-token-indexer.example.workers.dev`. */

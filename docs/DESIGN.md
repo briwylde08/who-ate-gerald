@@ -117,13 +117,16 @@ agent service; shop-fulfillment logic; player web app.
 
 ## Open design questions
 
-- Exact prices/budget and the tithe-encoding scheme (must survive collisions:
-  two players tithing the same amount).
+- Exact prices/budget (provisional numbers live in `config/catalog.json`) and
+  the tithe-encoding scheme (must survive collisions: two players tithing the
+  same amount).
 - What non-silver gear does, precisely (mitigation table).
 - Dead players: fully out (locked) — spectate silently or leave?
-- Auditor personality + name.
-- First playtest format: fully-built app vs. moderated hybrid (humans on a
-  call, real wallets, thin UI, Bri as GM for un-built pieces).
+- ~~Auditor personality + name~~ → **Maude McLedger**, Auditor of the Order
+  (Bri, 2026-07-28). Tired, meticulous bureaucrat; "one seal per moon"; found
+  Gerald's ledger "unremarkable, which is the saddest part."
+- ~~First playtest format~~ → moderated hybrid (Bri GMs over a call, real
+  wallets, thin UI); decided 2026-07-28.
 
 ## Someday
 

@@ -25,6 +25,14 @@
     "./chain/events": {
       "types": "./dist/chain/events.d.ts",
       "import": "./dist/chain/events.js"
+    },
+    "./chain/event-shapes": {
+      "types": "./dist/chain/event-shapes.d.ts",
+      "import": "./dist/chain/event-shapes.js"
+    },
+    "./chain/indexer": {
+      "types": "./dist/chain/indexer.d.ts",
+      "import": "./dist/chain/indexer.js"
     }
   },
   "main": "./dist/index.js",

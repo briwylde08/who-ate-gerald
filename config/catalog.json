@@ -1,0 +1,44 @@
+{
+  "$comment": "PROVISIONAL prices/budget (2026-07-28) — Bri to tune before playtest. Prices are whole XLM and unique within each shop: the payment amount IS the item. Wares from docs/DESIGN.md; gear effects beyond silver are an open design item.",
+  "startingBudgetXlm": 100,
+  "shops": {
+    "blacksmith": {
+      "label": "Blacksmith",
+      "items": [
+        { "id": "horseshoe_nail", "label": "Horseshoe nail", "priceXlm": 1, "effect": "decoy" },
+        { "id": "knife", "label": "Knife", "priceXlm": 9, "effect": "TBD (gear table)" },
+        { "id": "silver_charm", "label": "Silver charm", "priceXlm": 30, "effect": "survive the night attack; wolves cannot buy" }
+      ]
+    },
+    "general_store": {
+      "label": "General Store",
+      "items": [
+        { "id": "nails", "label": "Nails", "priceXlm": 1, "effect": "decoy" },
+        { "id": "firewood", "label": "Firewood", "priceXlm": 2, "effect": "decoy" },
+        { "id": "rope", "label": "Rope", "priceXlm": 4, "effect": "TBD (gear table)" },
+        { "id": "lantern_oil", "label": "Lantern oil", "priceXlm": 6, "effect": "TBD (gear table)" }
+      ]
+    },
+    "apothecary": {
+      "label": "Apothecary",
+      "items": [
+        { "id": "bandages", "label": "Bandages", "priceXlm": 3, "effect": "decoy" },
+        { "id": "sleeping_draught", "label": "Sleeping draught", "priceXlm": 12, "effect": "TBD (gear table)" },
+        { "id": "wolfsbane_tincture", "label": "Wolfsbane tincture", "priceXlm": 20, "effect": "TBD (gear table)" }
+      ]
+    },
+    "liquor_store": {
+      "label": "Liquor Store",
+      "items": [
+        { "id": "a_nip", "label": "A nip", "priceXlm": 2, "effect": "decoy" },
+        { "id": "a_bottle", "label": "A bottle", "priceXlm": 7, "effect": "decoy" },
+        { "id": "the_good_barrel", "label": "The good barrel", "priceXlm": 16, "effect": "TBD (gear table)" }
+      ]
+    },
+    "chapel": {
+      "label": "Chapel",
+      "tithe": true,
+      "items": []
+    }
+  }
+}

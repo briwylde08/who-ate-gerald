@@ -1,0 +1,22 @@
+{
+  "name": "@gerald/auditor-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Maude McLedger — the AI Auditor of Who Ate Gerald? Cloudflare Worker + Durable Object holding the auditor key: decrypts confidential transfers in code, lets the model phrase (never invent) the answers.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types",
+    "typecheck": "tsc -p tsconfig.json",
+    "tail": "wrangler tail gerald-auditor"
+  },
+  "dependencies": {
+    "openai": "^6.43.0",
+    "@ctd/sdk": "*"
+  },
+  "devDependencies": {
+    "wrangler": "^4.114.0",
+    "typescript": "^5.6.0"
+  }
+}
