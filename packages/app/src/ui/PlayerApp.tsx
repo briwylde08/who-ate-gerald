@@ -185,9 +185,19 @@ export function PlayerApp() {
             <i>different</i> villager, switch accounts in the Freighter extension before
             connecting.
           </p>
-          <button className="primary" onClick={connect} disabled={busy !== null}>
-            Connect your wallet
-          </button>
+          <div className="row">
+            <button className="primary" onClick={connect} disabled={busy !== null}>
+              Connect your wallet
+            </button>
+            <button
+              onClick={() => {
+                clearProfile();
+                setProfile(null);
+              }}
+            >
+              Not {profile.name}? Start over
+            </button>
+          </div>
         </div>
       )}
 
