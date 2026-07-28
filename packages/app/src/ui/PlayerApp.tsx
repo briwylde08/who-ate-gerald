@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wallet";
+import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
+import { loadProfile, characterOf, type Profile } from "../lib/profile";
+import { Intro } from "./Intro";
 import { Village } from "./Village";
 import { Ledger } from "./Ledger";
 
@@ -13,6 +16,7 @@ const PHASE_LABEL: Record<TxPhase, string> = {
 type Step = { id: string; label: string; status: "todo" | "doing" | "done" };
 
 export function PlayerApp() {
+  const [profile, setProfile] = useState<Profile | null>(loadProfile);
   const [wallet, setWallet] = useState<VillagerWallet | null>(null);
   const [balances, setBalances] = useState<VillagerBalances | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -107,8 +111,51 @@ export function PlayerApp() {
   const provisioned =
     balances !== null && balances.registered && balances.spendable + balances.receiving > 0n;
 
+  const [copied, setCopied] = useState(false);
+  const logout = async () => {
+    await wallet?.destroy();
+    setWallet(null);
+    setBalances(null);
+    setSteps(null);
+    setTab("village");
+  };
+
   return (
     <div>
+      <div className="topbar">
+        {profile && (
+          <button className="addr" title="Change name / villager" onClick={() => setProfile(null)}>
+            {characterOf(profile)?.emoji} {profile.name} {characterOf(profile)?.title}
+          </button>
+        )}
+        {wallet && (
+          <button
+            className="mono addr"
+            title="Copy your roster line (paste it to the GM)"
+            onClick={() => {
+              void navigator.clipboard.writeText(
+                profile ? `${profile.name}, ${wallet.address}` : wallet.address,
+              );
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+          >
+            {wallet.address.slice(0, 6)}…{wallet.address.slice(-6)} {copied ? "✓ copied" : "⧉"}
+          </button>
+        )}
+        <span className="dim">confidential token contract</span>
+        <a
+          className="mono addr"
+          href={`https://stellar.expert/explorer/testnet/contract/${DEPLOYMENT.token}`}
+          target="_blank"
+          rel="noreferrer"
+          title="The game's confidential token on Stellar testnet — every purchase lives here, amounts hidden"
+        >
+          {DEPLOYMENT.token.slice(0, 6)}…{DEPLOYMENT.token.slice(-6)} ↗
+        </a>
+        <span className="spacer" />
+        {wallet && <button onClick={() => void logout()}>Log out</button>}
+      </div>
       <h1>Who Ate Gerald?</h1>
       <p className="tagline">Trust is scarce. Gerald is dead.</p>
 
@@ -118,10 +165,12 @@ export function PlayerApp() {
         </div>
       )}
 
-      {!wallet && (
+      {!profile && <Intro onDone={setProfile} />}
+
+      {profile && !wallet && (
         <div className="panel">
           <p>
-            One of the villagers named Gerald has been eaten. The wolf shops among you — its
+            Welcome, {profile.name} {characterOf(profile)?.title}. The wolf shops among you — its
             purchases hidden, like yours, on a confidential ledger only the Auditor can read.
           </p>
           <p className="dim">
@@ -130,7 +179,7 @@ export function PlayerApp() {
             your browser.
           </p>
           <button className="primary" onClick={connect} disabled={busy !== null}>
-            Enter the village
+            Connect your wallet
           </button>
         </div>
       )}
