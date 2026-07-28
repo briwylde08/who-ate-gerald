@@ -1,0 +1,11 @@
+{
+  "name": "@ctd/disclosure",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared selective-disclosure artifacts: Noir disclosure circuits and their UltraHonk verification keys. Loaded by BOTH the proving party (holder wallet) and the disclosure receiver (verify page) — agreeing on these files out-of-band is the trust anchor of the off-chain disclosure protocol (SELECTIVE_DISCLOSURE.md §5.5).",
+  "exports": {
+    "./artifacts/*": "./artifacts/*"
+  },
+  "files": ["artifacts", "circuits"]
+}

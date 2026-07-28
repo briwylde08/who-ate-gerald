@@ -1,0 +1,8 @@
+[package]
+name = "disclose_sender"
+type = "bin"
+authors = ["confidential-token-demo"]
+compiler_version = ">=0.30.0"
+
+[dependencies]
+stellar_confidential_lib = { path = "../../../../../stellar-contracts-cv-ultrahonk/packages/tokens/src/confidential/circuits/lib" }

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# bb.js browser build is vendored from node_modules at predev/prebuild
+packages/*/public/vendor/
+
+# local secrets: auditor key, deployer, shop keypairs
+config/local*
+.env
+.env.*
+
+.DS_Store
+.wrangler/
+worker-configuration.d.ts
