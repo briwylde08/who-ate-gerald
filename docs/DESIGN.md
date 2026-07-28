@@ -120,7 +120,16 @@ agent service; shop-fulfillment logic; player web app.
 - Exact prices/budget (provisional numbers live in `config/catalog.json`) and
   the tithe-encoding scheme (must survive collisions: two players tithing the
   same amount).
+  - **PROPOSED (2026-07-28, awaiting Bri):** wolf's tithe in whole XLM,
+    mod 7 = victim's seat (0 → seat 7). Natural-looking amounts; GM decodes
+    only the wolf's tithe, so villager collisions are harmless. Spicier
+    later-game variant: victim seat in the final stroop digit (detectable by
+    clever Maude questions — a hunt mechanic, probably too strong for game 1).
+  - **PROPOSED:** ship current catalog prices/budget (100 XLM; silver at 30 ≈
+    a third of the game — "proving it costs you").
 - What non-silver gear does, precisely (mitigation table).
+  - **PROPOSED:** playtest #1 is silver-only (everything else is decoy +
+    flavor); build the gear table from playtest evidence.
 - Dead players: fully out (locked) — spectate silently or leave?
 - ~~Auditor personality + name~~ → **Maude McLedger**, Auditor of the Order
   (Bri, 2026-07-28). Tired, meticulous bureaucrat; "one seal per moon"; found
