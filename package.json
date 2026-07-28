@@ -11,7 +11,8 @@
     "deploy:stack": "tsx scripts/deploy-stack.ts",
     "setup:shops": "tsx scripts/setup-shops.ts",
     "health": "tsx scripts/health.ts",
-    "test:auditor": "tsx scripts/test-auditor-facts.ts"
+    "test:auditor": "tsx scripts/test-auditor-facts.ts",
+    "mini-game": "tsx scripts/mini-game.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

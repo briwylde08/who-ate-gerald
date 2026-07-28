@@ -18,10 +18,17 @@ import type { Env } from "./env";
 
 export { GameRoom };
 
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, OPTIONS",
+  "access-control-allow-headers": "authorization, content-type",
+  "access-control-max-age": "86400",
+};
+
 const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body, null, 2), {
     status,
-    headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
+    headers: { "content-type": "application/json", ...CORS },
   });
 
 function authorized(req: Request, env: Env): boolean {
@@ -40,6 +47,11 @@ async function bodyOf(req: Request): Promise<Record<string, unknown>> {
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
+
+    // CORS preflight for the GM dashboard's authenticated browser requests.
+    if (req.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS });
+    }
 
     if (url.pathname === "/" || url.pathname === "") {
       return json({

@@ -37,7 +37,7 @@ if (!srcDir) {
   throw new Error("could not locate @aztec/bb.js dest/browser under node_modules — run npm install first");
 }
 
-const destDir = join(repoRoot, "packages", "game", "public", "vendor", "bb");
+const destDir = join(repoRoot, "packages", "app", "public", "vendor", "bb");
 await mkdir(destDir, { recursive: true });
 await cp(srcDir, destDir, { recursive: true });
 
