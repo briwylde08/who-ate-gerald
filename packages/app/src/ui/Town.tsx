@@ -160,8 +160,38 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         </h2>
         <p className="dim">
           {view.players.filter((p) => p.alive).length}/{view.players.length} alive
-          {me ? (me.alive ? "" : " · you are among the departed") : " · you are not seated in this game"}
+          {me ? (me.alive ? "" : " · you are among the departed") : ""}
         </p>
+
+        {!me && !view.dealt && (
+          <div className="answer-card">
+            <b>Take a seat in “{gameId}”.</b> Joining asks Freighter for one signature — that's
+            you proving your seat to the record-keeper.
+            <div className="row">
+              <button
+                className="primary"
+                onClick={() => {
+                  const prof = loadProfile();
+                  if (!prof) {
+                    setError("Pick a name and villager first (📜 → log out if you need to start over).");
+                    return;
+                  }
+                  playerApi
+                    .join(wallet, gameId, prof.name, prof.characterId)
+                    .then(() => void load())
+                    .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+                }}
+              >
+                Join the village
+              </button>
+            </div>
+          </div>
+        )}
+        {!me && view.dealt && (
+          <p className="dim">
+            This game is already underway — you can spectate, or join the next one.
+          </p>
+        )}
 
         {me && view.dealt && !roleShown && (
           <div className="answer-card">

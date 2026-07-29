@@ -71,6 +71,9 @@ export function hasCachedAuth(wallet: VillagerWallet, gameId: string): boolean {
 }
 
 export const playerApi = {
+  join: (w: VillagerWallet, game: string, name: string, character: string) =>
+    playerCall<{ seat: number; name: string }>(w, game, "join", { name, character }),
+
   myRole: (w: VillagerWallet, game: string) =>
     playerCall<{ dealt: boolean; role: "villager" | "werebear" | null; name: string | null }>(
       w,

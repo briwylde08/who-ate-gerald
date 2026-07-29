@@ -150,9 +150,48 @@ export class GameRoom extends DurableObject<Env> {
     return { players: this.state.players };
   }
 
+  /**
+   * Self-serve lobby join — the app calls this after name + character are
+   * chosen (identity pre-verified). Idempotent per address; open until the
+   * roles are dealt.
+   */
+  async join(
+    address: string,
+    name: string,
+    character: string,
+  ): Promise<{ seat: number; name: string }> {
+    if (this.state.roles) throw new Error("the game is already underway — join the next one");
+    const cleanName = String(name).trim().slice(0, 24);
+    if (!cleanName) throw new Error("a villager needs a name");
+    const existing = this.playerByAddress(address);
+    const clash = this.state.players.find(
+      (p) => p.name.toLowerCase() === cleanName.toLowerCase() && p.address !== address,
+    );
+    if (clash) throw new Error(`someone here is already called "${cleanName}" — pick another name`);
+    if (existing) {
+      existing.name = cleanName;
+      existing.character = String(character).trim().slice(0, 32) || existing.character;
+      await this.persist();
+      return { seat: existing.seat, name: existing.name };
+    }
+    const player: PlayerRef = {
+      seat: this.state.players.length + 1,
+      name: cleanName,
+      address,
+      alive: true,
+      character: String(character).trim().slice(0, 32) || undefined,
+    };
+    this.state.players.push(player);
+    await this.persist();
+    return { seat: player.seat, name: player.name };
+  }
+
   /** Deal roles: one werebear among the seated, chosen by real randomness. */
   async deal(force = false): Promise<{ dealt: true; players: number }> {
     this.requireGame();
+    if (this.state.players.length < 3) {
+      throw new Error(`only ${this.state.players.length} seated — the village needs at least 3`);
+    }
     if (this.state.roles && !force) throw new Error("roles already dealt — pass force:true to re-deal");
     if (this.state.round > 0 && !force) throw new Error("game already started");
     const idx = new Uint32Array(1);

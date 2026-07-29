@@ -84,6 +84,10 @@ export default {
           return json({ error: "the village record-keeper does not recognize that signature" }, 401);
         }
         switch (action) {
+          case "p/join":
+            return json(
+              await room.join(address, String(body.name ?? ""), String(body.character ?? "")),
+            );
           case "p/role":
             return json(await room.myRole(address));
           case "p/character":

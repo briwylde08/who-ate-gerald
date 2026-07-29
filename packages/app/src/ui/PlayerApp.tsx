@@ -6,6 +6,7 @@ import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, type Profile } from "../lib/profile";
 import { fetchGraph, loadGameId, saveGameId } from "../lib/player";
 import { Intro } from "./Intro";
+import { GeraldStory } from "./Story";
 import { Village } from "./Village";
 import { Maude } from "./Maude";
 import { Town } from "./Town";
@@ -28,6 +29,7 @@ export function PlayerApp() {
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
+  const [storyOpen, setStoryOpen] = useState(false);
   const refreshing = useRef(false);
 
   const refresh = useCallback(
@@ -191,8 +193,20 @@ export function PlayerApp() {
           {DEPLOYMENT.token.slice(0, 6)}…{DEPLOYMENT.token.slice(-6)} ↗
         </a>
         <span className="spacer" />
+        <button title="Read the story again" onClick={() => setStoryOpen((s) => !s)}>
+          📜
+        </button>
         {wallet && <button onClick={() => void logout()}>Log out</button>}
       </div>
+
+      {storyOpen && (
+        <div className="panel story">
+          <GeraldStory />
+          <div className="row">
+            <button onClick={() => setStoryOpen(false)}>Close the case file</button>
+          </div>
+        </div>
+      )}
       <h1>Who Ate Gerald?</h1>
       <p className="tagline">Trust is scarce. Gerald is dead.</p>
 
