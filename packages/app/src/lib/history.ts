@@ -8,6 +8,8 @@ import { DEPLOYMENT } from "./deployment";
 
 export interface PurchaseRecord {
   at: string;
+  /** Which game this purchase belonged to — a new game starts a clean ledger. */
+  gameId?: string;
   shopId: string;
   shopLabel: string;
   /** Item label from the catalog. */
@@ -18,7 +20,7 @@ export interface PurchaseRecord {
 
 const key = (address: string) => `gerald:history:${DEPLOYMENT.token}:${address}`;
 
-export function loadHistory(address: string): PurchaseRecord[] {
+function loadAll(address: string): PurchaseRecord[] {
   try {
     return JSON.parse(localStorage.getItem(key(address)) ?? "[]") as PurchaseRecord[];
   } catch {
@@ -26,8 +28,13 @@ export function loadHistory(address: string): PurchaseRecord[] {
   }
 }
 
+/** This game's records only — legacy entries without a gameId stay hidden. */
+export function loadHistory(address: string, gameId: string): PurchaseRecord[] {
+  return loadAll(address).filter((r) => r.gameId === gameId);
+}
+
 export function recordPurchase(address: string, rec: PurchaseRecord): void {
-  const all = loadHistory(address);
+  const all = loadAll(address); // append to the FULL store, across games
   all.push(rec);
   localStorage.setItem(key(address), JSON.stringify(all));
 }

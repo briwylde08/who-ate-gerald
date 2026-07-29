@@ -7,6 +7,7 @@ import { xlmString } from "../lib/catalog";
 
 interface Props {
   wallet: VillagerWallet;
+  gameId: string;
   onPhase: (p: TxPhase) => void;
   setBusy: (b: string | null) => void;
   setError: (e: string | null) => void;
@@ -18,8 +19,11 @@ interface Props {
  * paste the GM's disclosure request, and produce an unforgeable proof of that
  * one payment. Nothing else is revealed, and nothing touches the chain.
  */
-export function Ledger({ wallet, onPhase, setBusy, setError }: Props) {
-  const history = useMemo(() => loadHistory(wallet.address).slice().reverse(), [wallet.address]);
+export function Ledger({ wallet, gameId, onPhase, setBusy, setError }: Props) {
+  const history = useMemo(
+    () => loadHistory(wallet.address, gameId).slice().reverse(),
+    [wallet.address, gameId],
+  );
   const [selected, setSelected] = useState<string | null>(null);
   const [requestJson, setRequestJson] = useState("");
   const [bundleJson, setBundleJson] = useState<string | null>(null);

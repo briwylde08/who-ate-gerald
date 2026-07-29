@@ -300,7 +300,13 @@ export function PlayerApp() {
             />
           )}
           {tab === "ledger" && (
-            <Ledger wallet={wallet} onPhase={onPhase} setBusy={setBusy} setError={setError} />
+            <Ledger
+              wallet={wallet}
+              gameId={gameId}
+              onPhase={onPhase}
+              setBusy={setBusy}
+              setError={setError}
+            />
           )}
         </>
       )}

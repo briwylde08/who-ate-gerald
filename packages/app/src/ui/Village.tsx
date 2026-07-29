@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { VillagerWallet, VillagerBalances, TxPhase } from "../lib/wallet";
 import { SHOPS, stroopsFromXlm, xlmString, type ShopInfo, type CatalogItem } from "../lib/catalog";
 import { recordPurchase } from "../lib/history";
+import { loadGameId } from "../lib/player";
 
 interface Props {
   wallet: VillagerWallet;
@@ -43,6 +44,7 @@ export function Village({ wallet, balances, visitedShops, onPhase, setBusy, setE
       const hash = await wallet.transfer(shop.address, amountStroops, onPhase);
       recordPurchase(wallet.address, {
         at: new Date().toISOString(),
+        gameId: loadGameId(),
         shopId: shop.id,
         shopLabel: shop.label,
         item: item.label,
