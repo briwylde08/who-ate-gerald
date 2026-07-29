@@ -55,6 +55,9 @@ export const SHOPS: ShopInfo[] = Object.entries(catalog.shops).map(([id, s]) => 
 export const SHOP_BY_ID = new Map(SHOPS.map((s) => [s.id, s]));
 export const SHOP_BY_ADDRESS = new Map(SHOPS.map((s) => [s.address, s]));
 
+/** Maude's office — where old-wallet excess is surrendered before shopping. */
+export const ORDER_ADDRESS: string = shopAddresses.maudes_office ?? "";
+
 export const STROOPS_PER_XLM = 10_000_000n;
 
 /** Render a stroop amount as a decimal XLM string ("7", "12.5", "0.0000001"). */

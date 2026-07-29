@@ -29,6 +29,7 @@ export function PlayerApp() {
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
+  const [round, setRound] = useState(0);
   const [storyOpen, setStoryOpen] = useState(false);
   const refreshing = useRef(false);
 
@@ -42,6 +43,7 @@ export function PlayerApp() {
         // (drives the two-shops-a-day custom).
         try {
           const g = await fetchGraph(gameId);
+          setRound(g.round);
           const myName = g.players.find((p) => p.address === w.address)?.name;
           if (myName && g.round >= 1) {
             setVisitedShops([
@@ -310,6 +312,7 @@ export function PlayerApp() {
               wallet={wallet}
               balances={balances}
               visitedShops={visitedShops}
+              round={round}
               onPhase={onPhase}
               setBusy={setBusy}
               setError={setError}

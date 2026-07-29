@@ -447,6 +447,16 @@ export class GameRoom extends DurableObject<Env> {
     let eaten: PlayerRef | null = null;
     const bearAddress = Object.entries(roles).find(([, r]) => r === "werebear")?.[0];
     const bear = bearAddress ? this.playerByAddress(bearAddress) : null;
+    // Silver burns: the werebear that buys the charm wounds itself — the
+    // charm rule stops being an honor system without leaking who the bear is.
+    if (this.state.winner === null && bear?.alive && bearAddress) {
+      if (boughtThisRound(bearAddress, "silver_charm")) {
+        this.state.wounded = true;
+        notes.push(
+          "Someone in the village smells of burnt fur and shame. Honest metal does not forgive.",
+        );
+      }
+    }
     if (this.state.winner === null && bear?.alive && bearAddress) {
       const target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
       const muskTonight = boughtThisRound(bearAddress, "musk_salve");
@@ -511,18 +521,36 @@ export class GameRoom extends DurableObject<Env> {
         );
       }
       // THE fairness audit: in-game spending vs the allowance schedule.
-      // Maude decrypts every purchase, so old wallet balances can't buy
-      // anything extra without being named at dawn.
+      // Surrenders to the Order don't count — that's old money going home.
       const spent = purchases
-        .filter((x) => x.from === p.address && x.round >= 1)
+        .filter((x) => x.from === p.address && x.round >= 1 && !x.isSurrender)
         .reduce((a, x) => a + x.amountStroops, 0n);
       if (spent > allowedTotal) {
         violations.push(
           `${p.name} has spent ${xlmString(spent)} XLM this game — the allowance is ${xlmString(allowedTotal)} by day ${round}. Old money, new suspicion. The Order notices.`,
         );
       }
+      // Budget normalization check: your FIRST purchase reveals (to Maude)
+      // your balance going into it. Walking into the market holding more
+      // than the schedule allows means you skipped the surrender.
+      const firstBuy = purchases
+        .filter((x) => x.from === p.address && x.round >= 1 && !x.isSurrender)
+        .sort((a, b) => a.ledger - b.ledger)[0];
+      if (firstBuy) {
+        const preBalance = firstBuy.senderBalanceStroops + firstBuy.amountStroops;
+        const allowedAtBuy = stroopsFromXlm(
+          STARTING_BUDGET_XLM + DAILY_INCOME_XLM * (firstBuy.round - 1),
+        );
+        if (preBalance > allowedAtBuy) {
+          violations.push(
+            `${p.name} came to market carrying ${xlmString(preBalance)} XLM — the law allows ${xlmString(allowedAtBuy)}. Old coin must be surrendered to the Order before shopping.`,
+          );
+        }
+      }
       const shopsVisited = new Set(
-        purchases.filter((x) => x.from === p.address && x.round === round).map((x) => x.shopId),
+        purchases
+          .filter((x) => x.from === p.address && x.round === round && x.shopId !== null)
+          .map((x) => x.shopId),
       );
       if (shopsVisited.size > 2) {
         violations.push(

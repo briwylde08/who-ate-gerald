@@ -12,6 +12,7 @@ import { fromHex } from "@ctd/sdk/crypto";
 
 import {
   DEPLOYED_AT_LEDGER,
+  ORDER_ADDRESS,
   SHOP_BY_ADDRESS,
   SHOP_BY_ID,
   findItem,
@@ -50,8 +51,12 @@ export interface Purchase {
   toLabel: string;
   amountStroops: bigint;
   amountXlm: string;
-  /** Exact catalog price match at the destination shop (never for the Chapel). */
+  /** Exact catalog price match at the destination shop. */
   itemGuess: string | null;
+  /** Sender's spendable balance AFTER this transfer (auditor channel). */
+  senderBalanceStroops: bigint;
+  /** Payment to the Order's office (budget surrender) — not shopping. */
+  isSurrender: boolean;
   /** Both auditor channels decrypted to the same amount (sanity flag). */
   channelsAgree: boolean;
 }
@@ -128,6 +133,7 @@ export async function loadPurchases(
     const audit = auditTransfer(k, t);
     const shop = SHOP_BY_ADDRESS.get(t.to) ?? null;
     const player = byAddress.get(t.from) ?? null;
+    const isSurrender = ORDER_ADDRESS !== "" && t.to === ORDER_ADDRESS;
     purchases.push({
       round: roundOf(t.ledger, rounds),
       ledger: t.ledger,
@@ -135,11 +141,13 @@ export async function loadPurchases(
       from: t.from,
       player: player?.name ?? null,
       shopId: shop?.id ?? null,
-      toLabel: shop?.label ?? shortAddress(t.to),
+      toLabel: isSurrender ? "the Order" : (shop?.label ?? shortAddress(t.to)),
       amountStroops: audit.amount,
       amountXlm: xlmString(audit.amount),
       itemGuess:
         shop ? (itemByExactPrice(shop, audit.amount)?.label ?? null) : null,
+      senderBalanceStroops: audit.senderBalance,
+      isSurrender,
       channelsAgree: audit.channelsAgree,
     });
   }

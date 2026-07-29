@@ -1,8 +1,17 @@
 import { useState } from "react";
 
 import type { VillagerWallet, VillagerBalances, TxPhase } from "../lib/wallet";
-import { SHOPS, stroopsFromXlm, xlmString, type ShopInfo, type CatalogItem } from "../lib/catalog";
-import { recordPurchase } from "../lib/history";
+import {
+  DAILY_INCOME_XLM,
+  ORDER_ADDRESS,
+  SHOPS,
+  STARTING_BUDGET_XLM,
+  stroopsFromXlm,
+  xlmString,
+  type ShopInfo,
+  type CatalogItem,
+} from "../lib/catalog";
+import { loadHistory, recordPurchase } from "../lib/history";
 import { loadGameId } from "../lib/player";
 
 interface Props {
@@ -10,6 +19,8 @@ interface Props {
   balances: VillagerBalances;
   /** Shop labels visited this round (from the public graph) — drives the 2-shop cap. */
   visitedShops: string[];
+  /** Current game day (0 = lobby) — drives the allowance schedule. */
+  round: number;
   onPhase: (p: TxPhase) => void;
   setBusy: (b: string | null) => void;
   setError: (e: string | null) => void;
@@ -22,8 +33,37 @@ interface Props {
  * the visit, never the amount, and the amount IS the item. Item effects are
  * public knowledge (hover); which one YOU bought is not.
  */
-export function Village({ wallet, balances, visitedShops, onPhase, setBusy, setError, refresh }: Props) {
+export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh }: Props) {
   const [armed, setArmed] = useState<string | null>(null);
+
+  // Budget normalization: the allowance schedule says how much spendable a
+  // law-abiding villager can hold right now. Anything above it is old-wallet
+  // money that must be surrendered to the Order before the shops will serve
+  // you — that's how everyone verifiably plays with the same budget.
+  const allowance = stroopsFromXlm(
+    STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1),
+  );
+  const spentThisGame = loadHistory(wallet.address, loadGameId()).reduce(
+    (a, r) => a + BigInt(r.amountStroops),
+    0n,
+  );
+  const remainingAllowance = allowance > spentThisGame ? allowance - spentThisGame : 0n;
+  const excess = round >= 1 && balances.spendable > remainingAllowance
+    ? balances.spendable - remainingAllowance
+    : 0n;
+
+  const surrender = async () => {
+    setError(null);
+    try {
+      if (!ORDER_ADDRESS) throw new Error("the Order's office is not configured");
+      await wallet.transfer(ORDER_ADDRESS, excess, onPhase);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const pay = async (shop: ShopInfo, item: CatalogItem, amountStroops: bigint) => {
     setArmed(null);
@@ -95,7 +135,22 @@ export function Village({ wallet, balances, visitedShops, onPhase, setBusy, setE
         </div>
       </div>
 
-      <div className="shops">
+      {excess > 0n && (
+        <div className="panel">
+          <h3>⚖ The Order requires a word</h3>
+          <p className="dim">
+            You hold {xlmString(balances.spendable)} XLM, but the law allows{" "}
+            {xlmString(remainingAllowance)} at this point in the game. Surrender the difference
+            to Maude's office and the shops will serve you — everyone plays with the same
+            budget, verifiably.
+          </p>
+          <button className="primary" onClick={() => void surrender()}>
+            Surrender {xlmString(excess)} XLM to the Order
+          </button>
+        </div>
+      )}
+
+      <div className="shops" style={excess > 0n ? { opacity: 0.4, pointerEvents: "none" } : undefined}>
         {SHOPS.map((shop) => (
           <div key={shop.id} className="panel shop-card">
             <h3>{shop.label}</h3>
