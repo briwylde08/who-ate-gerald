@@ -146,10 +146,20 @@ export class VillagerWallet {
 
   /** Public (visible) XLM balance in stroops, via the underlying SAC. */
   async publicBalance(): Promise<bigint> {
-    const v = await this.client.simulate(this.deployment.underlying, "balance", [
-      new Address(this.address).toScVal(),
-    ]);
-    return scValToNative(v) as bigint;
+    try {
+      const v = await this.client.simulate(this.deployment.underlying, "balance", [
+        new Address(this.address).toScVal(),
+      ]);
+      return scValToNative(v) as bigint;
+    } catch (e) {
+      // A never-funded account has no ledger entry yet — its balance is zero,
+      // not an error (provisioning's friendbot step will create it).
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("account entry is missing") || msg.includes("Error(Contract, #6)")) {
+        return 0n;
+      }
+      throw e;
+    }
   }
 
   /** Everything the UI needs in one read. */
