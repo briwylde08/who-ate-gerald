@@ -86,6 +86,8 @@ export default {
         switch (action) {
           case "p/role":
             return json(await room.myRole(address));
+          case "p/character":
+            return json(await room.claimCharacter(address, String(body.character ?? "")));
           case "p/ask":
             return json(await room.ask(String(body.question ?? ""), address));
           case "p/vote":

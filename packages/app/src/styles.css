@@ -144,6 +144,8 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character .emoji { font-size: 1.6rem; }
 .character .blurb { font-style: italic; font-size: 0.8rem; }
 .character.selected { border-color: var(--gold); background: var(--panel); }
+.character.dead { opacity: 0.45; }
+div.character { border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
 
 .tabs { display: flex; gap: 8px; margin: 16px 0; }
 .tabs button.active { border-color: var(--gold); color: var(--gold); }

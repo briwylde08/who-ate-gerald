@@ -24,7 +24,7 @@ export function PlayerApp() {
   const [balances, setBalances] = useState<VillagerBalances | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"village" | "maude" | "town" | "ledger">("village");
+  const [tab, setTab] = useState<"village" | "maude" | "town" | "ledger">("town");
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);

@@ -63,6 +63,13 @@ async function playerCall<T>(
   return body;
 }
 
+/** Is the auth signature already cached (no Freighter popup needed)? */
+export function hasCachedAuth(wallet: VillagerWallet, gameId: string): boolean {
+  return (
+    localStorage.getItem(`gerald:psig:${DEPLOYMENT.token}:${gameId}:${wallet.address}`) !== null
+  );
+}
+
 export const playerApi = {
   myRole: (w: VillagerWallet, game: string) =>
     playerCall<{ dealt: boolean; role: "villager" | "werebear" | null; name: string | null }>(
@@ -70,6 +77,9 @@ export const playerApi = {
       game,
       "role",
     ),
+
+  claimCharacter: (w: VillagerWallet, game: string, character: string) =>
+    playerCall<{ character: string }>(w, game, "character", { character }),
 
   ask: (w: VillagerWallet, game: string, question: string) =>
     playerCall<{ answer: string; asker: string; round: number }>(w, game, "ask", { question }),
@@ -102,7 +112,13 @@ export interface PublicView {
   phase: "lobby" | "day" | "ended";
   dealt: boolean;
   winner: "village" | "werebear" | null;
-  players: { seat: number; name: string; address: string; alive: boolean }[];
+  players: {
+    seat: number;
+    name: string;
+    address: string;
+    alive: boolean;
+    character?: string | null;
+  }[];
   mornings: MorningReport[];
   incomeXlm: number;
 }

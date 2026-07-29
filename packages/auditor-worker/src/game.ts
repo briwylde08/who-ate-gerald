@@ -175,6 +175,17 @@ export class GameRoom extends DurableObject<Env> {
     return { dealt: true, role: this.state.roles[address] ?? "villager", name: player.name };
   }
 
+  /** Claim a cosmetic character so the whole village can see who's who. */
+  async claimCharacter(address: string, character: string): Promise<{ character: string }> {
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("that address holds no seat in this game");
+    const c = String(character).trim().slice(0, 32);
+    if (!c) throw new Error("character must be a non-empty id");
+    player.character = c;
+    await this.persist();
+    return { character: c };
+  }
+
   // ---------------------------------------------------------------- days --
 
   /** Open the next day: new ledger window, fresh seals, cleared votes. */
@@ -479,6 +490,7 @@ export class GameRoom extends DurableObject<Env> {
         name: p.name,
         address: p.address, // public on-chain anyway; lets the app find itself
         alive: p.alive,
+        character: p.character ?? null,
       })),
       mornings: this.state.mornings,
       incomeXlm: this.state.round <= 1 ? STARTING_BUDGET_XLM : DAILY_INCOME_XLM,

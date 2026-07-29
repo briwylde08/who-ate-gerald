@@ -25,6 +25,8 @@ export interface PlayerRef {
   name: string;
   address: string;
   alive: boolean;
+  /** Cosmetic villager character id, claimed by the player's own app. */
+  character?: string;
 }
 
 export interface RoundWindow {

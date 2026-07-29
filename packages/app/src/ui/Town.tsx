@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { VillagerWallet, TxPhase } from "../lib/wallet";
-import { playerApi, fetchPublicView, type PublicView } from "../lib/player";
-import { DAILY_INCOME_XLM, stroopsFromXlm } from "../lib/catalog";
+import {
+  playerApi,
+  fetchPublicView,
+  fetchGraph,
+  hasCachedAuth,
+  type PublicView,
+  type GraphView,
+} from "../lib/player";
+import { CHARACTERS, loadProfile } from "../lib/profile";
+import { DAILY_INCOME_XLM, SHOPS, stroopsFromXlm } from "../lib/catalog";
+
+const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 
 /**
  * The town square: your role (fetched privately), the day's income, the
@@ -32,9 +42,12 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   const [pickTarget, setPickTarget] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
 
+  const [graph, setGraph] = useState<GraphView | null>(null);
+
   const load = useCallback(async () => {
     try {
       setView(await fetchPublicView(gameId));
+      setGraph(await fetchGraph(gameId));
     } catch {
       setView(null); // game may not exist yet — quiet
     }
@@ -47,6 +60,31 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   }, [load]);
 
   const me = view?.players.find((p) => p.address === wallet.address);
+
+  // The fate notification: once roles are dealt, fetch yours automatically
+  // when the auth signature is already cached (no Freighter popup) — but
+  // never DISPLAY it without a click, in case someone is screen-sharing.
+  useEffect(() => {
+    if (view?.dealt && me && role === null && hasCachedAuth(wallet, gameId)) {
+      playerApi
+        .myRole(wallet, gameId)
+        .then((r) => setRole(r.role))
+        .catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view?.dealt, me?.address]);
+
+  // Share our cosmetic character with the village once we're seated.
+  useEffect(() => {
+    const prof = loadProfile();
+    if (me && !me.character && prof) {
+      playerApi
+        .claimCharacter(wallet, gameId, prof.characterId)
+        .then(() => void load())
+        .catch(() => undefined); // not seated yet, or user declined the popup
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me?.address, me?.character]);
   const living = (view?.players ?? []).filter((p) => p.alive && p.address !== wallet.address);
   const lastIncomeRound = Number(localStorage.getItem(incomeKey(wallet.address, gameId)) ?? "1");
   const incomeDue = view !== null && view.round >= 2 && lastIncomeRound < view.round && me?.alive;
@@ -126,9 +164,17 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         </p>
 
         {me && view.dealt && !roleShown && (
-          <button className="primary" onClick={() => void fetchRole()}>
-            Receive your fate (private)
-          </button>
+          <div className="answer-card">
+            <b>📜 Your fate has been dealt.</b>{" "}
+            {role
+              ? "It waits, sealed. Open it when nobody is looking over your shoulder."
+              : "Receiving it will ask Freighter for one signature — that's you proving your seat."}
+            <div className="row">
+              <button className="primary" onClick={() => (role ? setRoleShown(true) : void fetchRole())}>
+                {role ? "Break the seal (private)" : "Receive your fate (private)"}
+              </button>
+            </div>
+          </div>
         )}
         {roleShown && role && (
           <div className="answer-card">
@@ -149,6 +195,57 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             </div>
           </div>
         )}
+      </div>
+
+      <div className="panel">
+        <h2>The village</h2>
+        <div className="characters">
+          {view.players.map((p) => {
+            const c = p.character ? CHAR_BY_ID.get(p.character) : null;
+            return (
+              <div key={p.seat} className={`character ${p.alive ? "" : "dead"}`}>
+                <span className="emoji">{p.alive ? (c?.emoji ?? "🧑‍🌾") : "🪦"}</span>
+                <span>
+                  {p.name} {c ? c.title : ""}
+                  {p.address === wallet.address ? " (you)" : ""}
+                </span>
+                <span className="dim blurb">{p.alive ? (c?.blurb ?? "New in town.") : "Eaten or banished. Gerald has company."}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="dim">One of these fine people is the werebear. Possibly you.</p>
+      </div>
+
+      <div className="panel">
+        <h2>What the village sees</h2>
+        <p className="dim">
+          The rules of the ledger: everyone can see <b>who paid which store and when</b>, plus
+          everyone's <b>income deposits</b> (that's how you know nobody smuggled extra budget).
+          Nobody — except Maude — can see <b>how much</b> a purchase was, and since the price is
+          the item, that means nobody can see <b>what you bought</b>. Two shops a day is the
+          custom; item powers are public knowledge (hover them in the Shops tab).
+        </p>
+        {graph && (
+          <p>
+            {graph.edges.filter((e) => e.round === view.round).length === 0 ? (
+              <span className="dim">No sightings yet today.</span>
+            ) : (
+              graph.edges
+                .filter((e) => e.round === view.round)
+                .map((e, i, arr) => (
+                  <span key={i}>
+                    {e.from} → {e.to}
+                    {i < arr.length - 1 ? " · " : ""}
+                  </span>
+                ))
+            )}
+          </p>
+        )}
+        <p className="dim">
+          {SHOPS.map((s) => s.label).join(" · ")} — five stores, fifteen wares, every price a
+          different item. Spend your budget on gear, or on looking innocent.
+        </p>
       </div>
 
       {incomeDue && (
