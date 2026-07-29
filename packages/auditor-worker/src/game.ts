@@ -528,7 +528,9 @@ export class GameRoom extends DurableObject<Env> {
       const totalWeight = [...weights.values()].reduce((a, b) => a + b, 0);
       const voterCount = Object.keys(this.state.votes).length;
       if (totalWeight > voterCount) {
-        notes.push("The tally does not add up to the hands raised. Somebody voted with a knife.");
+        notes.push(
+          "⚒ Steel glinted at the trial: the tally counts more voices than hands. Somebody bought a hunting knife — ask the Blacksmith's door who visited.",
+        );
       }
       if (banishedRole === "werebear") {
         this.state.winner = "village";
@@ -585,14 +587,23 @@ export class GameRoom extends DurableObject<Env> {
         } else {
           eaten = target;
           target.alive = false;
-          if (pierced) this.state.venisonUsed += 1;
+          if (pierced) {
+            this.state.venisonUsed += 1;
+            // The victim is dead — their trap/bane is safe to name; the
+            // venison line tells the village what BEAT it (bear-anonymous).
+            notes.push(
+              `🥩 ${target.name}'s defenses were ready — and useless: scraps of fresh venison at the scene. Something came prepared.`,
+            );
+          }
           if (hasTrap && !pierced) {
             this.state.wounded = true;
-            notes.push("There is blood at the scene that does not belong to the victim.");
+            notes.push(
+              `🪤 ${target.name}'s bear trap snapped shut on something big: there is blood at the scene that does not belong to the victim.`,
+            );
           }
           if (boughtEver(target.address, "lantern_oil")) {
             const fact = this.lanternFact(purchases, bearAddress);
-            notes.push(`By lantern light, Maude reads one true thing: ${fact}`);
+            notes.push(`🏮 By ${target.name}'s still-lit lantern, Maude reads one true thing: ${fact}`);
           }
         }
       }
