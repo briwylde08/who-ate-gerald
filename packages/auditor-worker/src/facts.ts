@@ -255,11 +255,13 @@ export function executeFact(
       const round =
         args.round === undefined || args.round === null ? null : roundArg(ctx, args.round);
       const price = stroopsFromXlm(found.item.priceXlm);
+      // "All rounds" means game days only — purchases before day 1 (setup,
+      // previous games on this token) are not part of this game's story.
       const rows = ctx.purchases.filter(
         (p) =>
           p.shopId === found.shop.id &&
           p.amountStroops === price &&
-          (round === null || p.round === round),
+          (round === null ? p.round >= 1 : p.round === round),
       );
       return {
         item: found.item.label,
