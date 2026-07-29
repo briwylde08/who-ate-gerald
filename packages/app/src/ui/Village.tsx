@@ -1,12 +1,14 @@
 import { useState } from "react";
 
 import type { VillagerWallet, VillagerBalances, TxPhase } from "../lib/wallet";
-import { CHAPEL, SHOPS, stroopsFromXlm, xlmString, type ShopInfo, type CatalogItem } from "../lib/catalog";
+import { SHOPS, stroopsFromXlm, xlmString, type ShopInfo, type CatalogItem } from "../lib/catalog";
 import { recordPurchase } from "../lib/history";
 
 interface Props {
   wallet: VillagerWallet;
   balances: VillagerBalances;
+  /** Shop labels visited this round (from the public graph) — drives the 2-shop cap. */
+  visitedShops: string[];
   onPhase: (p: TxPhase) => void;
   setBusy: (b: string | null) => void;
   setError: (e: string | null) => void;
@@ -14,17 +16,23 @@ interface Props {
 }
 
 /**
- * The shop floor: five cards, each item a two-click button (arm, then
+ * The shop floor: five stores, each item a two-click button (arm, then
  * confirm). Every purchase is one confidential transfer — the village sees
- * the visit, never the amount, and the amount IS the item.
+ * the visit, never the amount, and the amount IS the item. Item effects are
+ * public knowledge (hover); which one YOU bought is not.
  */
-export function Village({ wallet, balances, onPhase, setBusy, setError, refresh }: Props) {
+export function Village({ wallet, balances, visitedShops, onPhase, setBusy, setError, refresh }: Props) {
   const [armed, setArmed] = useState<string | null>(null);
-  const [titheXlm, setTitheXlm] = useState<string>("");
 
-  const pay = async (shop: ShopInfo, item: CatalogItem | null, amountStroops: bigint) => {
+  const pay = async (shop: ShopInfo, item: CatalogItem, amountStroops: bigint) => {
     setArmed(null);
     setError(null);
+    if (visitedShops.length >= 2 && !visitedShops.includes(shop.label)) {
+      setError(
+        `The village is small, but spread out: two shops a day is the custom. Today you've been to ${visitedShops.join(" and ")}. (Maude audits.)`,
+      );
+      return;
+    }
     if (balances.spendable < amountStroops) {
       setError(
         `Not enough hidden budget: that costs ${xlmString(amountStroops)} XLM, you have ${xlmString(balances.spendable)}.`,
@@ -37,7 +45,7 @@ export function Village({ wallet, balances, onPhase, setBusy, setError, refresh 
         at: new Date().toISOString(),
         shopId: shop.id,
         shopLabel: shop.label,
-        item: item?.label ?? "tithe",
+        item: item.label,
         amountStroops: amountStroops.toString(),
         txHash: hash,
       });
@@ -47,16 +55,6 @@ export function Village({ wallet, balances, onPhase, setBusy, setError, refresh 
     } finally {
       setBusy(null);
     }
-  };
-
-  const payTithe = async () => {
-    const parsed = Number(titheXlm);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setError("The Chapel accepts any amount — but it must be a positive number of XLM.");
-      return;
-    }
-    setTitheXlm("");
-    await pay(CHAPEL, null, stroopsFromXlm(parsed));
   };
 
   return (
@@ -96,7 +94,7 @@ export function Village({ wallet, balances, onPhase, setBusy, setError, refresh 
       </div>
 
       <div className="shops">
-        {SHOPS.filter((s) => !s.tithe).map((shop) => (
+        {SHOPS.map((shop) => (
           <div key={shop.id} className="panel shop-card">
             <h3>{shop.label}</h3>
             <div className="items">
@@ -121,37 +119,12 @@ export function Village({ wallet, balances, onPhase, setBusy, setError, refresh 
             </div>
           </div>
         ))}
-
-        <div className="panel shop-card">
-          <h3>{CHAPEL.label}</h3>
-          <p className="dim">
-            The tithe. Any amount, once a round. The whole village sees you pay — only the
-            Auditor sees how much.
-          </p>
-          <div className="row">
-            <input
-              type="number"
-              min="0"
-              step="0.0000001"
-              placeholder="amount in XLM"
-              value={titheXlm}
-              onChange={(e) => setTitheXlm(e.target.value)}
-            />
-            <button
-              className={armed === "tithe" ? "armed" : ""}
-              onClick={() => (armed === "tithe" ? void payTithe() : setArmed("tithe"))}
-              onBlur={() => armed === "tithe" && setArmed(null)}
-              disabled={titheXlm === ""}
-            >
-              {armed === "tithe" ? "Confirm tithe?" : "Pay the tithe"}
-            </button>
-          </div>
-        </div>
       </div>
 
       <p className="dim">
         Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,
-        never the amount. Cheap wares make fine decoys. Spend wisely — or conspicuously.
+        never the amount. Hover an item for what it does — effects are public knowledge; your
+        shopping is not. Cheap wares make fine cover. The werebear is shopping too.
       </p>
     </div>
   );

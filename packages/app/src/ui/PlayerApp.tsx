@@ -4,8 +4,11 @@ import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wall
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, type Profile } from "../lib/profile";
+import { fetchGraph, loadGameId, saveGameId } from "../lib/player";
 import { Intro } from "./Intro";
 import { Village } from "./Village";
+import { Maude } from "./Maude";
+import { Town } from "./Town";
 import { Ledger } from "./Ledger";
 
 const PHASE_LABEL: Record<TxPhase, string> = {
@@ -21,19 +24,41 @@ export function PlayerApp() {
   const [balances, setBalances] = useState<VillagerBalances | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"village" | "ledger">("village");
+  const [tab, setTab] = useState<"village" | "maude" | "town" | "ledger">("village");
   const [steps, setSteps] = useState<Step[] | null>(null);
+  const [gameId, setGameId] = useState(loadGameId);
+  const [visitedShops, setVisitedShops] = useState<string[]>([]);
   const refreshing = useRef(false);
 
-  const refresh = useCallback(async (w: VillagerWallet) => {
-    if (refreshing.current) return;
-    refreshing.current = true;
-    try {
-      setBalances(await w.balances());
-    } finally {
-      refreshing.current = false;
-    }
-  }, []);
+  const refresh = useCallback(
+    async (w: VillagerWallet) => {
+      if (refreshing.current) return;
+      refreshing.current = true;
+      try {
+        setBalances(await w.balances());
+        // The public graph tells us which shops we've visited this round
+        // (drives the two-shops-a-day custom).
+        try {
+          const g = await fetchGraph(gameId);
+          const myName = g.players.find((p) => p.address === w.address)?.name;
+          if (myName && g.round >= 1) {
+            setVisitedShops([
+              ...new Set(
+                g.edges.filter((e) => e.from === myName && e.round === g.round).map((e) => e.to),
+              ),
+            ]);
+          } else {
+            setVisitedShops([]);
+          }
+        } catch {
+          setVisitedShops([]); // no game yet — no cap
+        }
+      } finally {
+        refreshing.current = false;
+      }
+    },
+    [gameId],
+  );
 
   const connect = async () => {
     setError(null);
@@ -145,6 +170,16 @@ export function PlayerApp() {
             {wallet.address.slice(0, 6)}…{wallet.address.slice(-6)} {copied ? "✓ copied" : "⧉"}
           </button>
         )}
+        <span className="dim">game</span>
+        <input
+          type="text"
+          value={gameId}
+          onChange={(e) => {
+            setGameId(e.target.value);
+            saveGameId(e.target.value);
+          }}
+          style={{ width: "110px", padding: "4px 6px", fontSize: "0.85rem" }}
+        />
         <span className="dim">confidential token contract</span>
         <a
           className="mono addr"
@@ -172,8 +207,9 @@ export function PlayerApp() {
       {profile && !wallet && (
         <div className="panel">
           <p>
-            Welcome, {profile.name} {characterOf(profile)?.title}. The wolf shops among you — its
-            purchases hidden, like yours, on a confidential ledger only the Auditor can read.
+            Welcome, {profile.name} {characterOf(profile)?.title}. The werebear shops among you —
+            its purchases hidden, like yours, on a confidential ledger only Maude McLedger, the
+            village fortune teller, can read.
           </p>
           <p className="dim">
             You need the Freighter extension, set to <b>Testnet</b>. Freighter signs your
@@ -228,23 +264,42 @@ export function PlayerApp() {
       {wallet && provisioned && balances && (
         <>
           <div className="tabs">
+            <button className={tab === "town" ? "active" : ""} onClick={() => setTab("town")}>
+              Town Square
+            </button>
             <button className={tab === "village" ? "active" : ""} onClick={() => setTab("village")}>
-              The Village
+              The Shops
+            </button>
+            <button className={tab === "maude" ? "active" : ""} onClick={() => setTab("maude")}>
+              Maude
             </button>
             <button className={tab === "ledger" ? "active" : ""} onClick={() => setTab("ledger")}>
               My Ledger
             </button>
           </div>
-          {tab === "village" ? (
+          {tab === "village" && (
             <Village
               wallet={wallet}
               balances={balances}
+              visitedShops={visitedShops}
               onPhase={onPhase}
               setBusy={setBusy}
               setError={setError}
               refresh={() => refresh(wallet)}
             />
-          ) : (
+          )}
+          {tab === "maude" && <Maude wallet={wallet} gameId={gameId} setError={setError} />}
+          {tab === "town" && (
+            <Town
+              wallet={wallet}
+              gameId={gameId}
+              onPhase={onPhase}
+              setBusy={setBusy}
+              setError={setError}
+              refresh={() => refresh(wallet)}
+            />
+          )}
+          {tab === "ledger" && (
             <Ledger wallet={wallet} onPhase={onPhase} setBusy={setBusy} setError={setError} />
           )}
         </>

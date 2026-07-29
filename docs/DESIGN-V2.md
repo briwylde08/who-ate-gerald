@@ -4,7 +4,11 @@
 conflict. v1 (the moderated-hybrid build) remains deployed and playable
 throughout the v2 build.*
 
-**Status: DRAFT — items marked ⏳ await Bri + Patrick's bless.**
+**Status: BUILT & LIVE (2026-07-29)** — deployed with the proposed defaults;
+items marked ⏳ remain tweakable (edit `config/catalog.json` / this doc and
+redeploy). Verified end-to-end by `npm run mini-game:v2` (scripted 3-player
+automated game: dealt roles, signed player auth, private Maude seals, tie
+vote, musk-masked silver save, day-2 banishment, village win).
 
 ## The story
 

@@ -11,7 +11,6 @@ import { auditTransfer } from "@ctd/sdk/auditor";
 import { fromHex } from "@ctd/sdk/crypto";
 
 import {
-  CHAPEL_ID,
   DEPLOYED_AT_LEDGER,
   SHOP_BY_ADDRESS,
   SHOP_BY_ID,
@@ -136,7 +135,7 @@ export async function loadPurchases(
       amountStroops: audit.amount,
       amountXlm: xlmString(audit.amount),
       itemGuess:
-        shop && !shop.tithe ? (itemByExactPrice(shop, audit.amount)?.label ?? null) : null,
+        shop ? (itemByExactPrice(shop, audit.amount)?.label ?? null) : null,
       channelsAgree: audit.channelsAgree,
     });
   }
@@ -145,6 +144,40 @@ export async function loadPurchases(
 
 function shortAddress(addr: string): string {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
+}
+
+/** One public deposit (buy-in / income) — amounts are public by protocol. */
+export interface DepositRec {
+  round: number;
+  ledger: number;
+  to: string;
+  amountStroops: bigint;
+  amountXlm: string;
+}
+
+/**
+ * Fetch every public deposit into the game token, bucketed by round — the
+ * self-auditing half of the economy (income arrives as public deposits, so
+ * over-deposits are provable by anyone, no decryption needed).
+ */
+export async function loadDeposits(
+  env: { INDEXER_URL: string; TOKEN_CONTRACT: string },
+  rounds: RoundWindow[],
+): Promise<DepositRec[]> {
+  const indexer = new IndexerClient({ baseUrl: env.INDEXER_URL });
+  const { events } = await indexer.fetchEvents({
+    contractId: env.TOKEN_CONTRACT,
+    startLedger: DEPLOYED_AT_LEDGER,
+  });
+  return events
+    .filter((e) => e.type === "deposit")
+    .map((e) => ({
+      round: roundOf(e.ledger, rounds),
+      ledger: e.ledger,
+      to: e.to,
+      amountStroops: e.amount,
+      amountXlm: xlmString(e.amount),
+    }));
 }
 
 // ---------------------------------------------------------------------------
@@ -205,30 +238,14 @@ export function executeFact(
         (p) =>
           p.from === player.address &&
           p.round === round &&
-          (shopId === null ? p.shopId !== CHAPEL_ID : p.shopId === shopId),
+          (shopId === null || p.shopId === shopId),
       );
       return {
         player: player.name,
         round,
-        shop: shopId ? (SHOP_BY_ID.get(shopId)?.label ?? shopId) : "all shops (tithe excluded)",
+        shop: shopId ? (SHOP_BY_ID.get(shopId)?.label ?? shopId) : "all shops",
         count: rows.length,
         purchases: rows.map(project),
-      };
-    }
-
-    case "tithe_amount": {
-      const player = resolvePlayer(ctx, args.player);
-      if (!player) return { error: `no villager named "${String(args.player)}" on the register` };
-      const round = roundArg(ctx, args.round);
-      const rows = ctx.purchases.filter(
-        (p) => p.from === player.address && p.round === round && p.shopId === CHAPEL_ID,
-      );
-      return {
-        player: player.name,
-        round,
-        tithes: rows.map((p) => p.amountXlm),
-        totalXlm: xlmString(rows.reduce((a, p) => a + p.amountStroops, 0n)),
-        note: rows.length === 0 ? "no tithe recorded this round" : undefined,
       };
     }
 
@@ -253,16 +270,41 @@ export function executeFact(
       };
     }
 
-    case "largest_tithe": {
+    case "biggest_purchase": {
       const round = roundArg(ctx, args.round);
-      const rows = ctx.purchases.filter((p) => p.round === round && p.shopId === CHAPEL_ID);
-      if (rows.length === 0) return { round, largest: null, note: "no tithes recorded this round" };
+      const shopId = args.shop === undefined || args.shop === null ? null : resolveShopId(args.shop);
+      if (args.shop !== undefined && args.shop !== null && !shopId) {
+        return { error: `no shop named "${String(args.shop)}" in the village` };
+      }
+      const rows = ctx.purchases.filter(
+        (p) => p.round === round && (shopId === null || p.shopId === shopId),
+      );
+      if (rows.length === 0) {
+        return { round, biggest: null, note: "no purchases recorded there this round" };
+      }
       const max = rows.reduce((a, p) => (p.amountStroops > a ? p.amountStroops : a), 0n);
       const top = rows.filter((p) => p.amountStroops === max);
       return {
         round,
+        shop: shopId ? (SHOP_BY_ID.get(shopId)?.label ?? shopId) : "all shops",
         amountXlm: xlmString(max),
-        payers: top.map((p) => p.player ?? shortAddress(p.from)),
+        item: top[0]?.itemGuess ?? null,
+        buyers: top.map((p) => p.player ?? shortAddress(p.from)),
+      };
+    }
+
+    case "shops_visited": {
+      const player = resolvePlayer(ctx, args.player);
+      if (!player) return { error: `no villager named "${String(args.player)}" on the register` };
+      const round = roundArg(ctx, args.round);
+      const rows = ctx.purchases.filter((p) => p.from === player.address && p.round === round);
+      const counts = new Map<string, number>();
+      for (const p of rows) counts.set(p.toLabel, (counts.get(p.toLabel) ?? 0) + 1);
+      return {
+        player: player.name,
+        round,
+        shops: [...counts.entries()].map(([shop, visits]) => ({ shop, visits })),
+        totalVisits: rows.length,
       };
     }
 
@@ -276,7 +318,6 @@ export function executeFact(
         round,
         totalXlm: xlmString(rows.reduce((a, p) => a + p.amountStroops, 0n)),
         payments: rows.length,
-        includesTithe: rows.some((p) => p.shopId === CHAPEL_ID),
       };
     }
 

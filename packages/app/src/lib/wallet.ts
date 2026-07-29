@@ -58,7 +58,7 @@ export type TxPhase = "proving" | "submitting";
 export type OnPhase = (phase: TxPhase) => void;
 
 export interface VillagerBalances {
-  /** Public XLM balance (stroops) — visible to everyone, including the wolf. */
+  /** Public XLM balance (stroops) — visible to everyone, including the werebear. */
   publicXlm: bigint;
   /** Hidden spendable budget (stroops of wrapped XLM). */
   spendable: bigint;
@@ -259,6 +259,11 @@ export class VillagerWallet {
       prover: this.prover("disclose_sender"),
     });
     return bundle;
+  }
+
+  /** Sign an arbitrary auth message with Freighter (SEP-53), raw bytes. */
+  async signAuthMessage(message: string): Promise<Uint8Array> {
+    return this.signer.signMessage(message);
   }
 
   /** Current local state without a network sync. */

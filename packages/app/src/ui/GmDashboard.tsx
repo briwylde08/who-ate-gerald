@@ -30,8 +30,9 @@ export function GmDashboard() {
   const [cfg, setCfg] = useState<GmConfig>(loadGmConfig);
   const [players, setPlayers] = useState<GmPlayer[]>([]);
   const [round, setRound] = useState(0);
-  const [questionUsed, setQuestionUsed] = useState(false);
-  const [suggestedAsker, setSuggestedAsker] = useState<string | null>(null);
+  const [phase, setPhase] = useState<string>("lobby");
+  const [winner, setWinner] = useState<string | null>(null);
+  const [dealt, setDealt] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,8 +48,9 @@ export function GmDashboard() {
       const s = await gmApi.state(cfg);
       setPlayers(s.players);
       setRound(s.round);
-      setQuestionUsed(s.questionUsed);
-      setSuggestedAsker(s.suggestedAsker);
+      setPhase(s.phase);
+      setWinner(s.winner);
+      setDealt(s.roles !== null);
       setError(null);
     } catch (e) {
       setError(msg(e));
@@ -102,21 +104,17 @@ export function GmDashboard() {
           <button onClick={() => void refreshState()}>Load game</button>
         </div>
         <p className="dim">
-          Round {round} · seal {questionUsed ? "SPENT" : "unbroken"}
-          {suggestedAsker ? ` · asker: ${suggestedAsker}` : ""} ·{" "}
+          Day {round} · {phase}
+          {winner ? ` · THE ${winner.toUpperCase()} WON` : ""} · roles {dealt ? "dealt" : "undealt"} ·{" "}
           {players.filter((p) => p.alive).length}/{players.length} alive
         </p>
       </div>
 
       <Roster cfg={cfg} players={players} run={run} refreshState={refreshState} />
-      <RoundControls
-        cfg={cfg}
-        players={players}
-        run={run}
-        refreshState={refreshState}
-      />
-      <AskConsole cfg={cfg} players={players} questionUsed={questionUsed} refreshState={refreshState} />
-      <NightPanel cfg={cfg} run={run} />
+      <RoundControls cfg={cfg} players={players} run={run} refreshState={refreshState} />
+      <AskConsole cfg={cfg} players={players} refreshState={refreshState} />
+      <MorningPanel cfg={cfg} run={run} refreshState={refreshState} />
+      <GodPanel cfg={cfg} run={run} />
       <GraphPanel cfg={cfg} />
       <TrialPanel />
     </div>
@@ -218,19 +216,32 @@ function RoundControls({
 
   return (
     <div className="panel">
-      <h2>Rounds</h2>
+      <h2>Days</h2>
       <div className="row">
         <button
-          className="primary"
           onClick={() =>
-            void run("opening the round…", async () => {
-              const r = await gmApi.startRound(cfg);
-              setLastStart(`Round ${r.round} open — asker: ${r.asker} (ledger ${r.startLedger})`);
+            void run("dealing fates…", async () => {
+              const r = await gmApi.deal(cfg);
+              setLastStart(`Roles dealt to ${r.players} players — one of them is very hungry.`);
               await refreshState();
             })
           }
         >
-          Start next round
+          Deal roles
+        </button>
+        <button
+          className="primary"
+          onClick={() =>
+            void run("opening the day…", async () => {
+              const r = await gmApi.startDay(cfg);
+              setLastStart(
+                `Day ${r.round} open (ledger ${r.startLedger}) — income ${r.incomeXlm} XLM`,
+              );
+              await refreshState();
+            })
+          }
+        >
+          Start next day
         </button>
         {lastStart && <span className="dim">{lastStart}</span>}
       </div>
@@ -265,12 +276,10 @@ function RoundControls({
 function AskConsole({
   cfg,
   players,
-  questionUsed,
   refreshState,
 }: {
   cfg: GmConfig;
   players: GmPlayer[];
-  questionUsed: boolean;
   refreshState: () => Promise<void>;
 }) {
   const [asker, setAsker] = useState("");
@@ -296,7 +305,7 @@ function AskConsole({
 
   return (
     <div className="panel">
-      <h2>Maude McLedger — one seal per moon</h2>
+      <h2>Maude McLedger — GM console (players ask from their own app)</h2>
       {error && <div className="error">{error}</div>}
       <div className="row">
         <select value={asker} onChange={(e) => setAsker(e.target.value)}>
@@ -319,9 +328,9 @@ function AskConsole({
         <button
           className="primary"
           onClick={() => void ask()}
-          disabled={busy || questionUsed || question.trim() === ""}
+          disabled={busy || question.trim() === ""}
         >
-          {busy ? "Maude is consulting the register…" : questionUsed ? "Seal spent this round" : "Put the question"}
+          {busy ? "Maude is consulting the register…" : "Put the question"}
         </button>
       </div>
       {result && (
@@ -339,38 +348,107 @@ function AskConsole({
   );
 }
 
-function NightPanel({
+function MorningPanel({
+  cfg,
+  run,
+  refreshState,
+}: {
+  cfg: GmConfig;
+  run: (label: string, fn: () => Promise<void>) => Promise<void>;
+  refreshState: () => Promise<void>;
+}) {
+  const [report, setReport] = useState<Awaited<ReturnType<typeof gmApi.resolveDay>> | null>(null);
+
+  return (
+    <div className="panel">
+      <h2>Resolve the day</h2>
+      <p className="dim">
+        Closes the vote, runs the night through the gear order, audits the customs, and
+        publishes the morning report to every player.
+      </p>
+      <div className="row">
+        <button
+          className="primary"
+          onClick={() =>
+            void run("the sun sets…", async () => {
+              setReport(await gmApi.resolveDay(cfg));
+              await refreshState();
+            })
+          }
+        >
+          Resolve day → morning report
+        </button>
+      </div>
+      {report && (
+        <div className="answer-card">
+          <p>
+            <b>Morning of day {report.round + 1}.</b>
+          </p>
+          {report.banished && (
+            <p>
+              Banished: <b>{report.banished}</b> ({report.banishedRole}
+              {report.banishedRole === "werebear" ? " — CAUGHT!" : ""})
+            </p>
+          )}
+          {report.eaten && (
+            <p>
+              Eaten: <b>{report.eaten}</b>
+            </p>
+          )}
+          {report.notes.map((n, i) => (
+            <p key={i} className="dim">
+              {n}
+            </p>
+          ))}
+          {report.violations.map((v, i) => (
+            <p key={i} className="dim">
+              ⚖ {v}
+            </p>
+          ))}
+          {report.winner && <p className="tagline">The {report.winner} has won.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GodPanel({
   cfg,
   run,
 }: {
   cfg: GmConfig;
   run: (label: string, fn: () => Promise<void>) => Promise<void>;
 }) {
-  const [view, setView] = useState<Awaited<ReturnType<typeof gmApi.resolveNight>> | null>(null);
+  const [view, setView] = useState<Awaited<ReturnType<typeof gmApi.godView>> | null>(null);
 
   return (
     <div className="panel">
-      <h2>Night — GM eyes only</h2>
+      <h2>God view — GM eyes only, never screen-share</h2>
       <div className="row">
         <button
           onClick={() =>
-            void run("decrypting the round…", async () => {
-              setView(await gmApi.resolveNight(cfg));
+            void run("decrypting the day…", async () => {
+              setView(await gmApi.godView(cfg));
             })
           }
         >
-          Resolve night (round god-view)
+          Peek behind the curtain
         </button>
+        {view && (
+          <span className="dim">
+            pick: {view.nightPick ?? "—"} · wounded: {view.wounded ? "yes" : "no"} · venison 
+            pierces spent: {view.venisonUsed}
+          </span>
+        )}
       </div>
       {view && (
         <>
-          <p className="dim">Round {view.round}. {view.note}</p>
           <table>
             <thead>
               <tr>
                 <th>player</th>
-                <th>purchases</th>
-                <th>tithes</th>
+                <th>role</th>
+                <th>today's purchases (decrypted)</th>
               </tr>
             </thead>
             <tbody>
@@ -380,6 +458,7 @@ function NightPanel({
                     {p.name}
                     {p.alive ? "" : " ☠"}
                   </td>
+                  <td>{p.role === "werebear" ? "🐻 werebear" : p.role}</td>
                   <td>
                     {p.purchases.length === 0
                       ? "—"
@@ -387,15 +466,17 @@ function NightPanel({
                           .map((x) => `${x.shop}: ${x.amountXlm} XLM (${x.item})`)
                           .join(" · ")}
                   </td>
-                  <td>{p.tithes.length === 0 ? "—" : p.tithes.map((t) => `${t} XLM`).join(" · ")}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {view.strangers.length > 0 && (
+          {view.votes.length > 0 && (
             <p className="dim">
-              strangers: {view.strangers.map((s) => `${s.from.slice(0, 6)}→${s.to} ${s.amountXlm}`).join(" · ")}
+              votes: {view.votes.map((v) => `${v.voter}→${v.target}`).join(" · ")}
             </p>
+          )}
+          {view.baneConsumed.length > 0 && (
+            <p className="dim">bearsbane spent: {view.baneConsumed.join(", ")}</p>
           )}
         </>
       )}
@@ -568,7 +649,7 @@ function TrialPanel() {
                 — that is the price of the <b>{verdict.item}</b>
               </>
             ) : (
-              <> (no exact catalog match{verdict.shop === "Chapel" ? " — a tithe" : ""})</>
+              <> (no exact catalog match — an off-menu amount)</>
             )}
             . Sender: <span className="mono">{verdict.result.disclosingAccount.slice(0, 8)}…</span>
             <details>

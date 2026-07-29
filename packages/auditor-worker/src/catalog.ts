@@ -15,6 +15,8 @@ export interface CatalogItem {
   id: string;
   label: string;
   priceXlm: number;
+  /** V/W/B (villager/werebear/both) × off/def, or "cover". Public knowledge. */
+  class?: string;
   effect: string;
 }
 
@@ -38,6 +40,8 @@ const shopAddresses = shopsRaw as Record<string, string>;
 export const DEPLOYED_AT_LEDGER: number = (deploymentRaw as { deployedAtLedger: number })
   .deployedAtLedger;
 export const STARTING_BUDGET_XLM = catalog.startingBudgetXlm;
+export const DAILY_INCOME_XLM =
+  (catalogRaw as unknown as { dailyIncomeXlm?: number }).dailyIncomeXlm ?? 0;
 export const CHAPEL_ID = "chapel";
 
 export const SHOPS: ShopInfo[] = Object.entries(catalog.shops).map(([id, s]) => ({
@@ -95,7 +99,6 @@ export function findItem(query: string): { shop: ShopInfo; item: CatalogItem } |
 /** Compact catalog text for the fact-selection prompt. */
 export function catalogSummary(): string {
   return SHOPS.map((s) => {
-    if (s.tithe) return `- ${s.label} (${s.id}): accepts the tithe — any amount.`;
     const items = s.items.map((it) => `${it.label} ${it.priceXlm} XLM`).join(", ");
     return `- ${s.label} (${s.id}): ${items}.`;
   }).join("\n");

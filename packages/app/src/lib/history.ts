@@ -10,7 +10,7 @@ export interface PurchaseRecord {
   at: string;
   shopId: string;
   shopLabel: string;
-  /** Item label, or "tithe" for chapel payments. */
+  /** Item label from the catalog. */
   item: string;
   amountStroops: string; // bigint as string for JSON
   txHash: string;

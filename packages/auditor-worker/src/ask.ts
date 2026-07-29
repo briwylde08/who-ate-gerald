@@ -62,20 +62,11 @@ const tool = (
 const FACT_TOOLS: FunctionTool[] = [
   tool(
     "purchases_of_player",
-    "One player's confidential purchases in one round (tithe excluded), optionally limited to one shop: amounts and exact-price item matches. Use for 'what did X buy (at Y) this round'.",
+    "One player's confidential purchases in one round, optionally limited to one shop: amounts and exact-price item matches. Use for 'what did X buy (at Y) this round'.",
     {
       player: { type: "string", description: "Player name from the roster" },
       round: { type: "integer", description: "Round number (1-based)" },
       shop: { type: "string", description: "Optional shop id or label to filter by" },
-    },
-    ["player", "round"],
-  ),
-  tool(
-    "tithe_amount",
-    "How much one player paid the Chapel in one round. Use for 'how much did X tithe'.",
-    {
-      player: { type: "string", description: "Player name from the roster" },
-      round: { type: "integer", description: "Round number (1-based)" },
     },
     ["player", "round"],
   ),
@@ -89,14 +80,26 @@ const FACT_TOOLS: FunctionTool[] = [
     ["item"],
   ),
   tool(
-    "largest_tithe",
-    "The largest Chapel tithe in one round and who paid it. Use for 'whose tithe was biggest'.",
-    { round: { type: "integer", description: "Round number (1-based)" } },
+    "biggest_purchase",
+    "The most expensive single purchase in one round — at one shop, or across the whole village if shop is omitted — and who made it. Use for 'whose purchase was the biggest'.",
+    {
+      round: { type: "integer", description: "Round number (1-based)" },
+      shop: { type: "string", description: "Optional shop id or label" },
+    },
     ["round"],
   ),
   tool(
+    "shops_visited",
+    "Which shops one player visited (with visit counts) in one round — without revealing amounts. Use for 'did X shop at both the Blacksmith and the Apothecary', or to audit the two-shops-a-day rule.",
+    {
+      player: { type: "string", description: "Player name from the roster" },
+      round: { type: "integer", description: "Round number (1-based)" },
+    },
+    ["player", "round"],
+  ),
+  tool(
     "total_spent",
-    "One player's total spending (all payments, tithe included) in one round. Use for 'how much did X spend'.",
+    "One player's total spending (all payments) in one round. Use for 'how much did X spend'.",
     {
       player: { type: "string", description: "Player name from the roster" },
       round: { type: "integer", description: "Round number (1-based)" },

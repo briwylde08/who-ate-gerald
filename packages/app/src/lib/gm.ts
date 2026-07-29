@@ -1,8 +1,9 @@
 /**
- * Client for the gerald-auditor worker (Maude McLedger). GM endpoints need
- * the bearer token; /graph is public.
+ * Client for the gerald-auditor worker (Maude McLedger) — GM tier. Player
+ * endpoints live in player.ts; /graph and /public are public.
  */
 import { AUDITOR_URL } from "./deployment";
+import type { MorningReport } from "./types";
 
 export interface GmConfig {
   gameId: string;
@@ -54,12 +55,44 @@ export interface GmPlayer {
   alive: boolean;
 }
 
+export interface GmGameState {
+  players: GmPlayer[];
+  round: number;
+  phase: "lobby" | "day" | "ended";
+  winner: "village" | "werebear" | null;
+  roles: Record<string, "villager" | "werebear"> | null; // keyed by NAME — GM eyes only
+  askLog: { round: number; asker: string; question: string; answer: string }[];
+}
+
+export interface GodView {
+  round: number;
+  phase: string;
+  players: {
+    seat: number;
+    name: string;
+    alive: boolean;
+    role: string;
+    purchases: { shop: string; amountXlm: string; item: string }[];
+  }[];
+  votes: { voter: string; target: string }[];
+  nightPick: string | null;
+  wounded: boolean;
+  venisonUsed: number;
+  baneConsumed: string[];
+  note: string;
+}
+
 export const gmApi = {
   newGame: (cfg: GmConfig, players: RosterEntry[], force: boolean) =>
     call<{ players: GmPlayer[] }>(cfg, "new", { body: { players, force } }),
 
-  startRound: (cfg: GmConfig) =>
-    call<{ round: number; startLedger: number; asker: string }>(cfg, "round/start", { body: {} }),
+  deal: (cfg: GmConfig, force = false) =>
+    call<{ dealt: true; players: number }>(cfg, "deal", { body: { force } }),
+
+  startDay: (cfg: GmConfig) =>
+    call<{ round: number; startLedger: number; incomeXlm: number }>(cfg, "round/start", {
+      body: {},
+    }),
 
   eliminate: (cfg: GmConfig, player: string) =>
     call<{ player: string; alive: boolean }>(cfg, "eliminate", { body: { player } }),
@@ -74,33 +107,16 @@ export const gmApi = {
       round: number;
     }>(cfg, "ask", { body: { question, asker } }),
 
-  resolveNight: (cfg: GmConfig) =>
-    call<{
-      round: number;
-      players: {
-        seat: number;
-        name: string;
-        alive: boolean;
-        purchases: { shop: string; amountXlm: string; item: string }[];
-        tithes: string[];
-      }[];
-      strangers: { from: string; to: string; amountXlm: string }[];
-      note: string;
-    }>(cfg, "resolve-night", { body: {} }),
+  resolveDay: (cfg: GmConfig) => call<MorningReport>(cfg, "resolve-day", { body: {} }),
+
+  godView: (cfg: GmConfig) => call<GodView>(cfg, "god-view", { method: "GET" }),
 
   graph: (cfg: GmConfig) =>
     call<{
       round: number;
-      players: { seat: number; name: string; alive: boolean }[];
+      players: { seat: number; name: string; address: string; alive: boolean }[];
       edges: { round: number; ledger: number; from: string; to: string }[];
     }>(cfg, "graph", { method: "GET", auth: false }),
 
-  state: (cfg: GmConfig) =>
-    call<{
-      players: GmPlayer[];
-      round: number;
-      questionUsed: boolean;
-      suggestedAsker: string | null;
-      askLog: { round: number; asker: string; question: string; answer: string }[];
-    }>(cfg, "state", { method: "GET" }),
+  state: (cfg: GmConfig) => call<GmGameState>(cfg, "state", { method: "GET" }),
 };

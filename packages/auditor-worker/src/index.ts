@@ -1,19 +1,19 @@
 /**
- * gerald-auditor — HTTP front door for Maude McLedger.
+ * gerald-auditor — HTTP front door for Maude McLedger and the game itself.
  *
  * Thin auth + routing; all game logic lives in the GameRoom Durable Object
- * (one per game id). Every route is GM-token-gated except GET /graph, which
- * serves the public (amount-free) payment graph for the spectator screen.
+ * (one per game id). Three access tiers:
  *
- *   POST /games/:id/new            {players: [{name, address}], force?}
- *   POST /games/:id/round/start
- *   POST /games/:id/eliminate      {player}
- *   POST /games/:id/ask            {question, asker?}
- *   POST /games/:id/resolve-night
- *   GET  /games/:id/graph          (public)
- *   GET  /games/:id/state
+ *   GM (bearer token):   POST new · deal · round/start · eliminate · ask
+ *                        (console) · resolve-day    GET state · god-view
+ *   Player (signature):  POST p/role · p/ask · p/vote · p/night-pick
+ *                        — body: {address, signature, ...} where signature is
+ *                        Freighter's SEP-53 signMessage over the fixed
+ *                        per-game auth message (see auth.ts)
+ *   Public (open):       GET graph · public
  */
 import { GameRoom } from "./game";
+import { verifyPlayerSignature } from "./auth";
 import type { Env } from "./env";
 
 export { GameRoom };
@@ -31,7 +31,7 @@ const json = (body: unknown, status = 200): Response =>
     headers: { "content-type": "application/json", ...CORS },
   });
 
-function authorized(req: Request, env: Env): boolean {
+function gmAuthorized(req: Request, env: Env): boolean {
   const header = req.headers.get("authorization") ?? "";
   return env.GM_TOKEN.length > 0 && header === `Bearer ${env.GM_TOKEN}`;
 }
@@ -48,7 +48,7 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
 
-    // CORS preflight for the GM dashboard's authenticated browser requests.
+    // CORS preflight for the app's authenticated browser requests.
     if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS });
     }
@@ -56,9 +56,13 @@ export default {
     if (url.pathname === "/" || url.pathname === "") {
       return json({
         service: "gerald-auditor",
-        auditor: "Maude McLedger, Auditor of the Order",
-        motto: "One seal per moon.",
-        endpoints: ["/games/:id/{new,round/start,eliminate,ask,resolve-night,graph,state}"],
+        auditor: "Maude McLedger, Auditor of the Order (the village calls her the fortune teller)",
+        motto: "One seal per villager per day.",
+        endpoints: [
+          "GM:     /games/:id/{new,deal,round/start,eliminate,ask,resolve-day,state,god-view}",
+          "player: /games/:id/p/{role,ask,vote,night-pick}",
+          "public: /games/:id/{graph,public}",
+        ],
       });
     }
 
@@ -66,42 +70,70 @@ export default {
     if (!m) return json({ error: "not found" }, 404);
     const [, gameId, action] = m;
 
-    const isPublic = action === "graph" && req.method === "GET";
-    if (!isPublic && !authorized(req, env)) {
-      return json({ error: "the Order requires credentials (GM bearer token)" }, 401);
-    }
+    const isPublic = (action === "graph" || action === "public") && req.method === "GET";
+    const isPlayer = action!.startsWith("p/") && req.method === "POST";
 
     const room = env.GAMES.getByName(gameId!);
     try {
+      // ---- player tier: identity proven by signature, then role-checked in the DO
+      if (isPlayer) {
+        const body = await bodyOf(req);
+        const address = String(body.address ?? "");
+        const signature = String(body.signature ?? "");
+        if (!verifyPlayerSignature(gameId!, address, signature)) {
+          return json({ error: "the village record-keeper does not recognize that signature" }, 401);
+        }
+        switch (action) {
+          case "p/role":
+            return json(await room.myRole(address));
+          case "p/ask":
+            return json(await room.ask(String(body.question ?? ""), address));
+          case "p/vote":
+            return json(await room.vote(address, String(body.target ?? "")));
+          case "p/night-pick":
+            return json(await room.nightPick(address, String(body.target ?? "")));
+          default:
+            return json({ error: `no player route: ${action}` }, 404);
+        }
+      }
+
+      // ---- public tier
+      if (isPublic) {
+        return json(action === "graph" ? await room.graphView() : await room.publicView());
+      }
+
+      // ---- GM tier
+      if (!gmAuthorized(req, env)) {
+        return json({ error: "the Order requires credentials (GM bearer token)" }, 401);
+      }
+      const body = req.method === "POST" ? await bodyOf(req) : {};
       switch (`${req.method} ${action}`) {
-        case "POST new": {
-          const body = await bodyOf(req);
+        case "POST new":
           return json(
             await room.newGame(
               body.players as { name: string; address: string }[],
               body.force === true,
             ),
           );
-        }
+        case "POST deal":
+          return json(await room.deal(body.force === true));
         case "POST round/start":
-          return json(await room.startRound());
-        case "POST eliminate": {
-          const body = await bodyOf(req);
+        case "POST day/start":
+          return json(await room.startDay());
+        case "POST eliminate":
           return json(await room.eliminate(String(body.player ?? "")));
-        }
-        case "POST ask": {
-          const body = await bodyOf(req);
+        case "POST ask":
           return json(
-            await room.ask(
+            await room.gmAsk(
               String(body.question ?? ""),
               body.asker === undefined ? undefined : String(body.asker),
             ),
           );
-        }
-        case "POST resolve-night":
-          return json(await room.resolveNight());
-        case "GET graph":
-          return json(await room.graphView());
+        case "POST resolve-day":
+        case "POST resolve-night": // v1 alias
+          return json(await room.resolveDay());
+        case "GET god-view":
+          return json(await room.godView());
         case "GET state":
           return json(await room.getState());
         default:

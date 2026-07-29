@@ -1,6 +1,6 @@
 /**
  * The player's local identity: a name and a (purely cosmetic) village
- * character. Roles — wolf or villager — are dealt by the GM, never here.
+ * character. Roles — werebear or villager — are dealt by the game, never here.
  * One profile per browser per game token; the GM's roster is still the
  * canonical seat list.
  */

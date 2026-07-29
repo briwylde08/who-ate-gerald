@@ -9,6 +9,8 @@ export interface CatalogItem {
   id: string;
   label: string;
   priceXlm: number;
+  /** V/W/B (villager/werebear/both) × off/def, or "cover". Public knowledge. */
+  class?: string;
   effect: string;
 }
 
@@ -29,6 +31,7 @@ const catalog = catalogRaw as unknown as CatalogJson;
 const shopAddresses = shopsRaw as Record<string, string>;
 
 export const STARTING_BUDGET_XLM = catalog.startingBudgetXlm;
+export const DAILY_INCOME_XLM = (catalogRaw as { dailyIncomeXlm?: number }).dailyIncomeXlm ?? 0;
 
 export const SHOPS: ShopInfo[] = Object.entries(catalog.shops).map(([id, s]) => ({
   id,
@@ -38,7 +41,6 @@ export const SHOPS: ShopInfo[] = Object.entries(catalog.shops).map(([id, s]) => 
   items: s.items ?? [],
 }));
 
-export const CHAPEL = SHOPS.find((s) => s.tithe)!;
 export const SHOP_BY_ADDRESS = new Map(SHOPS.map((s) => [s.address, s]));
 
 export const STROOPS_PER_XLM = 10_000_000n;
