@@ -62,20 +62,33 @@ export function PlayerApp() {
     [gameId],
   );
 
-  const connect = async () => {
-    setError(null);
-    setBusy("Waking Freighter…");
-    try {
-      const w = await VillagerWallet.connect();
-      setWallet(w);
-      setBusy("Reading the ledger…");
-      await refresh(w);
-    } catch (e) {
-      setError(msg(e));
-    } finally {
-      setBusy(null);
+  const connect = useCallback(
+    async (silent = false) => {
+      setError(null);
+      setBusy(silent ? "Waking the village…" : "Waking Freighter…");
+      try {
+        const w = await VillagerWallet.connect();
+        setWallet(w);
+        localStorage.setItem("gerald:connected", "1"); // enables auto-reconnect
+        setBusy("Reading the ledger…");
+        await refresh(w);
+      } catch (e) {
+        if (!silent) setError(msg(e));
+      } finally {
+        setBusy(null);
+      }
+    },
+    [refresh],
+  );
+
+  // A refresh shouldn't send you back to the connect page: once you've
+  // connected on this browser, Freighter re-authorizes silently on load.
+  useEffect(() => {
+    if (profile && !wallet && localStorage.getItem("gerald:connected")) {
+      void connect(true);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onPhase = (phase: TxPhase) => setBusy(PHASE_LABEL[phase]);
 
@@ -141,6 +154,7 @@ export function PlayerApp() {
   const [copied, setCopied] = useState(false);
   const logout = async () => {
     await wallet?.destroy();
+    localStorage.removeItem("gerald:connected"); // stop auto-reconnecting
     clearProfile(); // back to the intro — name and villager are chosen fresh
     setProfile(null);
     setWallet(null);
@@ -236,7 +250,7 @@ export function PlayerApp() {
             connecting.
           </p>
           <div className="row">
-            <button className="primary" onClick={connect} disabled={busy !== null}>
+            <button className="primary" onClick={() => void connect()} disabled={busy !== null}>
               Connect your wallet
             </button>
             <button
