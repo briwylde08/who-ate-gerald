@@ -328,7 +328,9 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         )}
         <p className="dim">
           {SHOPS.map((s) => s.label).join(" · ")} — five stores, fifteen wares, every price a
-          different item. Spend your budget on gear, or on looking innocent.
+          different item. <b>The shops never run out</b>: any number of players can own the same
+          item, so learning what the dead carried proves nothing about the living. Spend your
+          budget on gear, or on looking innocent.
         </p>
       </div>
 
