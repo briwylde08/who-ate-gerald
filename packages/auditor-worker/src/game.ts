@@ -15,7 +15,6 @@ import {
   loadDeposits,
   loadPurchases,
   syncIndexer,
-  walletHistory,
   type FactContext,
   type PlayerRef,
   type Purchase,
@@ -167,20 +166,10 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.roles) throw new Error("the game is already underway — join the next one");
     const cleanName = String(name).trim().slice(0, 24);
     if (!cleanName) throw new Error("a villager needs a name");
-    // FAIRNESS GATE: everyone starts with the same spendable budget. Deposits
-    // are public by protocol, so a wallet's history is checkable by anyone:
-    // a fresh player has at most the starting buy-in deposited and has spent
-    // nothing. Old, rich, or busy wallets are turned away at the door.
-    if (!this.playerByAddress(address)) {
-      await syncIndexer(this.env);
-      const history = await walletHistory(this.env, address);
-      const maxBuyIn = stroopsFromXlm(STARTING_BUDGET_XLM);
-      if (history.depositTotal > maxBuyIn || history.sentTransfers > 0) {
-        throw new Error(
-          `this wallet has a past (${xlmString(history.depositTotal)} XLM deposited, ${history.sentTransfers} payments made) — the village only admits fresh accounts, so everyone verifiably starts with ${STARTING_BUDGET_XLM} XLM. Switch accounts in Freighter and rejoin.`,
-        );
-      }
-    }
+    // Fairness is enforced on SPENDING, not wallet history: Maude decrypts
+    // every purchase, and resolve-day flags anyone whose in-game spending
+    // exceeds the allowance schedule. Any wallet may join; old balances are
+    // dead weight.
     const existing = this.playerByAddress(address);
     const clash = this.state.players.find(
       (p) => p.name.toLowerCase() === cleanName.toLowerCase() && p.address !== address,
@@ -519,6 +508,17 @@ export class GameRoom extends DurableObject<Env> {
       if (depTotal > allowedTotal) {
         violations.push(
           `${p.name} has deposited ${xlmString(depTotal)} XLM in total — the schedule allows ${xlmString(allowedTotal)} by day ${round}. The Order notices.`,
+        );
+      }
+      // THE fairness audit: in-game spending vs the allowance schedule.
+      // Maude decrypts every purchase, so old wallet balances can't buy
+      // anything extra without being named at dawn.
+      const spent = purchases
+        .filter((x) => x.from === p.address && x.round >= 1)
+        .reduce((a, x) => a + x.amountStroops, 0n);
+      if (spent > allowedTotal) {
+        violations.push(
+          `${p.name} has spent ${xlmString(spent)} XLM this game — the allowance is ${xlmString(allowedTotal)} by day ${round}. Old money, new suspicion. The Order notices.`,
         );
       }
       const shopsVisited = new Set(
