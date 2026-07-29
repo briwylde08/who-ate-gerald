@@ -400,7 +400,7 @@ function MorningPanel({
               {n}
             </p>
           ))}
-          {report.violations.map((v, i) => (
+          {(report.violations ?? []).map((v, i) => (
             <p key={i} className="dim">
               ⚖ {v}
             </p>

@@ -728,7 +728,10 @@ export class GameRoom extends DurableObject<Env> {
       stillShopping: this.state.players
         .filter((p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round)
         .map((p) => p.name),
-      mornings: this.state.mornings,
+      // Players get the story; the Order's audit findings (violations) are
+      // GM-only — resolve-day response + game state — announced at the GM's
+      // discretion, in the GM's voice.
+      mornings: this.state.mornings.map(({ violations: _violations, ...story }) => story),
       incomeXlm: this.state.round <= 1 ? STARTING_BUDGET_XLM : DAILY_INCOME_XLM,
     };
   }

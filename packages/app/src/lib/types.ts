@@ -5,7 +5,8 @@ export interface MorningReport {
   banishedRole: "villager" | "werebear" | null;
   eaten: string | null;
   notes: string[];
-  violations: string[];
+  /** GM-only — stripped from the public view; present on GM responses. */
+  violations?: string[];
   winner: "village" | "werebear" | null;
   at: string;
 }

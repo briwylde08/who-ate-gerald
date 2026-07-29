@@ -431,7 +431,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               {n}
             </p>
           ))}
-          {m.violations.map((v, i) => (
+          {(m.violations ?? []).map((v, i) => (
             <p key={i} className="dim">
               ⚖ {v}
             </p>
