@@ -290,6 +290,13 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           })}
         </div>
         <p className="dim">One of these fine people is the werebear. Possibly you.</p>
+        {view.round >= 1 && !view.winner && (
+          <p className="dim">
+            {view.marketClosed
+              ? "🔮 The market has closed — Maude's office is open for questions."
+              : `🛍 The market is open. Maude waits for: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
+          </p>
+        )}
       </div>
 
       <div className="panel">

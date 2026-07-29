@@ -32,6 +32,8 @@ export function Maude({ wallet, gameId, setError }: Props) {
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<{ round: number; question: string; answer: string }[]>([]);
   const [doneToday, setDoneToday] = useState<boolean | null>(null);
+  const [marketClosed, setMarketClosed] = useState<boolean | null>(null);
+  const [stillShopping, setStillShopping] = useState<string[]>([]);
 
   useEffect(() => {
     const check = () =>
@@ -39,12 +41,16 @@ export function Maude({ wallet, gameId, setError }: Props) {
         .then((v) => {
           const me = v.players.find((p) => p.address === wallet.address);
           setDoneToday(me ? me.doneToday === true : null);
+          setMarketClosed(v.marketClosed ?? null);
+          setStillShopping(v.stillShopping ?? []);
         })
         .catch(() => setDoneToday(null));
     void check();
-    const t = setInterval(check, 8_000);
+    const t = setInterval(check, 5_000);
     return () => clearInterval(t);
   }, [gameId, wallet.address]);
+
+  const locked = doneToday === false || marketClosed === false;
 
   const ask = async () => {
     setBusy(true);
@@ -75,6 +81,15 @@ export function Maude({ wallet, gameId, setError }: Props) {
             written.” <span className="dim">(Declare Done in the Shops to unlock your question.)</span>
           </div>
         )}
+        {doneToday === true && marketClosed === false && (
+          <div className="answer-card">
+            “One moment, dear — the market is still open.” The office opens when everyone has
+            finished shopping.{" "}
+            {stillShopping.length > 0 && (
+              <span className="dim">Still out: {stillShopping.join(", ")}.</span>
+            )}
+          </div>
+        )}
         <p className="dim">Ideas (tap to use — replace [player] with a name):</p>
         <div className="row" style={{ flexWrap: "wrap" }}>
           {SUGGESTED.map((q) => (
@@ -92,7 +107,7 @@ export function Maude({ wallet, gameId, setError }: Props) {
           <button
             className="primary"
             onClick={() => void ask()}
-            disabled={busy || question.trim() === "" || question.includes("[player]") || doneToday === false}
+            disabled={busy || question.trim() === "" || question.includes("[player]") || locked}
           >
             {busy ? "Maude is consulting the register…" : "Spend today's seal"}
           </button>

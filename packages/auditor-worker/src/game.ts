@@ -348,6 +348,16 @@ export class GameRoom extends DurableObject<Env> {
         "Maude sees you mid-errand — finish your shopping first (declare Done in the Shops)",
       );
     }
+    // The market closes for everyone at once: Maude opens her office only
+    // when every living villager has finished shopping.
+    const stillShopping = this.state.players.filter(
+      (p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round,
+    );
+    if (stillShopping.length > 0) {
+      throw new Error(
+        `the market is still open — Maude waits for ${stillShopping.map((p) => p.name).join(", ")}`,
+      );
+    }
     if (typeof question !== "string" || question.trim().length === 0) {
       throw new Error("question must be a non-empty string");
     }
@@ -664,6 +674,15 @@ export class GameRoom extends DurableObject<Env> {
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,
+      /** Maude's office opens only when every living villager is done shopping. */
+      marketClosed:
+        this.state.round >= 1 &&
+        this.state.players
+          .filter((p) => p.alive)
+          .every((p) => this.state.doneShopping[p.address]?.round === this.state.round),
+      stillShopping: this.state.players
+        .filter((p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round)
+        .map((p) => p.name),
       mornings: this.state.mornings,
       incomeXlm: this.state.round <= 1 ? STARTING_BUDGET_XLM : DAILY_INCOME_XLM,
     };

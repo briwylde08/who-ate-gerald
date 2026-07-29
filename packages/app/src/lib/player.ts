@@ -135,6 +135,9 @@ export interface PublicView {
   }[];
   readyCount?: number;
   minPlayers?: number;
+  /** True when every living villager has finished shopping — Maude opens. */
+  marketClosed?: boolean;
+  stillShopping?: string[];
   mornings: MorningReport[];
   incomeXlm: number;
 }
