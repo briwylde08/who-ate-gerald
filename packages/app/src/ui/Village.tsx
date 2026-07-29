@@ -47,10 +47,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     (a, r) => a + BigInt(r.amountStroops),
     0n,
   );
+  // In the lobby (round 0) the day-1 allowance already applies — settle your
+  // business with the Order BEFORE the market opens, not during it.
   const remainingAllowance = allowance > spentThisGame ? allowance - spentThisGame : 0n;
-  const excess = round >= 1 && balances.spendable > remainingAllowance
-    ? balances.spendable - remainingAllowance
-    : 0n;
+  const excess =
+    balances.spendable > remainingAllowance ? balances.spendable - remainingAllowance : 0n;
 
   const surrender = async () => {
     setError(null);
