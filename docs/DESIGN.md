@@ -1,5 +1,10 @@
 # Who Ate Gerald?
 
+> **⚠ v2 exists:** [DESIGN-V2.md](DESIGN-V2.md) (the automated werebear game,
+> Bri + Patrick workshop 2026-07-28) supersedes this document where they
+> conflict. This file describes the moderated-hybrid v1, which is built and
+> deployed.
+
 **Trust is scarce. Gerald is dead.**
 
 *A multiplayer social-deduction game where the evidence is a real blockchain
