@@ -27,7 +27,13 @@ h1, h2, h3 { font-weight: normal; letter-spacing: 0.02em; }
 h1 { font-size: 2rem; margin: 0 0 4px; }
 h2 { font-size: 1.25rem; margin: 24px 0 8px; color: var(--moon); }
 
-.tagline { color: var(--blood); font-style: italic; margin: 0 0 24px; }
+.tagline {
+  color: #ffffff;
+  font-style: normal;
+  font-family: "Avenir Next", "Futura", "Helvetica Neue", ui-sans-serif, sans-serif;
+  letter-spacing: 0.08em;
+  margin: 0 0 24px;
+}
 
 .dim { color: var(--ink-dim); font-size: 0.9rem; }
 .mono { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
