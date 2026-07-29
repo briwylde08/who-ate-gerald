@@ -146,6 +146,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     try {
       const r = await playerApi.vote(wallet, gameId, voteTarget);
       setVoted(r.voted);
+      await load(); // if this was the last vote, dawn just came
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -156,6 +157,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     try {
       const r = await playerApi.nightPick(wallet, gameId, pickTarget);
       setPicked(r.picked);
+      await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -346,8 +348,16 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
       {me?.alive && view.phase === "day" && !view.winner && (
         <div className="panel">
           <h2>The trial</h2>
+          {!view.marketClosed && (
+            <p className="dim">
+              🛍 The trial begins when the market closes.{" "}
+              {(view.stillShopping ?? []).length > 0 &&
+                `Maude waits for: ${(view.stillShopping ?? []).join(", ")}.`}
+            </p>
+          )}
           <p className="dim">
-            Who is the werebear? You may change your vote until the day is resolved.
+            Who is the werebear? Ask Maude before you vote — <b>dawn comes the moment the last
+            vote lands</b>, and it doesn't wait for unspent questions.
             {voted && (
               <>
                 {" "}
@@ -364,7 +374,11 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
                 </option>
               ))}
             </select>
-            <button className="primary" disabled={!voteTarget} onClick={() => void castVote()}>
+            <button
+              className="primary"
+              disabled={!voteTarget || !view.marketClosed}
+              onClick={() => void castVote()}
+            >
               Cast vote
             </button>
           </div>

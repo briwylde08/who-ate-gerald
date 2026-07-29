@@ -409,9 +409,17 @@ export class GameRoom extends DurableObject<Env> {
 
   // --------------------------------------------------- votes & the night --
 
-  /** Cast/overwrite your vote for who the werebear is. Identity pre-verified. */
-  async vote(voterAddress: string, targetName: string): Promise<{ voted: string }> {
+  /**
+   * Cast/overwrite your vote for who the werebear is. Identity pre-verified.
+   * Votes open once the market has closed; dawn comes by itself when the
+   * last living vote and the werebear's pick are in.
+   */
+  async vote(voterAddress: string, targetName: string): Promise<{ voted: string; dawn: boolean }> {
     this.requireDay();
+    this.requireUnresolved();
+    if (!this.marketClosed()) {
+      throw new Error("the market is still open — the trial begins when everyone is done shopping");
+    }
     const voter = this.playerByAddress(voterAddress);
     if (!voter) throw new Error("that address holds no seat in this game");
     if (!voter.alive) throw new Error("the dead do not vote");
@@ -419,12 +427,16 @@ export class GameRoom extends DurableObject<Env> {
     if (!target || !target.alive) throw new Error(`no living player named "${targetName}"`);
     this.state.votes[voterAddress] = target.name;
     await this.persist();
-    return { voted: target.name };
+    return { voted: target.name, dawn: await this.maybeResolve() };
   }
 
   /** The werebear's secret pick. Identity pre-verified; role checked here. */
-  async nightPick(bearAddress: string, targetName: string): Promise<{ picked: string }> {
+  async nightPick(
+    bearAddress: string,
+    targetName: string,
+  ): Promise<{ picked: string; dawn: boolean }> {
     this.requireDay();
+    this.requireUnresolved();
     if (this.state.roles?.[bearAddress] !== "werebear") {
       throw new Error("only the werebear hunts"); // and now the worker knows you tried
     }
@@ -435,7 +447,38 @@ export class GameRoom extends DurableObject<Env> {
     if (target.address === bearAddress) throw new Error("you cannot eat yourself");
     this.state.nightPick = target.name;
     await this.persist();
-    return { picked: target.name };
+    return { picked: target.name, dawn: await this.maybeResolve() };
+  }
+
+  /** True once every living villager has finished today's shopping. */
+  private marketClosed(): boolean {
+    return (
+      this.state.round >= 1 &&
+      this.state.players
+        .filter((p) => p.alive)
+        .every((p) => this.state.doneShopping[p.address]?.round === this.state.round)
+    );
+  }
+
+  /** Dawn already came for this round? */
+  private requireUnresolved(): void {
+    if (this.state.mornings.some((m) => m.round === this.state.round)) {
+      throw new Error("dawn has already come — wait for the next day");
+    }
+  }
+
+  /** Dawn comes by itself when the last vote and the bear's pick are in. */
+  private async maybeResolve(): Promise<boolean> {
+    const alive = this.state.players.filter((p) => p.alive);
+    const allVoted = alive.every((p) => this.state.votes[p.address] !== undefined);
+    const roles = this.state.roles ?? {};
+    const bear = alive.find((p) => roles[p.address] === "werebear");
+    const bearReady = !bear || this.state.nightPick !== null;
+    if (allVoted && bearReady) {
+      await this.resolveDay();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -444,6 +487,7 @@ export class GameRoom extends DurableObject<Env> {
    */
   async resolveDay(): Promise<MorningReport> {
     this.requireDay();
+    this.requireUnresolved(); // one dawn per day (guards GM double-clicks too)
     const round = this.state.round;
     await syncIndexer(this.env);
     const purchases = await this.loadAll();

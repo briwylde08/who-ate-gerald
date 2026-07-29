@@ -96,10 +96,10 @@ export const playerApi = {
     playerCall<{ answer: string; asker: string; round: number }>(w, game, "ask", { question }),
 
   vote: (w: VillagerWallet, game: string, target: string) =>
-    playerCall<{ voted: string }>(w, game, "vote", { target }),
+    playerCall<{ voted: string; dawn: boolean }>(w, game, "vote", { target }),
 
   nightPick: (w: VillagerWallet, game: string, target: string) =>
-    playerCall<{ picked: string }>(w, game, "night-pick", { target }),
+    playerCall<{ picked: string; dawn: boolean }>(w, game, "night-pick", { target }),
 };
 
 /** Public game view — no auth. */
