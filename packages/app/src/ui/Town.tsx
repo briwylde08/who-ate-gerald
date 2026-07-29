@@ -44,20 +44,41 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
 
   const [graph, setGraph] = useState<GraphView | null>(null);
 
-  const load = useCallback(async () => {
+  const loadView = useCallback(async () => {
     try {
       setView(await fetchPublicView(gameId));
-      setGraph(await fetchGraph(gameId));
     } catch {
       setView(null); // game may not exist yet — quiet
     }
   }, [gameId]);
 
+  const loadGraph = useCallback(async () => {
+    try {
+      setGraph(await fetchGraph(gameId));
+    } catch {
+      // graph is decoration; keep the last one
+    }
+  }, [gameId]);
+
+  const load = useCallback(async () => {
+    await Promise.all([loadView(), loadGraph()]);
+  }, [loadView, loadGraph]);
+
   useEffect(() => {
     void load();
-    const t = setInterval(() => void load(), 20_000);
-    return () => clearInterval(t);
-  }, [load]);
+    // Game state is a cheap in-memory read — poll it fast so lobbies and
+    // votes feel live across browsers. The graph re-reads the chain, so it
+    // polls slower. Tab focus refreshes everything immediately.
+    const fast = setInterval(() => void loadView(), 4_000);
+    const slow = setInterval(() => void loadGraph(), 30_000);
+    const onFocus = () => void load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(fast);
+      clearInterval(slow);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [load, loadView, loadGraph]);
 
   const me = view?.players.find((p) => p.address === wallet.address);
 
