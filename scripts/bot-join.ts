@@ -13,10 +13,30 @@ import { playerAuthMessage } from "../packages/auditor-worker/src/auth";
 
 const AUDITOR_URL = "https://gerald-auditor.briana-761.workers.dev";
 
-const [gameId, name = "Old Tom", character = "gravedigger"] = process.argv.slice(2);
+const [gameId, name = "Old Tom", characterArg] = process.argv.slice(2);
 if (!gameId) {
   console.error("usage: npx tsx scripts/bot-join.ts <gameId> [name] [characterId]");
   process.exit(1);
+}
+
+// One face per game — pick the first character nobody has claimed yet.
+const ALL_CHARACTERS = [
+  "gravedigger",
+  "baker",
+  "midwife",
+  "poacher",
+  "schoolteacher",
+  "beekeeper",
+  "drunk",
+  "ratcatcher",
+];
+let character = characterArg;
+if (!character) {
+  const pub = (await (
+    await fetch(`${AUDITOR_URL}/games/${encodeURIComponent(gameId)}/public`)
+  ).json()) as { players?: { character?: string | null }[] };
+  const claimed = new Set((pub.players ?? []).map((p) => p.character).filter(Boolean));
+  character = ALL_CHARACTERS.find((c) => !claimed.has(c)) ?? "gravedigger";
 }
 
 const kp = Keypair.random();

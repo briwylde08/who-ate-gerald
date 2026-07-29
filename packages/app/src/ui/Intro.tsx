@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CHARACTERS, saveProfile, type Profile } from "../lib/profile";
+import { fetchPublicView, loadGameId } from "../lib/player";
 import { GeraldStory } from "./Story";
 
 /**
@@ -12,6 +13,16 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
   const [page, setPage] = useState<"story" | "identity">("story");
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState<string | null>(null);
+  const [taken, setTaken] = useState<Set<string>>(new Set());
+
+  // One face per game: grey out characters already claimed in this game.
+  useEffect(() => {
+    fetchPublicView(loadGameId())
+      .then((v) =>
+        setTaken(new Set(v.players.map((p) => p.character).filter((c): c is string => !!c))),
+      )
+      .catch(() => setTaken(new Set())); // no game yet — all faces free
+  }, [page]);
 
   const ready = name.trim().length > 0 && characterId !== null;
 
@@ -52,17 +63,24 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
         Flavor only — the werebear is dealt in secret and could be wearing any of these faces.
       </p>
       <div className="characters">
-        {CHARACTERS.map((c) => (
-          <button
-            key={c.id}
-            className={`character ${characterId === c.id ? "selected" : ""}`}
-            onClick={() => setCharacterId(c.id)}
-          >
-            <span className="emoji">{c.emoji}</span>
-            <span>{c.title}</span>
-            <span className="dim blurb">{c.blurb}</span>
-          </button>
-        ))}
+        {CHARACTERS.map((c) => {
+          const isTaken = taken.has(c.id);
+          return (
+            <button
+              key={c.id}
+              className={`character ${characterId === c.id ? "selected" : ""}`}
+              disabled={isTaken}
+              onClick={() => setCharacterId(c.id)}
+            >
+              <span className="emoji">{c.emoji}</span>
+              <span>
+                {c.title}
+                {isTaken ? " — claimed" : ""}
+              </span>
+              <span className="dim blurb">{isTaken ? "Somebody already wears this face." : c.blurb}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="row">

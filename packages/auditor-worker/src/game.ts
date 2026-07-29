@@ -175,9 +175,13 @@ export class GameRoom extends DurableObject<Env> {
       (p) => p.name.toLowerCase() === cleanName.toLowerCase() && p.address !== address,
     );
     if (clash) throw new Error(`someone here is already called "${cleanName}" — pick another name`);
+    const cleanCharacter = String(character).trim().slice(0, 32);
+    if (cleanCharacter && this.characterTaken(cleanCharacter, address)) {
+      throw new Error("that villager is already claimed — pick another face");
+    }
     if (existing) {
       existing.name = cleanName;
-      existing.character = String(character).trim().slice(0, 32) || existing.character;
+      existing.character = cleanCharacter || existing.character;
       await this.persist();
       return { seat: existing.seat, name: existing.name };
     }
@@ -186,7 +190,7 @@ export class GameRoom extends DurableObject<Env> {
       name: cleanName,
       address,
       alive: true,
-      character: String(character).trim().slice(0, 32) || undefined,
+      character: cleanCharacter || undefined,
     };
     this.state.players.push(player);
     await this.persist();
@@ -254,9 +258,19 @@ export class GameRoom extends DurableObject<Env> {
     if (!player) throw new Error("that address holds no seat in this game");
     const c = String(character).trim().slice(0, 32);
     if (!c) throw new Error("character must be a non-empty id");
+    if (this.characterTaken(c, address)) {
+      throw new Error("that villager is already claimed — pick another face");
+    }
     player.character = c;
     await this.persist();
     return { character: c };
+  }
+
+  /** One face per game: is this character claimed by someone else? */
+  private characterTaken(character: string, exceptAddress: string): boolean {
+    return this.state.players.some(
+      (p) => p.character === character && p.address !== exceptAddress,
+    );
   }
 
   // ---------------------------------------------------------------- days --
