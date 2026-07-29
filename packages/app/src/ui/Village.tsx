@@ -12,7 +12,8 @@ import {
   type CatalogItem,
 } from "../lib/catalog";
 import { loadHistory, recordPurchase } from "../lib/history";
-import { loadGameId } from "../lib/player";
+import { fetchPublicView, loadGameId, playerApi } from "../lib/player";
+import { useEffect } from "react";
 
 interface Props {
   wallet: VillagerWallet;
@@ -63,6 +64,27 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(null);
+    }
+  };
+
+  // Done-for-the-day: locks your stores and unlocks your Maude question.
+  const [doneToday, setDoneToday] = useState(false);
+  useEffect(() => {
+    fetchPublicView(loadGameId())
+      .then((v) => {
+        const me = v.players.find((p) => p.address === wallet.address);
+        setDoneToday(me?.doneToday === true);
+      })
+      .catch(() => undefined);
+  }, [wallet.address, round]);
+
+  const declareDone = async () => {
+    setError(null);
+    try {
+      await playerApi.doneShopping(wallet, loadGameId());
+      setDoneToday(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -151,7 +173,26 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
 
-      <div className="shops" style={excess > 0n ? { opacity: 0.4, pointerEvents: "none" } : undefined}>
+      {doneToday && (
+        <div className="panel">
+          <h3>🛍✓ Done for today</h3>
+          <p className="dim">
+            The shopkeepers wave you off. Your question to Maude is waiting — and buying
+            anything now would be noticed at dawn.
+          </p>
+        </div>
+      )}
+      {!doneToday && round >= 1 && (
+        <div className="row">
+          <button onClick={() => void declareDone()}>Done buying for today → unlock Maude</button>
+          <span className="dim">locks your stores for the day; shop first, ask second</span>
+        </div>
+      )}
+
+      <div
+        className="shops"
+        style={excess > 0n || doneToday ? { opacity: 0.4, pointerEvents: "none" } : undefined}
+      >
         {SHOPS.map((shop) => (
           <div key={shop.id} className="panel shop-card">
             <h3>{shop.label}</h3>

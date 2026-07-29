@@ -281,6 +281,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
                   {p.name} {c ? c.title : ""}
                   {p.address === wallet.address ? " (you)" : ""}
                   {!view.dealt && p.ready ? " ✅" : ""}
+                  {view.dealt && p.alive && p.doneToday ? " 🛍✓" : ""}
+                  {view.dealt && p.alive && p.askedToday ? " 🔮" : ""}
                 </span>
                 <span className="dim blurb">{p.alive ? (c?.blurb ?? "New in town.") : "Eaten or banished. Gerald has company."}</span>
               </div>

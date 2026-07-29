@@ -90,6 +90,8 @@ export default {
             );
           case "p/ready":
             return json(await room.setReady(address, body.ready !== false));
+          case "p/done":
+            return json(await room.declareDone(address));
           case "p/role":
             return json(await room.myRole(address));
           case "p/character":

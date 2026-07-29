@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
-import { playerApi } from "../lib/player";
+import { fetchPublicView, playerApi } from "../lib/player";
 
 /**
  * Maude McLedger's parlor. One private question per day — her answer comes
@@ -31,6 +31,20 @@ export function Maude({ wallet, gameId, setError }: Props) {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<{ round: number; question: string; answer: string }[]>([]);
+  const [doneToday, setDoneToday] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const check = () =>
+      fetchPublicView(gameId)
+        .then((v) => {
+          const me = v.players.find((p) => p.address === wallet.address);
+          setDoneToday(me ? me.doneToday === true : null);
+        })
+        .catch(() => setDoneToday(null));
+    void check();
+    const t = setInterval(check, 8_000);
+    return () => clearInterval(t);
+  }, [gameId, wallet.address]);
 
   const ask = async () => {
     setBusy(true);
@@ -55,6 +69,12 @@ export function Maude({ wallet, gameId, setError }: Props) {
           her answer comes to <b>you alone</b>. Whether you tell the truth about it afterward is
           between you and St. Ursula.
         </p>
+        {doneToday === false && (
+          <div className="answer-card">
+            “Finish your errands first, dear — I don't read ledgers that are still being
+            written.” <span className="dim">(Declare Done in the Shops to unlock your question.)</span>
+          </div>
+        )}
         <p className="dim">Ideas (tap to use — replace [player] with a name):</p>
         <div className="row" style={{ flexWrap: "wrap" }}>
           {SUGGESTED.map((q) => (
@@ -72,7 +92,7 @@ export function Maude({ wallet, gameId, setError }: Props) {
           <button
             className="primary"
             onClick={() => void ask()}
-            disabled={busy || question.trim() === "" || question.includes("[player]")}
+            disabled={busy || question.trim() === "" || question.includes("[player]") || doneToday === false}
           >
             {busy ? "Maude is consulting the register…" : "Spend today's seal"}
           </button>

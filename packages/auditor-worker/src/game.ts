@@ -56,6 +56,8 @@ interface GameState {
   rounds: RoundWindow[];
   /** address → last round in which they spent their Maude seal. */
   asked: Record<string, number>;
+  /** address → {round, ledger} of their "done shopping" declaration. */
+  doneShopping: Record<string, { round: number; ledger: number }>;
   askLog: AskRecord[];
   /** This round's votes: voter address → target player name. */
   votes: Record<string, string>;
@@ -79,6 +81,7 @@ const freshState = (): GameState => ({
   round: 0,
   rounds: [],
   asked: {},
+  doneShopping: {},
   askLog: [],
   votes: {},
   nightPick: null,
@@ -308,6 +311,23 @@ export class GameRoom extends DurableObject<Env> {
     return { player: p.name, alive: p.alive };
   }
 
+  /**
+   * Declare the day's shopping finished (identity pre-verified). Locks your
+   * stores and unlocks your Maude question — and records the ledger height,
+   * so buying after "done" is provable at dawn.
+   */
+  async declareDone(address: string): Promise<{ round: number }> {
+    this.requireDay();
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("that address holds no seat in this game");
+    if (!player.alive) throw new Error("the dead are, by definition, done shopping");
+    await syncIndexer(this.env);
+    const ledger = await indexerLatestLedger(this.env);
+    this.state.doneShopping[address] = { round: this.state.round, ledger };
+    await this.persist();
+    return { round: this.state.round };
+  }
+
   // --------------------------------------------------------------- maude --
 
   /** One private question per living player per day. Identity pre-verified. */
@@ -322,6 +342,11 @@ export class GameRoom extends DurableObject<Env> {
     if (!player.alive) throw new Error("the dead ask no questions");
     if ((this.state.asked[askerAddress] ?? 0) >= this.state.round) {
       throw new Error("your seal is spent — one question per villager per day");
+    }
+    if (this.state.doneShopping[askerAddress]?.round !== this.state.round) {
+      throw new Error(
+        "Maude sees you mid-errand — finish your shopping first (declare Done in the Shops)",
+      );
     }
     if (typeof question !== "string" || question.trim().length === 0) {
       throw new Error("question must be a non-empty string");
@@ -571,6 +596,19 @@ export class GameRoom extends DurableObject<Env> {
           `${p.name} visited ${shopsVisited.size} shops today — the village is small, but not that small. Two is the custom.`,
         );
       }
+      // Shopping after declaring "done" is provable: the declaration pinned
+      // a ledger height, and purchases carry theirs.
+      const done = this.state.doneShopping[p.address];
+      if (done?.round === round) {
+        const lateBuys = purchases.filter(
+          (x) => x.from === p.address && x.round === round && !x.isSurrender && x.ledger > done.ledger,
+        ).length;
+        if (lateBuys > 0) {
+          violations.push(
+            `${p.name} declared their shopping done, then bought ${lateBuys} more thing${lateBuys === 1 ? "" : "s"}. The Order notices little lies especially.`,
+          );
+        }
+      }
     }
 
     // --- WIN CHECK: parity. -------------------------------------------------
@@ -621,6 +659,8 @@ export class GameRoom extends DurableObject<Env> {
         alive: p.alive,
         character: p.character ?? null,
         ready: p.ready === true,
+        doneToday: this.state.doneShopping[p.address]?.round === this.state.round,
+        askedToday: (this.state.asked[p.address] ?? 0) >= this.state.round && this.state.round >= 1,
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,

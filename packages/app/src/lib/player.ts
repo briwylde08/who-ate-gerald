@@ -79,6 +79,9 @@ export const playerApi = {
       ready,
     }),
 
+  doneShopping: (w: VillagerWallet, game: string) =>
+    playerCall<{ round: number }>(w, game, "done"),
+
   myRole: (w: VillagerWallet, game: string) =>
     playerCall<{ dealt: boolean; role: "villager" | "werebear" | null; name: string | null }>(
       w,
@@ -127,6 +130,8 @@ export interface PublicView {
     alive: boolean;
     character?: string | null;
     ready?: boolean;
+    doneToday?: boolean;
+    askedToday?: boolean;
   }[];
   readyCount?: number;
   minPlayers?: number;
