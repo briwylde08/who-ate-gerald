@@ -2,9 +2,9 @@
 
 **Trust is scarce. Gerald is dead.**
 
-> One of the villagers named Gerald has been eaten.
+> Villager Gerald has been eaten.
 
-A multiplayer social-deduction game (7 players, one secret Wolf) where the
+A multiplayer social-deduction game (7 players, one secret werebear) where the
 evidence is a real confidential-token ledger on Stellar testnet: every
 purchase is a confidential transfer — everyone sees *who* paid *which* shop,
 nobody sees *how much* — and **Maude McLedger**, the AI Auditor who can see

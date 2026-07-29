@@ -17,12 +17,11 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
   if (page === "story") {
     return (
       <div className="panel story">
-        <p>One of the villagers named Gerald has been eaten.</p>
+        <p>Villager Gerald has been eaten.</p>
         <p>
-          Eaten by a <b>werewolf</b> — we know because of the telltale signs of a{" "}
-          <b>werebear</b> attack. Someone found his mangled remains at the treeline this
-          morning: a still-lit lantern strapped to his arm, one croc, and nothing else. Bear
-          tracks everywhere.
+          Eaten by a <b>werebear</b> — we know because of the telltale signs of a werebear
+          attack. Someone found his mangled remains at the treeline this morning: a still-lit
+          lantern strapped to his arm, one pink croc, and nothing else. Bear tracks everywhere.
         </p>
         <p>
           There have been whispers of a werebear round these parts for years. And this is a
