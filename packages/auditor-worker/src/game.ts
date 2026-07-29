@@ -599,14 +599,15 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     // --- AUDITS: the Order notices. ----------------------------------------
-    // Cumulative deposit audit: lifetime deposits vs the full allowance
-    // schedule (50 buy-in + 15/day). Cumulative, so nothing slips between
-    // round windows or into the lobby.
+    // Deposit audit: deposits made DURING THIS GAME vs the allowance
+    // schedule. Pre-game history is irrelevant (the Order's desk normalizes
+    // balances and the spend audit caps usage) — this tripwire exists for
+    // mid-game top-ups only.
     const deposits = await loadDeposits(this.env, this.state.rounds);
     const allowedTotal = stroopsFromXlm(STARTING_BUDGET_XLM + DAILY_INCOME_XLM * (round - 1));
     for (const p of this.state.players) {
       const depTotal = deposits
-        .filter((d) => d.to === p.address)
+        .filter((d) => d.to === p.address && d.round >= 1)
         .reduce((a, d) => a + d.amountStroops, 0n);
       if (depTotal > allowedTotal) {
         violations.push(
