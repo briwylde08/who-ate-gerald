@@ -91,6 +91,9 @@ const freshState = (): GameState => ({
   createdAt: new Date().toISOString(),
 });
 
+/** Minimum lobby size before ready-up can start the game (7 for the real thing). */
+const MIN_PLAYERS = 3;
+
 /** itemId → { shopId, price } for gear checks (prices are globally unique). */
 const ITEM_INDEX = new Map<string, { shopId: string; price: bigint }>();
 for (const shop of SHOP_BY_ID.values()) {
@@ -186,11 +189,38 @@ export class GameRoom extends DurableObject<Env> {
     return { seat: player.seat, name: player.name };
   }
 
+  /**
+   * Ready-up (identity pre-verified). When everyone seated is ready and the
+   * lobby has reached quorum, the game starts itself: roles dealt, day 1 open.
+   */
+  async setReady(
+    address: string,
+    ready: boolean,
+  ): Promise<{ ready: boolean; readyCount: number; started: boolean }> {
+    if (this.state.roles) throw new Error("the game is already underway");
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("join the village before readying up");
+    player.ready = ready;
+    await this.persist();
+    const readyCount = this.state.players.filter((p) => p.ready).length;
+    const everyoneReady =
+      this.state.players.length >= MIN_PLAYERS &&
+      this.state.players.every((p) => p.ready === true);
+    if (ready && everyoneReady) {
+      await this.deal(false);
+      await this.startDay();
+      return { ready, readyCount, started: true };
+    }
+    return { ready, readyCount, started: false };
+  }
+
   /** Deal roles: one werebear among the seated, chosen by real randomness. */
   async deal(force = false): Promise<{ dealt: true; players: number }> {
     this.requireGame();
-    if (this.state.players.length < 3) {
-      throw new Error(`only ${this.state.players.length} seated — the village needs at least 3`);
+    if (this.state.players.length < MIN_PLAYERS) {
+      throw new Error(
+        `only ${this.state.players.length} seated — the village needs at least ${MIN_PLAYERS}`,
+      );
     }
     if (this.state.roles && !force) throw new Error("roles already dealt — pass force:true to re-deal");
     if (this.state.round > 0 && !force) throw new Error("game already started");
@@ -530,7 +560,10 @@ export class GameRoom extends DurableObject<Env> {
         address: p.address, // public on-chain anyway; lets the app find itself
         alive: p.alive,
         character: p.character ?? null,
+        ready: p.ready === true,
       })),
+      readyCount: this.state.players.filter((p) => p.ready).length,
+      minPlayers: MIN_PLAYERS,
       mornings: this.state.mornings,
       incomeXlm: this.state.round <= 1 ? STARTING_BUDGET_XLM : DAILY_INCOME_XLM,
     };

@@ -193,6 +193,27 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           </p>
         )}
 
+        {me && !view.dealt && (
+          <div className="answer-card">
+            <b>The lobby.</b> {view.readyCount ?? 0}/{Math.max(view.minPlayers ?? 3, view.players.length)}{" "}
+            ready — the game starts itself the moment everyone seated is ready (minimum{" "}
+            {view.minPlayers ?? 3}).
+            <div className="row">
+              <button
+                className={me.ready ? "" : "primary"}
+                onClick={() => {
+                  playerApi
+                    .ready(wallet, gameId, !me.ready)
+                    .then(() => void load())
+                    .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+                }}
+              >
+                {me.ready ? "✓ Ready (tap to unready)" : "Ready?"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {me && view.dealt && !roleShown && (
           <div className="answer-card">
             <b>📜 Your fate has been dealt.</b>{" "}
@@ -238,6 +259,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
                 <span>
                   {p.name} {c ? c.title : ""}
                   {p.address === wallet.address ? " (you)" : ""}
+                  {!view.dealt && p.ready ? " ✅" : ""}
                 </span>
                 <span className="dim blurb">{p.alive ? (c?.blurb ?? "New in town.") : "Eaten or banished. Gerald has company."}</span>
               </div>

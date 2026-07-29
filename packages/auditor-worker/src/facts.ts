@@ -27,6 +27,8 @@ export interface PlayerRef {
   alive: boolean;
   /** Cosmetic villager character id, claimed by the player's own app. */
   character?: string;
+  /** Lobby ready flag — when the whole lobby is ready, the game starts itself. */
+  ready?: boolean;
 }
 
 export interface RoundWindow {

@@ -74,6 +74,11 @@ export const playerApi = {
   join: (w: VillagerWallet, game: string, name: string, character: string) =>
     playerCall<{ seat: number; name: string }>(w, game, "join", { name, character }),
 
+  ready: (w: VillagerWallet, game: string, ready: boolean) =>
+    playerCall<{ ready: boolean; readyCount: number; started: boolean }>(w, game, "ready", {
+      ready,
+    }),
+
   myRole: (w: VillagerWallet, game: string) =>
     playerCall<{ dealt: boolean; role: "villager" | "werebear" | null; name: string | null }>(
       w,
@@ -121,7 +126,10 @@ export interface PublicView {
     address: string;
     alive: boolean;
     character?: string | null;
+    ready?: boolean;
   }[];
+  readyCount?: number;
+  minPlayers?: number;
   mornings: MorningReport[];
   incomeXlm: number;
 }

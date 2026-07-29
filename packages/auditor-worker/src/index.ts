@@ -88,6 +88,8 @@ export default {
             return json(
               await room.join(address, String(body.name ?? ""), String(body.character ?? "")),
             );
+          case "p/ready":
+            return json(await room.setReady(address, body.ready !== false));
           case "p/role":
             return json(await room.myRole(address));
           case "p/character":
