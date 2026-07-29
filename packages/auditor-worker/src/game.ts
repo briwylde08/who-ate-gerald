@@ -15,6 +15,7 @@ import {
   loadDeposits,
   loadPurchases,
   syncIndexer,
+  walletHistory,
   type FactContext,
   type PlayerRef,
   type Purchase,
@@ -166,6 +167,20 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.roles) throw new Error("the game is already underway — join the next one");
     const cleanName = String(name).trim().slice(0, 24);
     if (!cleanName) throw new Error("a villager needs a name");
+    // FAIRNESS GATE: everyone starts with the same spendable budget. Deposits
+    // are public by protocol, so a wallet's history is checkable by anyone:
+    // a fresh player has at most the starting buy-in deposited and has spent
+    // nothing. Old, rich, or busy wallets are turned away at the door.
+    if (!this.playerByAddress(address)) {
+      await syncIndexer(this.env);
+      const history = await walletHistory(this.env, address);
+      const maxBuyIn = stroopsFromXlm(STARTING_BUDGET_XLM);
+      if (history.depositTotal > maxBuyIn || history.sentTransfers > 0) {
+        throw new Error(
+          `this wallet has a past (${xlmString(history.depositTotal)} XLM deposited, ${history.sentTransfers} payments made) — the village only admits fresh accounts, so everyone verifiably starts with ${STARTING_BUDGET_XLM} XLM. Switch accounts in Freighter and rejoin.`,
+        );
+      }
+    }
     const existing = this.playerByAddress(address);
     const clash = this.state.players.find(
       (p) => p.name.toLowerCase() === cleanName.toLowerCase() && p.address !== address,
@@ -492,15 +507,18 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     // --- AUDITS: the Order notices. ----------------------------------------
+    // Cumulative deposit audit: lifetime deposits vs the full allowance
+    // schedule (50 buy-in + 15/day). Cumulative, so nothing slips between
+    // round windows or into the lobby.
     const deposits = await loadDeposits(this.env, this.state.rounds);
+    const allowedTotal = stroopsFromXlm(STARTING_BUDGET_XLM + DAILY_INCOME_XLM * (round - 1));
     for (const p of this.state.players) {
-      const dep = deposits
-        .filter((d) => d.to === p.address && d.round === round)
+      const depTotal = deposits
+        .filter((d) => d.to === p.address)
         .reduce((a, d) => a + d.amountStroops, 0n);
-      const allowed = stroopsFromXlm(round === 1 ? STARTING_BUDGET_XLM : DAILY_INCOME_XLM);
-      if (dep > allowed) {
+      if (depTotal > allowedTotal) {
         violations.push(
-          `${p.name} deposited ${xlmString(dep)} XLM today — the allowance is ${xlmString(allowed)}. The Order notices.`,
+          `${p.name} has deposited ${xlmString(depTotal)} XLM in total — the schedule allows ${xlmString(allowedTotal)} by day ${round}. The Order notices.`,
         );
       }
       const shopsVisited = new Set(

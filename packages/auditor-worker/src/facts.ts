@@ -160,6 +160,29 @@ export interface DepositRec {
 }
 
 /**
+ * One wallet's public footprint on the game token — no decryption needed.
+ * Used by the join gate: a fair fresh player has at most the starting buy-in
+ * deposited and nothing spent yet.
+ */
+export async function walletHistory(
+  env: { INDEXER_URL: string; TOKEN_CONTRACT: string },
+  address: string,
+): Promise<{ depositTotal: bigint; sentTransfers: number }> {
+  const indexer = new IndexerClient({ baseUrl: env.INDEXER_URL });
+  const { events } = await indexer.fetchEvents({
+    contractId: env.TOKEN_CONTRACT,
+    startLedger: DEPLOYED_AT_LEDGER,
+  });
+  let depositTotal = 0n;
+  let sentTransfers = 0;
+  for (const e of events) {
+    if (e.type === "deposit" && e.to === address) depositTotal += e.amount;
+    if (e.type === "transfer" && e.from === address) sentTransfers += 1;
+  }
+  return { depositTotal, sentTransfers };
+}
+
+/**
  * Fetch every public deposit into the game token, bucketed by round — the
  * self-auditing half of the economy (income arrives as public deposits, so
  * over-deposits are provable by anyone, no decryption needed).
