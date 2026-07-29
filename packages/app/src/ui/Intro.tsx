@@ -21,7 +21,7 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
         <GeraldStory />
         <div className="row">
           <button className="primary" onClick={() => setPage("identity")} autoFocus>
-            Find who ate Gerald
+            Play Who Ate Gerald?
           </button>
         </div>
       </div>
