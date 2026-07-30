@@ -13,10 +13,12 @@ export interface Character {
   blurb: string;
   /** Portrait under public/characters/ — 512px web copies; originals in design/. */
   image: string;
+  /** Optional small icon that replaces the emoji wherever it appears. */
+  icon?: string;
 }
 
 export const CHARACTERS: Character[] = [
-  { id: "baker", emoji: "🍞", title: "the Baker", blurb: "Everyone loves his buns. Gerald did too.", image: "/characters/baker.jpg" },
+  { id: "baker", emoji: "🍞", title: "the Baker", blurb: "Everyone loves his buns. Gerald did too.", image: "/characters/baker.jpg", icon: "/characters/baker-icon.png" },
   { id: "midwife", emoji: "🕯️", title: "the Midwife", blurb: "Delivered half the village. Regrets several of them.", image: "/characters/midwife.jpg" },
   { id: "gravedigger", emoji: "🪦", title: "the Grave Digger", blurb: "Business is, regrettably, booming.", image: "/characters/gravedigger.jpg" },
   { id: "drunk", emoji: "🍺", title: "the Drunk", blurb: "Remembers the murder. Misplaced his trousers.", image: "/characters/drunk.jpg" },

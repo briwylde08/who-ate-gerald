@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { CHARACTERS, saveProfile, type Profile } from "../lib/profile";
+import { CharEmoji } from "./CharIcon";
 import { fetchPublicView, loadGameId } from "../lib/player";
 import { GeraldStory } from "./Story";
 
@@ -74,7 +75,7 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
             >
               <img className="portrait" src={c.image} alt={c.title} loading="lazy" />
               <span>
-                {c.emoji} {c.title}
+                <CharEmoji c={c} /> {c.title}
                 {isTaken ? " — claimed" : ""}
               </span>
               <span className="dim blurb">{isTaken ? "Somebody already wears this face." : c.blurb}</span>

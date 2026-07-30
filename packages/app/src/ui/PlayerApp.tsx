@@ -5,6 +5,7 @@ import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, type Profile } from "../lib/profile";
 import { fetchGraph, fetchPublicView, loadGameId, saveGameId } from "../lib/player";
+import { CharEmoji } from "./CharIcon";
 import { Intro } from "./Intro";
 import { GeraldStory } from "./Story";
 import { Village } from "./Village";
@@ -195,7 +196,7 @@ export function PlayerApp() {
       <div className="topbar">
         {profile && (
           <button className="addr" title="Change name / villager" onClick={() => setProfile(null)}>
-            {characterOf(profile)?.emoji} {profile.name} {characterOf(profile)?.title}
+            <CharEmoji c={characterOf(profile)} /> {profile.name} {characterOf(profile)?.title}
           </button>
         )}
         {wallet && (

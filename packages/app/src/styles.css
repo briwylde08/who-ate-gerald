@@ -153,6 +153,13 @@ th { color: var(--ink-dim); font-weight: normal; }
   text-align: left;
 }
 .character .emoji { font-size: 1.6rem; }
+.char-icon {
+  width: 1.25em;
+  height: 1.25em;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: -0.25em;
+}
 .character .blurb { font-style: italic; font-size: 0.8rem; }
 .character .portrait {
   width: 100%;

@@ -10,6 +10,7 @@ import {
   type GraphView,
 } from "../lib/player";
 import { CHARACTERS, loadProfile } from "../lib/profile";
+import { CharEmoji } from "./CharIcon";
 import { loadHistory } from "../lib/history";
 import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
 
@@ -319,7 +320,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             const c = p.character ? CHAR_BY_ID.get(p.character) : null;
             return (
               <div key={p.seat} className={`character ${p.alive ? "" : "dead"}`}>
-                <span className="emoji">{p.alive ? (c?.emoji ?? "🧑‍🌾") : "🪦"}</span>
+                <span className="emoji">{p.alive ? <CharEmoji c={c} /> : "🪦"}</span>
                 <span>
                   {p.name} {c ? c.title : ""}
                   {p.address === wallet.address ? " (you)" : ""}
