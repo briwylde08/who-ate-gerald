@@ -106,6 +106,8 @@ export default {
             return json(await room.vote(address, String(body.target ?? "")));
           case "p/night-pick":
             return json(await room.nightPick(address, String(body.target ?? "")));
+          case "p/notes":
+            return json({ notes: await room.notesFor(address) });
           default:
             return json({ error: `no player route: ${action}` }, 404);
         }

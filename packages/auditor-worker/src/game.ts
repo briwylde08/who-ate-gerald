@@ -2,9 +2,10 @@
  * One Durable Object per game — v2 (DESIGN-V2.md): the game runs itself.
  * The DO deals roles, enforces one private Maude question per player per
  * day, collects votes and the werebear's night pick, and resolves each
- * morning in code (knife-doubled tallies, gear order: venison > bane/trap,
- * musk > announcement, charm saves the life). The GM still opens days and
- * pulls the resolve lever; timers can replace the lever later.
+ * morning in code. Catalog v4 (CATALOG-V4.md): knife-doubled tallies, nail
+ * tie-excusals, charm saves (ham hides the save), trap wounds, and the dawn
+ * readings — bottle rumor, ledger book, unsealing ritual, candle last words,
+ * the dogs' private whisper. Days open themselves on a 60s alarm.
  */
 import { DurableObject } from "cloudflare:workers";
 
@@ -69,14 +70,18 @@ interface GameState {
   nightPick: string | null;
   /** Werebear wounded by a trap — its next night is skipped. */
   wounded: boolean;
-  /** address → bearsbane already consumed. */
+  /** address → bearsbane already consumed. (v3 item — retired in catalog v4.) */
   baneConsumed: Record<string, boolean>;
   /** address → silver charms shattered (each purchase = one save). */
   charmUsed: Record<string, number>;
   /** address → round they spend in critical condition (no vote) after a save. */
   recovering: Record<string, number>;
-  /** Pierces spent — each venison purchase grants exactly one. */
+  /** Pierces spent — each venison purchase grants exactly one. (v3 — retired.) */
   venisonUsed: number;
+  /** address → horseshoe nails spent (each purchase = one tie excusal). */
+  nailUsed: Record<string, number>;
+  /** address → private dawn facts (the dogs) — readable only by that player. */
+  privateNotes: Record<string, { round: number; text: string }[]>;
   mornings: MorningReport[];
   phase: "lobby" | "day" | "ended";
   winner: "village" | "werebear" | null;
@@ -100,6 +105,8 @@ const freshState = (): GameState => ({
   charmUsed: {},
   recovering: {},
   venisonUsed: 0,
+  nailUsed: {},
+  privateNotes: {},
   mornings: [],
   phase: "lobby",
   winner: null,
@@ -108,6 +115,13 @@ const freshState = (): GameState => ({
 
 /** Minimum lobby size before ready-up can start the game (7 for the real thing). */
 const MIN_PLAYERS = 3;
+
+/** Uniform random index from real randomness (same source as the role deal). */
+function randomIndex(n: number): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0]! % n;
+}
 
 /** The clock: if the werebear survives the dusk of this day, it wins. */
 const MAX_DAYS = 5;
@@ -615,16 +629,13 @@ export class GameRoom extends DurableObject<Env> {
     const boughtEver = (address: string, itemId: string): boolean =>
       this.bought(purchases, address, itemId, {});
 
-    // --- TRIAL: knife-doubled plurality; barrel drinkers can't vote. -------
+    // --- TRIAL: knife-doubled plurality. -----------------------------------
     const weights = new Map<string, number>();
     for (const [voterAddr, targetName] of Object.entries(this.state.votes)) {
       const voter = this.playerByAddress(voterAddr);
       if (!voter?.alive) continue;
-      if (boughtThisRound(voterAddr, "the_good_barrel")) {
-        notes.push(`${voter.name}'s vote never arrived. (Someone was singing in the square.)`);
-        continue;
-      }
-      const weight = boughtThisRound(voterAddr, "hunting_knife") ? 2 : 1;
+      // The butcher's knife, once bought, stays sharp for the whole game.
+      const weight = boughtEver(voterAddr, "butchers_knife") ? 2 : 1;
       weights.set(targetName, (weights.get(targetName) ?? 0) + weight);
     }
     let banished: PlayerRef | null = null;
@@ -635,12 +646,26 @@ export class GameRoom extends DurableObject<Env> {
       else {
         // A tie has teeth: the tied STAND ACCUSED — each must let Maude
         // reveal one purchase of their choosing before voting tomorrow.
+        // Unless they carry lucky iron: a horseshoe nail excuses one tie.
         notes.push(
-          `The vote split between ${top.join(" and ")} — the village could not choose. They stand accused: each must reveal one purchase before voting tomorrow.`,
+          `The vote split between ${top.join(" and ")} — the village could not choose.`,
         );
         for (const name of top) {
           const p = this.playerByName(name);
-          if (p?.alive) this.state.mustDisclose[p.address] = round + 1;
+          if (!p?.alive) continue;
+          const nailsOwned = this.countBought(purchases, p.address, "horseshoe_nail");
+          const nailsSpent = (this.state.nailUsed ??= {})[p.address] ?? 0;
+          if (nailsOwned > nailsSpent) {
+            this.state.nailUsed[p.address] = nailsSpent + 1;
+            notes.push(
+              `${p.name}'s pockets jingled — lucky iron. The Order looks away; they reveal nothing.`,
+            );
+          } else {
+            this.state.mustDisclose[p.address] = round + 1;
+            notes.push(
+              `${p.name} stands accused: they must reveal one purchase before voting tomorrow.`,
+            );
+          }
         }
       }
     } else {
@@ -654,7 +679,7 @@ export class GameRoom extends DurableObject<Env> {
       const voterCount = Object.keys(this.state.votes).length;
       if (totalWeight > voterCount) {
         notes.push(
-          "⚒ Steel glinted at the trial: the tally counts more voices than hands. Somebody bought a hunting knife — ask the Blacksmith's door who visited.",
+          "🔪 Steel glinted at the trial: the tally counts more voices than hands. Somebody's knife is sharp — ask the Butcher's door who visited.",
         );
       }
       if (banishedRole === "werebear") {
@@ -680,23 +705,18 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.winner === null && bear?.alive && bearAddress) {
       const target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
       const hamTonight = boughtThisRound(bearAddress, "smoked_ham");
-      const announceFail = (line: string) => {
-        if (!hamTonight) notes.push(line);
-      };
       if (this.state.wounded) {
         this.state.wounded = false;
         notes.push("A quiet night. Something large limped past the mill and took nothing.");
       } else if (!target || !target.alive) {
         notes.push("A quiet night.");
-      } else if (boughtThisRound(target.address, "the_good_barrel")) {
-        announceFail("A quiet night — though something scratched at a door and gave up.");
       } else if (
         this.countBought(purchases, target.address, "silver_charm") >
         (this.state.charmUsed[target.address] ?? 0)
       ) {
-        // Silver is absolute — venison does not pierce it — but the charm
-        // SHATTERS (one save per charm bought), and the survivor spends the
-        // next day in CRITICAL CONDITION: alive, but too weak to vote.
+        // Silver is absolute, but the charm SHATTERS (one save per charm
+        // bought), and the survivor spends the next day in CRITICAL
+        // CONDITION: alive, but too weak to vote.
         // If the bear brought smoked ham, the whole thing stays secret —
         // no announcement AND no visible recovery: the ham trades
         // trial-silencing for secrecy.
@@ -711,41 +731,101 @@ export class GameRoom extends DurableObject<Env> {
           );
         }
       } else {
-        const hasBane =
-          boughtEver(target.address, "bearsbane_tincture") && !this.state.baneConsumed[target.address];
-        const hasTrap = boughtEver(target.address, "bear_trap");
-        // Each venison purchase grants exactly ONE pierce, spent only when
-        // there is actually bane or a trap to pierce.
-        const venisonAvailable =
-          this.countBought(purchases, bearAddress, "fresh_venison") > this.state.venisonUsed;
-        const pierced = (hasBane || hasTrap) && venisonAvailable;
-        if (hasBane && !pierced) {
-          this.state.baneConsumed[target.address] = true;
-          // Bearsbane is SILENT by design — the village sees only a quiet night.
-          notes.push("A quiet night.");
-        } else {
-          eaten = target;
-          target.alive = false;
-          if (pierced) {
-            this.state.venisonUsed += 1;
-            // The victim is dead — their trap/bane is safe to name; the
-            // venison line tells the village what BEAT it (bear-anonymous).
-            notes.push(
-              `🥩 ${target.name}'s defenses were ready — and useless: scraps of fresh venison at the scene. Something came prepared.`,
-            );
-          }
-          if (hasTrap && !pierced) {
-            this.state.wounded = true;
-            notes.push(
-              `🪤 ${target.name}'s bear trap snapped shut on something big: there is blood at the scene that does not belong to the victim.`,
-            );
-          }
-          if (boughtEver(target.address, "lantern_oil")) {
-            const fact = this.lanternFact(purchases, bearAddress);
-            notes.push(`🏮 By ${target.name}'s still-lit lantern, Maude reads one true thing: ${fact}`);
-          }
+        eaten = target;
+        target.alive = false;
+        if (boughtEver(target.address, "bear_trap")) {
+          this.state.wounded = true;
+          notes.push(
+            `🪤 ${target.name}'s bear trap snapped shut on something big: there is blood at the scene that does not belong to the victim.`,
+          );
+        }
+        if (boughtEver(target.address, "lantern_oil")) {
+          const fact = this.lanternFact(purchases, bearAddress);
+          notes.push(`🏮 By ${target.name}'s still-lit lantern, Maude reads one true thing: ${fact}`);
         }
       }
+    }
+
+    // --- DAWN READINGS: the information items fire. -------------------------
+    const livingBought = (itemId: string): PlayerRef[] =>
+      this.state.players.filter((p) => p.alive && boughtThisRound(p.address, itemId));
+
+    // The candle: the dead get their last words (any death, either kind).
+    for (const dead of [banished, eaten]) {
+      if (!dead || !boughtEver(dead.address, "votive_candle")) continue;
+      const lastLine = [...this.state.chat]
+        .reverse()
+        .find((m) => m.name === dead.name && !m.ghost);
+      notes.push(
+        lastLine
+          ? `🕯 By candlelight, ${dead.name}'s last words linger: “${lastLine.text}”`
+          : `🕯 ${dead.name}'s candle gutters last — but they never said a word worth keeping.`,
+      );
+    }
+
+    // The bottle: one true rumor from today's shopping (buyer doesn't choose).
+    if (livingBought("a_bottle").length > 0) {
+      const todays = purchases.filter((p) => p.round === round && !p.isSurrender);
+      if (todays.length > 0) {
+        const pick = todays[randomIndex(todays.length)]!;
+        const band = Math.floor(Number(pick.amountXlm ?? 0) / 10) * 10;
+        notes.push(
+          `🍻 Tavern talk: something worth more than ${band} XLM left the ${pick.toLabel} today.`,
+        );
+      } else {
+        notes.push("🍻 Tavern talk: nobody bought a thing today. Suspicious in itself.");
+      }
+    }
+
+    // The ledger book: dawn names today's biggest spender (names only).
+    if (livingBought("ledger_book").length > 0) {
+      const spent = new Map<string, bigint>();
+      for (const p of purchases.filter((x) => x.round === round && !x.isSurrender)) {
+        const who = this.playerByAddress(p.from);
+        if (who) spent.set(who.name, (spent.get(who.name) ?? 0n) + p.amountStroops);
+      }
+      if (spent.size > 0) {
+        const maxSpent = [...spent.values()].reduce((a, b) => (b > a ? b : a), 0n);
+        const names = [...spent.entries()].filter(([, v]) => v === maxSpent).map(([n]) => n);
+        notes.push(
+          `📖 The ledger book falls open: ${names.join(" and ")} spent the most today. The amounts stay sealed.`,
+        );
+      }
+    }
+
+    // The unsealing ritual: one purchase of the day's most-accused, named.
+    if (livingBought("unsealing_ritual").length > 0) {
+      const accusedName =
+        weights.size > 0
+          ? [...weights.entries()].sort((a, b) => b[1] - a[1])[0]![0]
+          : null;
+      const accused = accusedName ? this.playerByName(accusedName) : null;
+      if (accused) {
+        const theirBuys = purchases
+          .filter((p) => p.from === accused.address && p.round >= 1 && !p.isSurrender)
+          .sort((a, b) => b.ledger - a.ledger);
+        const latest = theirBuys[0];
+        notes.push(
+          latest
+            ? `🕯 The ritual unseals a purchase of ${accused.name}, the most accused: ${
+                latest.itemGuess ? `the ${latest.itemGuess.toLowerCase()}` : `${latest.amountXlm} XLM of something`
+              } at the ${latest.toLabel}.`
+            : `🕯 The ritual reaches for ${accused.name}'s ledger and finds it empty. They have bought nothing at all.`,
+        );
+      } else {
+        notes.push("🕯 The ritual was paid for, but with no accusation to aim it at, the smoke just rose.");
+      }
+    }
+
+    // The soup bone: the dogs whisper privately to their feeders.
+    for (const feeder of livingBought("soup_bone")) {
+      const cameForMe = this.state.nightPick === feeder.name;
+      ((this.state.privateNotes ??= {})[feeder.address] ??= []).push({
+        round: round + 1,
+        text: cameForMe
+          ? "🐕 The dogs speak low: the beast came to YOUR door last night."
+          : "🐕 The dogs slept soundly: the beast went elsewhere last night.",
+      });
     }
 
     // --- AUDITS: the Order notices. ----------------------------------------
@@ -947,6 +1027,15 @@ export class GameRoom extends DurableObject<Env> {
       await syncIndexer(this.env);
     }
     const purchases = await this.loadAll();
+    // Musk salve: a buyer's NEXT-day sightings are logged as "a hooded
+    // figure". Computed per (address, round) so the hiding never depends on
+    // — and never leaks — anything but the ledger itself.
+    const hooded = new Set<string>();
+    for (const p of purchases) {
+      if (this.bought(purchases, p.from, "musk_salve", { round: p.round - 1 })) {
+        hooded.add(`${p.from}:${p.round}`);
+      }
+    }
     return {
       round: this.state.round,
       players: this.state.players.map((p) => ({
@@ -958,10 +1047,17 @@ export class GameRoom extends DurableObject<Env> {
       edges: purchases.map((p) => ({
         round: p.round,
         ledger: p.ledger,
-        from: p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`,
+        from: hooded.has(`${p.from}:${p.round}`)
+          ? "a hooded figure"
+          : (p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`),
         to: p.toLabel,
       })),
     };
+  }
+
+  /** Private dawn facts (the dogs) for ONE player — identity pre-verified. */
+  notesFor(address: string): { round: number; text: string }[] {
+    return (this.state.privateNotes ?? {})[address] ?? [];
   }
 
   /** GM god-view of the current round: decrypted purchases + votes + pick. */

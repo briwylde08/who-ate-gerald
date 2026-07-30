@@ -1,89 +1,80 @@
-# Catalog v4 — draft for discussion (post playtest-7)
+# Catalog v4 — SHIPPED (post playtest-7)
 
 Twelve slots, four stores, no pure covers. Prices are globally unique
-(the amount IS the item). Design goals from POSTGAME-7: one expensive
-survival item, hunting knife back, an information arsenal for the
-village (the blend-in bear must be punishable), a proactive bear item,
-copy that explains itself.
+(the amount IS the item). Approved by Bri 2026-07-30; implemented in
+config/catalog.json + game.ts the same day.
 
-## The shelf
+**The design law (Bri's, from review):** every item is ONE clause and
+may reference only core rules — the vote, the night attack, the
+sightings, the morning report — never another item. No counter-chains.
+And stores stay mixed-purpose: the door must not tell the story (a
+store-per-category layout would turn public sightings into an intent
+detector, defeating the hidden-amounts premise).
+
+## The shelf (as shipped)
 
 ### Blacksmith — honest metal
 | Item | XLM | Effect (player-facing copy) |
 |---|---|---|
-| Horseshoe nail | 2 | Lucky iron: if today's vote ties and you're in the tie, the luck is yours — you are not banished. One nail, one escape. |
-| Hunting knife | 35 | Conviction, sharpened: your vote today counts twice. Everyone hears a knife being ground; nobody knows whose. |
-| Silver charm | 45 | Survive one night attack. The charm shatters, everyone hears it, and you spend the next day in bed — alive, too weak to vote. The werebear cannot buy silver. |
+| Horseshoe nail | 2 | Lucky iron: if the vote ties on you, luck excuses you — you reveal nothing. One nail, one escape. |
+| Bear trap | 21 | If you are eaten, the beast bleeds: it cannot kill the next night. |
+| Silver charm | 45 | Survive one night attack. The charm shatters, everyone hears it, and you spend the next day in bed — too weak to vote. The werebear cannot buy silver. |
 
 ### General Store — sundries and gossip
 | Item | XLM | Effect |
 |---|---|---|
-| A bottle | 7 | Loose lips: tomorrow's morning report includes one true rumor about someone's shopping. You don't choose whose. |
+| A bottle | 7 | Loose lips: tomorrow's morning report carries one true rumor about the day's shopping. You don't choose which. |
 | The ledger book | 15 | Tax records: at dawn, Maude names who spent the most today. Names only — amounts stay sealed. |
 | Musk salve | 18 | Shop unseen: tomorrow the sightings log your store visits as "a hooded figure" instead of your name. Anyone may buy it. Anyone. |
 
-### The Butcher's — meat and consequences
+### The Butcher's — meat and conviction
 | Item | XLM | Effect |
 |---|---|---|
-| Soup bone | 8 | The dogs remember: at dawn, you privately learn whether the werebear came for YOU last night — even on a quiet night. |
-| Smoked ham | 13 | The counter to the charm: a charm save tonight is announced to no one — the survivor's name, the shattered silver, the attack itself. The morning reads "a quiet night." |
-| Fresh venison | 21 | Fresh meat quiets the dogs: tonight, the dogs remember nothing — soup bones learn no truth at dawn. |
+| Soup bone | 8 | The dogs remember: at dawn, you privately learn whether the beast came to YOUR door last night — even on a quiet night. |
+| Smoked ham | 13 | A well-fed bear leaves quietly: if the night attack fails, the morning says nothing at all. |
+| The butcher's knife | 35 | Conviction, sharpened: once bought, your vote counts twice for the rest of the game. Everyone hears a knife being ground; nobody knows whose. |
 
 ### Chapel — light and revelation
 | Item | XLM | Effect |
 |---|---|---|
-| Votive candle | 5 | If you die, your candle gutters last: Maude posts your final words to the square. Say something worth haunting with. |
+| Votive candle | 5 | If you die, your candle gutters last: Maude posts your final words to the square. |
 | Lantern oil | 12 | Posthumous: if you are eaten, Maude reads one true fact about the werebear's purchases by your still-lit lantern. |
-| Unsealing ritual | 25 | At dawn, Maude unseals ONE purchase of the day's most-accused player and names the item. The vote chooses the target; the ritual pays for the reading. |
+| Unsealing ritual | 25 | At dawn, Maude unseals ONE purchase of the day's most-accused villager and names the item. The vote picks the target; the ritual pays for the reading. |
 
-## Category balance
-- **Minor luck / drama (3):** nail 2, candle 5, bottle 7 — the new cheap
-  tier: worth buying, still cover.
-- **Information (4):** soup bone 8, lantern oil 12, ledger book 15,
-  unsealing ritual 25 — the village's offense. A bear that blends in now
-  leaves reads: biggest-spender callouts, unsealed purchases, dogs.
-- **Bear shelf (3):** ham 13, musk 18, venison 21 — all dual-use enough
-  that villagers plausibly buy them (that's the cover).
-- **Big plays (2):** knife 35, charm 45 — visible sacrifices; buying one
-  crowds out everything else that day.
+## Why this shape
+- **Knife lives at the Butcher's** — the bear's most natural door is
+  also where villagers buy vote power and soup bones, so a Butcher's
+  sighting is maximally ambiguous. Knife is permanent once bought
+  (own-the-knife is the simpler mental model at 35 XLM).
+- **Nail excuses a tie** (skip the forced disclosure) rather than
+  blocking banishment — under tie-rules nobody is banished anyway, and
+  a 2 XLM banishment-escape would be broken.
+- **Candle's "last words"** = the player's final living chat line,
+  reposted by Maude. Zero input flow needed; write your epitaph in the
+  square while you still can.
+- **Bottle rumor** = one random purchase of the day, reported as a
+  10-XLM price band + store ("something worth more than 20 XLM left
+  the Chapel today"). True, partial, uncontrollable.
+- **Ritual rides the vote**: fires on the day's highest vote-getter
+  even in a tie — ties finally produce information either way.
+- **Dogs are private**: delivered via authed per-player notes
+  (privateNotes in game state, `p/notes` endpoint, card in the square).
+- **Musk hides in the graph only** — the worker's graphView renders the
+  buyer's next-day edges as "a hooded figure"; decrypted facts (Maude,
+  audits) are unaffected. Elimination caveat: a player with zero named
+  sightings on a hooded day is a candidate — acceptable noise at 8
+  players, watch it in playtest-8.
+- Bear kit check: ham 13 + musk 18 = 31 with covers to spare on day 1;
+  the knife (35) as a bear buy is a legitimate deep-cover power play.
 
-## Notes for the argument
-- Charm at 45 keeps the bear-can't-buy rule, the shatter, and the
-  critical-condition day. Bane and barrel are gone: silver is the only
-  door out of a night attack, and it costs three days of income.
-- Ritual targeting rides the vote (items can't carry targets — the
-  amount is the whole payload). It fires on the day's most-voted player
-  even if the vote ties; ties finally produce information either way.
-- The bear shelf is three kinds of HIDING, each countering one village
-  sense: ham hides failure (anti-charm), venison hides presence
-  (anti-dogs/soup bone), musk hides movement (anti-sightings). All
-  dual-use enough for villagers to buy — that's the cover story.
-  (v3 venison "pierces bane/traps" died with bane and traps; silver
-  stays absolute on purpose — a 45 XLM save must not lose to a 21 XLM
-  steak. Caught by Bri in review.)
-- Bear kit check: ham 13 + venison 21 + musk 18 = 52 > 50, so the full
-  kit is unaffordable on day 1 — the bear must sequence, which leaks.
+## Retired from v3
+Bearsbane tincture, the good barrel (both folded into the single
+45 XLM charm), fresh venison (both its jobs were counter-chains), rope
+and all "Cover." copy. GameState keeps baneConsumed/venisonUsed fields
+for old stored games; the logic is gone.
 
-## The bench (cut, revisit if v4 plays flat)
-- **Bear trap / bearsbane / barrel** — collapsed into the one survival
-  item; trap's posthumous-revenge niche overlaps lantern oil.
-- **Curfew bell (~40)** — "the bear cannot hunt tonight." Great tempo
-  item; lost its slot to the knife. First candidate to swap in (likely
-  for the bottle) if the village keeps losing.
+## The bench (revisit if v4 plays flat)
+- **Curfew bell (~40)** — "the bear cannot hunt tonight." Village tempo
+  tool; first swap-in if the village keeps losing.
 - **Town clock (~30)** — +1 to the day limit, once. Revisit if the
   5-day clock decides too many games.
-- **Rope** — never found a purpose. Gerald would understand.
-
-## Implementation sketch (when approved)
-- config/catalog.json rewrite; prices unique; no config for behavior —
-  effects live in resolveDayInner + facts.
-- Easy: knife (stale `hunting_knife` weight check at game.ts:627 goes
-  live again), nail (tie-break before stand-accused), ledger book
-  (facts.ts biggest_purchase at dawn), bottle (random true rumor from
-  purchases), candle (posthumous line; MVP = Maude writes the eulogy).
-- Medium: soup bone (needs a private-to-player dawn fact — deliver via
-  Maude's seals like ask-answers), unsealing ritual (vote tally +
-  auditTransfer decrypt of target's latest purchase).
-- Chunky: musk salve (graphView/indexer must render the buyer's
-  next-round edges as "a hooded figure" without leaking WHO bought it —
-  the edge suppression itself must not identify the buyer).

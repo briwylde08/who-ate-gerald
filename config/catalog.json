@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v3 (2026-07-30, consolidation per Bri) — 4 stores x 3 items, all 12 prices globally unique so any revealed amount identifies the item. class: V/W/B (villager/werebear/both) x off/def, or 'cover'. Effects resolve: venison > bearsbane/trap; ham > announcement; charm shatters on use, saves absolutely; barrel = no vote + uneatable. Economy: 50 XLM buy-in, +15 XLM/day.",
+  "$comment": "Catalog v4 (2026-07-30, per Bri + playtest-7) — 4 stores x 3 items, all 12 prices globally unique so any revealed amount identifies the item. Design law: every effect is ONE clause and references only core rules (vote, night attack, sightings, morning report) — never another item. No pure covers: cheap items carry small real purposes; deniability comes from hidden amounts, not dead items. class: V/W/B (villager/werebear/both) x off/def/info. Economy: 50 XLM buy-in, +15 XLM/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -10,22 +10,22 @@
           "id": "horseshoe_nail",
           "label": "Horseshoe nail",
           "priceXlm": 2,
-          "class": "cover",
-          "effect": "Cover. Looks like you might have bought something worse."
+          "class": "B-def",
+          "effect": "Lucky iron: if the vote ties on you, luck excuses you — you reveal nothing. One nail, one escape."
         },
         {
           "id": "bear_trap",
           "label": "Bear trap",
-          "priceXlm": 18,
+          "priceXlm": 21,
           "class": "V-off",
-          "effect": "If you are eaten, the werebear is wounded: it cannot kill the next night."
+          "effect": "If you are eaten, the beast bleeds: it cannot kill the next night."
         },
         {
           "id": "silver_charm",
           "label": "Silver charm",
-          "priceXlm": 30,
+          "priceXlm": 45,
           "class": "V-def",
-          "effect": "Survive one night attack, publicly — the charm shatters on use. The werebear cannot buy it."
+          "effect": "Survive one night attack. The charm shatters, everyone hears it, and you spend the next day in bed — too weak to vote. The werebear cannot buy silver."
         }
       ]
     },
@@ -33,25 +33,25 @@
       "label": "General Store",
       "items": [
         {
-          "id": "rope",
-          "label": "Rope",
-          "priceXlm": 3,
-          "class": "cover",
-          "effect": "Cover. Everyone needs rope."
-        },
-        {
           "id": "a_bottle",
           "label": "A bottle",
           "priceXlm": 7,
-          "class": "cover",
-          "effect": "Cover. The shopkeeper sells drink now. Times are hard."
+          "class": "B-info",
+          "effect": "Loose lips: tomorrow's morning report carries one true rumor about the day's shopping. You don't choose which."
         },
         {
-          "id": "the_good_barrel",
-          "label": "The good barrel",
+          "id": "ledger_book",
+          "label": "The ledger book",
           "priceXlm": 15,
+          "class": "V-info",
+          "effect": "Tax records: at dawn, Maude names who spent the most today. Names only — amounts stay sealed."
+        },
+        {
+          "id": "musk_salve",
+          "label": "Musk salve",
+          "priceXlm": 18,
           "class": "B-def",
-          "effect": "Dead drunk: you cannot vote today and cannot be eaten tonight."
+          "effect": "Shop unseen: tomorrow the sightings log your store visits as a hooded figure instead of your name. Anyone may buy it. Anyone."
         }
       ]
     },
@@ -61,23 +61,23 @@
         {
           "id": "soup_bone",
           "label": "Soup bone",
-          "priceXlm": 4,
-          "class": "cover",
-          "effect": "Cover. For soup. Probably."
+          "priceXlm": 8,
+          "class": "V-info",
+          "effect": "The dogs remember: at dawn, you privately learn whether the beast came to YOUR door last night — even on a quiet night."
         },
         {
           "id": "smoked_ham",
           "label": "Smoked ham",
           "priceXlm": 13,
           "class": "W-def",
-          "effect": "A well-fed bear leaves quietly: a failed attack tonight is not announced."
+          "effect": "A well-fed bear leaves quietly: if the night attack fails, the morning says nothing at all."
         },
         {
-          "id": "fresh_venison",
-          "label": "Fresh venison",
-          "priceXlm": 21,
-          "class": "W-off",
-          "effect": "The werebear's next attack pierces bearsbane and bear traps. In villager hands: pure chaos."
+          "id": "butchers_knife",
+          "label": "The butcher's knife",
+          "priceXlm": 35,
+          "class": "B-off",
+          "effect": "Conviction, sharpened: once bought, your vote counts twice for the rest of the game. Everyone hears a knife being ground; nobody knows whose."
         }
       ]
     },
@@ -88,22 +88,22 @@
           "id": "votive_candle",
           "label": "Votive candle",
           "priceXlm": 5,
-          "class": "cover",
-          "effect": "Cover. A small light against a large problem."
+          "class": "B-info",
+          "effect": "If you die, your candle gutters last: Maude posts your final words to the square."
         },
         {
           "id": "lantern_oil",
           "label": "Lantern oil",
           "priceXlm": 12,
-          "class": "V-off",
+          "class": "V-info",
           "effect": "Posthumous: if you are eaten, Maude reads one true fact about the werebear's purchases by your still-lit lantern."
         },
         {
-          "id": "bearsbane_tincture",
-          "label": "Bearsbane tincture",
-          "priceXlm": 22,
-          "class": "V-def",
-          "effect": "Silently survive one night attack. Consumed; nobody is told."
+          "id": "unsealing_ritual",
+          "label": "Unsealing ritual",
+          "priceXlm": 25,
+          "class": "V-info",
+          "effect": "At dawn, Maude unseals ONE purchase of the day's most-accused villager and names the item. The vote picks the target; the ritual pays for the reading."
         }
       ]
     }

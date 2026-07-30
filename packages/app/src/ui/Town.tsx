@@ -124,6 +124,19 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view?.dealt, me?.address]);
 
+  // The dogs: private dawn facts (soup bone). Fetched silently when the
+  // auth signature is cached — only ever this player's own notes.
+  const [dogNotes, setDogNotes] = useState<{ round: number; text: string }[]>([]);
+  useEffect(() => {
+    if (me && round && round >= 2 && hasCachedAuth(wallet, gameId)) {
+      playerApi
+        .notes(wallet, gameId)
+        .then((r) => setDogNotes(r.notes))
+        .catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me?.address, round]);
+
   // Share our cosmetic character with the village once we're seated.
   useEffect(() => {
     const prof = loadProfile();
@@ -392,6 +405,22 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               ))
             )}
           </div>
+
+          {dogNotes.some((n) => n.round === view.round) && (
+            <div className="answer-card">
+              <b>🐕 Only you hear the dogs.</b>
+              {dogNotes
+                .filter((n) => n.round === view.round)
+                .map((n, i) => (
+                  <p key={i}>
+                    <i>{n.text}</i>
+                  </p>
+                ))}
+              <span className="dim">
+                A soup bone's worth of truth — private to you. Share it or sit on it.
+              </span>
+            </div>
+          )}
 
           {me?.standsAccused && (
             <div className="answer-card">

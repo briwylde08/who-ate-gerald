@@ -55,7 +55,7 @@ const START = BigInt(catalog.startingBudgetXlm) * XLM;
 const INCOME = BigInt(catalog.dailyIncomeXlm) * XLM;
 
 const [gameId, countArg] = process.argv.slice(2);
-const BOT_COUNT = Math.max(1, Math.min(6, Number(countArg ?? 3)));
+const BOT_COUNT = Math.max(1, Math.min(8, Number(countArg ?? 3)));
 if (!gameId) {
   console.error("usage: npx tsx scripts/bots.ts <gameId> [count=3]");
   process.exit(1);
@@ -68,6 +68,19 @@ const BOT_POOL = [
   { name: "Goodwife Anna", character: "beekeeper" },
   { name: "Sexton Grim", character: "ratcatcher" },
   { name: "Miller Jack", character: "baker" },
+  { name: "Tapper Ned", character: "drunk" },
+  { name: "Old Wick", character: "lamplighter" },
+];
+
+const ALL_CHARACTERS = [
+  "baker",
+  "midwife",
+  "gravedigger",
+  "drunk",
+  "poacher",
+  "beekeeper",
+  "ratcatcher",
+  "lamplighter",
 ];
 
 const CHAT_LINES = [
@@ -237,6 +250,7 @@ interface PublicView {
     name: string;
     address: string;
     alive: boolean;
+    character?: string | null;
     ready?: boolean;
     doneToday?: boolean;
     standsAccused?: boolean;
@@ -312,7 +326,7 @@ function scoreSuspicion(
   for (const m of view.chat ?? []) {
     if (m.name !== "the Order") continue;
     for (const c of candidates) {
-      if (m.text.includes(c.name) && /venison|Smoked ham/i.test(m.text)) {
+      if (m.text.includes(c.name) && /smoked ham|musk salve/i.test(m.text)) {
         scores.set(c.name, (scores.get(c.name) ?? 0) + 3);
       }
     }
@@ -386,14 +400,38 @@ async function main() {
       bots.push(new BotVillager(meta.name, meta.character, secrets, client));
     }
 
-    // Provision + join + ready.
+    // Provision + join. If a human already claimed a bot's face, take a free one.
+    const botNames = new Set(BOT_POOL.map((b) => b.name.toLowerCase()));
     for (const bot of bots) {
       await bot.provision(registerProver);
-      await bot.call("join", { name: bot.name, character: bot.character }).catch((e) => {
-        if (!String(e).includes("already")) console.log(`  ${String(e)}`);
-      });
+      try {
+        await bot.call("join", { name: bot.name, character: bot.character });
+      } catch (e) {
+        if (String(e).includes("claimed")) {
+          const now = await publicView();
+          const claimed = new Set(now.players.map((p) => p.character).filter(Boolean));
+          const free = ALL_CHARACTERS.find((c) => !claimed.has(c));
+          await bot
+            .call("join", { name: bot.name, character: free ?? "" })
+            .catch((e2) => console.log(`  ${String(e2)}`));
+        } else if (!String(e).includes("already")) {
+          console.log(`  ${String(e)}`);
+        }
+      }
+      console.log(`  ${bot.name}: in the lobby`);
+    }
+
+    // Hold the ready — everyone-ready auto-starts the game, and a lobby of
+    // nothing but bots would start it without a single human seated.
+    console.log("\nwaiting for a human villager before the bots ready up…");
+    for (;;) {
+      const v = await publicView().catch(() => null);
+      if (v?.players.some((p) => !botNames.has(p.name.toLowerCase()))) break;
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+    for (const bot of bots) {
       await bot.call("ready", { ready: true }).catch(() => undefined);
-      console.log(`  ${bot.name}: in the lobby, ready`);
+      console.log(`  ${bot.name}: ready`);
     }
 
     console.log("\nbots are playing — Ctrl-C to stop; they resume on restart\n");

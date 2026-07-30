@@ -11,13 +11,13 @@ import { fetchPublicView, playerApi } from "../lib/player";
 const SUGGESTED: string[] = [
   "Did anyone buy the silver charm this game?",
   "How much did [player] spend in total today?",
-  "What did [player] buy at the Apothecary today?",
+  "What did [player] buy at the Butcher's today?",
   "Did [player] spend at least 20 XLM at the Blacksmith today?",
   "Whose purchase was the biggest today?",
-  "Did [player] visit both the Blacksmith and the Apothecary today?",
-  "Did anyone buy fresh venison? Asking for no particular reason.",
+  "Did [player] visit both the Chapel and the Butcher's today?",
+  "Did anyone buy smoked ham? Asking for no particular reason.",
   "Has [player] been suspiciously frugal today?",
-  "What's the most anyone has ever paid at the Liquor Store?",
+  "Has anyone bought the musk salve this game?",
   "Maude, professionally speaking: is my own ledger embarrassing?",
 ];
 
