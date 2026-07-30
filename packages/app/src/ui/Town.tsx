@@ -349,34 +349,47 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
 
       <div className="panel">
         <h2>What the village sees</h2>
-        <p className="dim">
-          The rules of the ledger: everyone can see <b>who paid which store and when</b>, plus
-          everyone's <b>income deposits</b> (that's how you know nobody smuggled extra budget).
-          Nobody — except Maude — can see <b>how much</b> a purchase was, and since the price is
-          the item, that means nobody can see <b>what you bought</b>. Two shops a day is the
-          custom; item powers are public knowledge (hover them in the Shops tab).
-        </p>
-        {graph && (
-          <p>
-            {graph.edges.filter((e) => e.round === view.round).length === 0 ? (
-              <span className="dim">No sightings yet today.</span>
-            ) : (
-              graph.edges
-                .filter((e) => e.round === view.round)
-                .map((e, i, arr) => (
-                  <span key={i}>
-                    {e.from} → {e.to}
-                    {i < arr.length - 1 ? " · " : ""}
-                  </span>
-                ))
-            )}
-          </p>
+        <div className="seen-grid">
+          <div className="seen-card">
+            <h3>👁 Public</h3>
+            <ul>
+              <li>Which store you visited, and when</li>
+              <li>Your income deposits — amounts included, so nobody smuggles extra budget</li>
+              <li>What every item does and costs (the Shops tab)</li>
+            </ul>
+          </div>
+          <div className="seen-card">
+            <h3>🔒 Hidden</h3>
+            <ul>
+              <li>
+                How much you paid — and since the price <i>is</i> the item, what you bought
+              </li>
+              <li>Maude's answer to your question. Yours alone.</li>
+              <li>Who voted for whom. Only the verdict is announced.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 className="seen-label">Today's sightings</h3>
+        {graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
+          <div className="sightings">
+            {graph.edges
+              .filter((e) => e.round === view.round)
+              .map((e, i) => (
+                <span key={i} className="sighting">
+                  {e.from} <span className="dim">→</span> {e.to}
+                </span>
+              ))}
+          </div>
+        ) : (
+          <p className="dim">Nobody has been seen at a store yet today.</p>
         )}
-        <p className="dim">
-          {SHOPS.map((s) => s.label).join(" · ")} — five stores, fifteen wares, every price a
-          different item. <b>The shops never run out</b>: any number of players can own the same
-          item, so learning what the dead carried proves nothing about the living. Spend your
-          budget on gear, or on looking innocent.
+
+        <p className="dim seen-foot">
+          {SHOPS.length} stores · {SHOPS.reduce((n, s) => n + s.items.length, 0)} wares · two
+          stores a day · one price per item. <b>The shops never run out</b>, so any number of
+          players can own the same thing — what the dead carried proves nothing about the
+          living.
         </p>
       </div>
 

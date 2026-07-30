@@ -206,6 +206,34 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.dead { opacity: 0.45; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 
+/* "What the village sees": the privacy boundary as two facing columns. */
+.seen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 10px 0 4px;
+}
+.seen-card {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.seen-card h3 { margin: 0 0 6px; font-size: 0.95rem; color: var(--moon); }
+.seen-card ul { margin: 0; padding-left: 1.1em; }
+.seen-card li { color: var(--ink-dim); font-size: 0.9rem; margin: 0 0 4px; }
+
+.seen-label { margin: 18px 0 6px; font-size: 0.95rem; color: var(--moon); }
+.sightings { display: flex; flex-wrap: wrap; gap: 6px; }
+.sighting {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+}
+.seen-foot { margin-top: 14px; }
+
 /* Quiet backwards navigation — present, never competing with the primary. */
 button.back {
   background: none;
