@@ -103,7 +103,13 @@ export function PlayerApp() {
       { id: "fund", label: "Fund your public account (testnet faucet)", status: "todo" },
       ...(balances.registered
         ? []
-        : [{ id: "register", label: "Register on the hidden ledger (ZK proof)", status: "todo" as const }]),
+        : [
+            {
+              id: "register",
+              label: "Register your keys with the confidential token contract (ZK proof)",
+              status: "todo" as const,
+            },
+          ]),
       ...(balances.spendable + balances.receiving > 0n
         ? []
         : [
@@ -277,7 +283,12 @@ export function PlayerApp() {
             transactions; a signed message derives your confidential key. Nothing secret leaves
             your browser.
           </p>
-          <p className="dim">Your budget and registration live on-chain, per account.</p>
+          <p className="dim">
+            Your hidden budget lives on-chain, tied to this account — as does your{" "}
+            <b>registration with the confidential token contract</b>: a one-time transaction
+            that binds your confidential keys to your address so you can hold and spend hidden
+            amounts.
+          </p>
           <div className="row">
             <button className="primary" onClick={() => void connect()} disabled={busy !== null}>
               Connect your wallet
@@ -299,9 +310,9 @@ export function PlayerApp() {
           <h2>Take your seat</h2>
           <p className="dim mono">{wallet.address}</p>
           <p>
-            Before the moon rises: fund your account, register on the hidden ledger, and buy in
-            your budget of {STARTING_BUDGET_XLM} XLM. From then on, every purchase you make is
-            visible only as <i>who paid whom</i> — never how much.
+            Before the moon rises: fund your account, register your keys with the confidential
+            token contract, and buy in your budget of {STARTING_BUDGET_XLM} XLM. From then on,
+            every purchase you make is visible only as <i>who paid whom</i> — never how much.
           </p>
           {steps && (
             <ul className="steps">
