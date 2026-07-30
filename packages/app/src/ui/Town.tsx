@@ -41,6 +41,22 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   const [voted, setVoted] = useState<string | null>(null);
   const [pickTarget, setPickTarget] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
+  const [chatText, setChatText] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+
+  const sendChat = async () => {
+    setChatBusy(true);
+    setError(null);
+    try {
+      await playerApi.chat(wallet, gameId, chatText.trim());
+      setChatText("");
+      await loadView();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setChatBusy(false);
+    }
+  };
 
   const [graph, setGraph] = useState<GraphView | null>(null);
 
@@ -344,6 +360,44 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           <button className="primary" onClick={() => void collectIncome()}>
             Collect {DAILY_INCOME_XLM} XLM income
           </button>
+        </div>
+      )}
+
+      {view.marketClosed && view.phase === "day" && !view.winner && (
+        <div className="panel">
+          <h2>The square</h2>
+          <p className="dim">
+            Accuse, defend, bluff — the square hears everything and forgets it at dawn.
+            {me?.alive ? "" : " The dead may listen, not speak."}
+          </p>
+          <div className="chat">
+            {(view.chat ?? []).length === 0 ? (
+              <p className="dim">Nobody has said anything yet. Suspicious, honestly.</p>
+            ) : (
+              (view.chat ?? []).slice(-60).map((m, i) => (
+                <p key={i} className="chat-line">
+                  <b>{m.name}:</b> {m.text}
+                </p>
+              ))
+            )}
+          </div>
+          {me?.alive && (
+            <div className="row">
+              <input
+                type="text"
+                maxLength={280}
+                placeholder="say it to their faces…"
+                value={chatText}
+                onChange={(e) => setChatText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && chatText.trim()) void sendChat();
+                }}
+              />
+              <button disabled={!chatText.trim() || chatBusy} onClick={() => void sendChat()}>
+                Say it
+              </button>
+            </div>
+          )}
         </div>
       )}
 

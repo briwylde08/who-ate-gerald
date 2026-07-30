@@ -92,6 +92,8 @@ export default {
             return json(await room.setReady(address, body.ready !== false));
           case "p/done":
             return json(await room.declareDone(address));
+          case "p/chat":
+            return json(await room.chat(address, String(body.text ?? "")));
           case "p/role":
             return json(await room.myRole(address));
           case "p/character":

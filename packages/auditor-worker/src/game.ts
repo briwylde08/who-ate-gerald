@@ -58,6 +58,8 @@ interface GameState {
   asked: Record<string, number>;
   /** address → {round, ledger} of their "done shopping" declaration. */
   doneShopping: Record<string, { round: number; ledger: number }>;
+  /** The town square chat — per-day threads, capped. */
+  chat: { round: number; name: string; text: string; at: string }[];
   askLog: AskRecord[];
   /** This round's votes: voter address → target player name. */
   votes: Record<string, string>;
@@ -82,6 +84,7 @@ const freshState = (): GameState => ({
   rounds: [],
   asked: {},
   doneShopping: {},
+  chat: [],
   askLog: [],
   votes: {},
   nightPick: null,
@@ -450,6 +453,33 @@ export class GameRoom extends DurableObject<Env> {
     return { picked: target.name, dawn: await this.maybeResolve() };
   }
 
+  /**
+   * Town square chat (identity pre-verified). Opens when the market closes,
+   * closes at dawn; the dead hold their peace. Say anything — convincing
+   * people is the whole game.
+   */
+  async chat(address: string, text: string): Promise<{ posted: boolean }> {
+    this.requireDay();
+    this.requireUnresolved();
+    if (!this.marketClosed()) {
+      throw new Error("the square is empty until the market closes — finish shopping first");
+    }
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("that address holds no seat in this game");
+    if (!player.alive) throw new Error("the dead hold their peace");
+    const clean = String(text).trim().slice(0, 280);
+    if (!clean) throw new Error("say something or say nothing");
+    this.state.chat.push({
+      round: this.state.round,
+      name: player.name,
+      text: clean,
+      at: new Date().toISOString(),
+    });
+    if (this.state.chat.length > 500) this.state.chat = this.state.chat.slice(-500);
+    await this.persist();
+    return { posted: true };
+  }
+
   /** True once every living villager has finished today's shopping. */
   private marketClosed(): boolean {
     return (
@@ -739,6 +769,8 @@ export class GameRoom extends DurableObject<Env> {
       stillShopping: this.state.players
         .filter((p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round)
         .map((p) => p.name),
+      /** Today's town-square thread (yesterday's arguments died at dawn). */
+      chat: this.state.chat.filter((m) => m.round === this.state.round),
       // Players get the story; the Order's audit findings (violations) are
       // GM-only — resolve-day response + game state — announced at the GM's
       // discretion, in the GM's voice.

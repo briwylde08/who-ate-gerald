@@ -82,6 +82,9 @@ export const playerApi = {
   doneShopping: (w: VillagerWallet, game: string) =>
     playerCall<{ round: number }>(w, game, "done"),
 
+  chat: (w: VillagerWallet, game: string, text: string) =>
+    playerCall<{ posted: boolean }>(w, game, "chat", { text }),
+
   myRole: (w: VillagerWallet, game: string) =>
     playerCall<{ dealt: boolean; role: "villager" | "werebear" | null; name: string | null }>(
       w,
@@ -138,6 +141,8 @@ export interface PublicView {
   /** True when every living villager has finished shopping — Maude opens. */
   marketClosed?: boolean;
   stillShopping?: string[];
+  /** Today's town-square chat thread. */
+  chat?: { round: number; name: string; text: string; at: string }[];
   mornings: MorningReport[];
   incomeXlm: number;
 }

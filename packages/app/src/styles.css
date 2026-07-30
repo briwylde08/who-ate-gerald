@@ -153,6 +153,17 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.dead { opacity: 0.45; }
 div.character { border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
 
+.chat {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: var(--bg);
+}
+.chat-line { margin: 4px 0; font-size: 0.9rem; }
+
 .tabs { display: flex; gap: 8px; margin: 16px 0; }
 .tabs button.active { border-color: var(--gold); color: var(--gold); }
 
