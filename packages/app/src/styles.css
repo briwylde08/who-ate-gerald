@@ -391,21 +391,142 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.dead { opacity: 0.45; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 
-/* Maude's office: she leans in from the left, her ledger already open. */
+/* --------------------------------------------------------- Maude's parlor --
+   A private consultation, not a form: her portrait and the seal state first,
+   then the ritual of composing one question. Narrower than the rest of the
+   app on purpose. */
+
+.maude-page { max-width: 860px; margin: 0 auto; }
+
 .maude-intro {
   display: flex;
-  gap: 16px;
+  gap: 18px;
   align-items: flex-start;
 }
 .maude-portrait {
-  width: 148px;
+  width: 176px;
   flex-shrink: 0;
   aspect-ratio: 1;
   object-fit: cover;
   border: 1px solid var(--line);
   border-radius: 7px;
+  /* The one supernatural flourish: her crystal keeps its own light. */
+  box-shadow: 0 0 22px rgba(213, 170, 99, 0.13);
 }
-.maude-words h2 { margin-top: 0; }
+.maude-words { min-width: 0; }
+.maude-words h2 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.5rem;
+  color: var(--parchment);
+  margin: 2px 0 4px;
+}
+.role-label {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.maude-tagline {
+  margin: 0 0 8px;
+  font-style: italic;
+  color: var(--moon);
+  opacity: 0.85;
+}
+
+/* Seal status: always legible, never colour alone — the words carry it. */
+.seal {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+}
+.seal-available {
+  border-color: var(--lantern);
+  color: var(--lantern);
+  box-shadow: 0 0 12px rgba(213, 170, 99, 0.22);
+  animation: seal-breathe 4.5s ease-in-out infinite;
+}
+.seal-spent { border-style: dashed; }
+@keyframes seal-breathe {
+  0%, 100% { box-shadow: 0 0 10px rgba(213, 170, 99, 0.16); }
+  50% { box-shadow: 0 0 16px rgba(213, 170, 99, 0.34); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seal-available { animation: none; }
+}
+
+.state-card { padding: 14px 16px; }
+.maude-quote {
+  margin: 0 0 10px;
+  font-style: italic;
+  color: var(--moon);
+  opacity: 0.85;
+}
+.state-head {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.05rem;
+  color: var(--parchment);
+}
+.state-note { margin: 4px 0 0; font-size: 0.88rem; color: var(--ink-dim); }
+
+.ask-about { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ask-about label { font-size: 0.9rem; }
+.composer-head {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.05rem;
+  color: var(--moon);
+  margin: 18px 0 10px;
+}
+.q-group { margin-bottom: 12px; }
+.q-group-label {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 6px;
+}
+.q-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 0.78rem;
+  padding: 5px 11px;
+  border-radius: 999px;
+  text-align: left;
+  color: var(--ink);
+}
+.chip:hover:not(:disabled) { border-color: #4a5170; color: var(--parchment); }
+.chip.selected {
+  border-color: var(--lantern);
+  color: var(--lantern);
+  background: rgba(213, 170, 99, 0.1);
+}
+.chip:disabled { opacity: 0.55; }
+.chip-tick { font-size: 0.7rem; }
+
+.composer-label {
+  display: block;
+  margin: 18px 0 6px;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+/* The answer keeps its own space, so nothing jumps when it arrives. */
+.answer-area { min-height: 96px; }
+.quiet-crystal {
+  margin: 0;
+  font-style: italic;
+  color: var(--ink-dim);
+}
+.maude-answer + .maude-answer { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.asked-what { margin: 4px 0 8px; font-size: 0.82rem; color: var(--ink-dim); }
+
 @media (max-width: 560px) {
   .maude-intro { flex-direction: column; }
   .maude-portrait { width: 100%; aspect-ratio: 16 / 10; object-position: center 28%; }
