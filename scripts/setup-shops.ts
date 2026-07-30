@@ -45,8 +45,10 @@ const deployment = JSON.parse(readFileSync(join(configDir, "deployment.testnet.j
 
 const FRIENDBOT = "https://friendbot.stellar.org";
 
-/** The village. Order matters nowhere; names are the canonical shop ids. */
-const SHOPS = ["blacksmith", "general_store", "apothecary", "liquor_store", "chapel"] as const;
+/** The village. Order matters nowhere; names are the canonical shop ids.
+ * (apothecary + liquor_store retired in catalog v3; their accounts remain
+ * registered and harmless. butcher added 2026-07-30.) */
+const SHOPS = ["blacksmith", "general_store", "butcher", "chapel"] as const;
 
 const localPath = join(configDir, "local.shops.json");
 const publicPath = join(configDir, "shops.testnet.json");
@@ -111,9 +113,12 @@ async function main() {
     await registerProver.destroy();
   }
 
+  // Merge over the existing file — it also carries non-shop entries
+  // (maudes_office, retired shops) that must survive a re-run.
+  const existing = existsSync(publicPath) ? JSON.parse(readFileSync(publicPath, "utf8")) : {};
   writeFileSync(
     publicPath,
-    JSON.stringify({ ...addresses, token: deployment.token }, null, 2) + "\n",
+    JSON.stringify({ ...existing, ...addresses, token: deployment.token }, null, 2) + "\n",
   );
   console.log("wrote", publicPath);
 }

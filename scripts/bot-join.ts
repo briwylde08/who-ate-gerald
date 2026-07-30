@@ -25,7 +25,7 @@ const ALL_CHARACTERS = [
   "baker",
   "midwife",
   "poacher",
-  "schoolteacher",
+  "lamplighter",
   "beekeeper",
   "drunk",
   "ratcatcher",

@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v2 (2026-07-29, DESIGN-V2.md) — 5 stores x 3 items, all 15 prices globally unique so any revealed amount identifies the item. class: V/W/B (villager/werebear/both) x off/def, or 'cover'. Effects resolve: venison > bearsbane/trap; musk > announcement; charm always saves the life. Economy: 50 XLM day-one buy-in, +15 XLM/day income (public deposits = self-auditing). Numbers await Bri+Patrick tweaks.",
+  "$comment": "Catalog v3 (2026-07-30, consolidation per Bri) — 4 stores x 3 items, all 12 prices globally unique so any revealed amount identifies the item. class: V/W/B (villager/werebear/both) x off/def, or 'cover'. Effects resolve: venison > bearsbane/trap; ham > announcement; charm shatters on use, saves absolutely; barrel = no vote + uneatable. Economy: 50 XLM buy-in, +15 XLM/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -7,11 +7,11 @@
       "label": "Blacksmith",
       "items": [
         {
-          "id": "hunting_knife",
-          "label": "Hunting knife",
-          "priceXlm": 9,
-          "class": "B-off",
-          "effect": "Your vote counts twice at today's trial (secret — shows only in the tally)."
+          "id": "horseshoe_nail",
+          "label": "Horseshoe nail",
+          "priceXlm": 2,
+          "class": "cover",
+          "effect": "Cover. Looks like you might have bought something worse."
         },
         {
           "id": "bear_trap",
@@ -40,63 +40,11 @@
           "effect": "Cover. Everyone needs rope."
         },
         {
-          "id": "lantern_oil",
-          "label": "Lantern oil",
-          "priceXlm": 12,
-          "class": "V-off",
-          "effect": "Posthumous: if you are eaten, Maude reveals one true fact about the werebear's purchases at dawn."
-        },
-        {
-          "id": "fresh_venison",
-          "label": "Fresh venison",
-          "priceXlm": 21,
-          "class": "W-off",
-          "effect": "The werebear's next attack pierces bearsbane and bear traps. In villager hands: pure chaos."
-        }
-      ]
-    },
-    "apothecary": {
-      "label": "Apothecary",
-      "items": [
-        {
-          "id": "bandages",
-          "label": "Bandages",
-          "priceXlm": 4,
-          "class": "cover",
-          "effect": "Cover. Looks prudent."
-        },
-        {
-          "id": "musk_salve",
-          "label": "Musk salve",
-          "priceXlm": 13,
-          "class": "W-def",
-          "effect": "A failed attack tonight is not announced."
-        },
-        {
-          "id": "bearsbane_tincture",
-          "label": "Bearsbane tincture",
-          "priceXlm": 22,
-          "class": "V-def",
-          "effect": "Silently survive one night attack. Consumed; nobody is told."
-        }
-      ]
-    },
-    "liquor_store": {
-      "label": "Liquor Store",
-      "items": [
-        {
-          "id": "a_nip",
-          "label": "A nip",
-          "priceXlm": 1,
-          "class": "cover",
-          "effect": "Cover. The cheapest alibi in town."
-        },
-        {
           "id": "a_bottle",
           "label": "A bottle",
           "priceXlm": 7,
           "class": "cover",
-          "effect": "Cover."
+          "effect": "Cover. The shopkeeper sells drink now. Times are hard."
         },
         {
           "id": "the_good_barrel",
@@ -104,6 +52,32 @@
           "priceXlm": 15,
           "class": "B-def",
           "effect": "Dead drunk: you cannot vote today and cannot be eaten tonight."
+        }
+      ]
+    },
+    "butcher": {
+      "label": "The Butcher's",
+      "items": [
+        {
+          "id": "soup_bone",
+          "label": "Soup bone",
+          "priceXlm": 4,
+          "class": "cover",
+          "effect": "Cover. For soup. Probably."
+        },
+        {
+          "id": "smoked_ham",
+          "label": "Smoked ham",
+          "priceXlm": 13,
+          "class": "W-def",
+          "effect": "A well-fed bear leaves quietly: a failed attack tonight is not announced."
+        },
+        {
+          "id": "fresh_venison",
+          "label": "Fresh venison",
+          "priceXlm": 21,
+          "class": "W-off",
+          "effect": "The werebear's next attack pierces bearsbane and bear traps. In villager hands: pure chaos."
         }
       ]
     },
@@ -118,18 +92,18 @@
           "effect": "Cover. A small light against a large problem."
         },
         {
-          "id": "minor_indulgence",
-          "label": "Minor indulgence",
-          "priceXlm": 11,
-          "class": "cover",
-          "effect": "Cover. Forgiveness, pre-purchased."
+          "id": "lantern_oil",
+          "label": "Lantern oil",
+          "priceXlm": 12,
+          "class": "V-off",
+          "effect": "Posthumous: if you are eaten, Maude reads one true fact about the werebear's purchases by your still-lit lantern."
         },
         {
-          "id": "st_ursulas_blessing",
-          "label": "St. Ursula's blessing",
-          "priceXlm": 25,
-          "class": "cover",
-          "effect": "Looks protective. The church makes no guarantees. (Ursula. From ursa. She knows.)"
+          "id": "bearsbane_tincture",
+          "label": "Bearsbane tincture",
+          "priceXlm": 22,
+          "class": "V-def",
+          "effect": "Silently survive one night attack. Consumed; nobody is told."
         }
       ]
     }

@@ -15,13 +15,13 @@ export interface Character {
 
 export const CHARACTERS: Character[] = [
   { id: "baker", emoji: "🍞", title: "the Baker", blurb: "Up before dawn. Saw nothing. Ever." },
-  { id: "gravedigger", emoji: "🪦", title: "the Gravedigger", blurb: "Business is, regrettably, booming." },
   { id: "midwife", emoji: "🕯️", title: "the Midwife", blurb: "Knows everyone's secrets. Keeps most." },
-  { id: "poacher", emoji: "🏹", title: "the Poacher", blurb: "Out in the woods that night. For reasons." },
-  { id: "schoolteacher", emoji: "📖", title: "the Schoolteacher", blurb: "Keeps a list. Checks it during trials." },
-  { id: "beekeeper", emoji: "🐝", title: "the Beekeeper", blurb: "Talks to the hives. They talk back." },
+  { id: "gravedigger", emoji: "🪦", title: "the Grave Digger", blurb: "Business is, regrettably, booming." },
   { id: "drunk", emoji: "🍺", title: "the Drunk", blurb: "Remembers everything. Believed about nothing." },
-  { id: "ratcatcher", emoji: "🐀", title: "the Ratcatcher", blurb: "Knows every cellar in the village." },
+  { id: "poacher", emoji: "🏹", title: "the Poacher", blurb: "Out in the woods that night. For reasons." },
+  { id: "beekeeper", emoji: "🐝", title: "the Beekeeper", blurb: "Talks to the hives. They talk back." },
+  { id: "ratcatcher", emoji: "🐀", title: "the Rat Catcher", blurb: "Knows every cellar in the village." },
+  { id: "lamplighter", emoji: "🔦", title: "the Lamplighter", blurb: "Lit Gerald's last lantern. Hasn't slept since." },
 ];
 
 export interface Profile {
