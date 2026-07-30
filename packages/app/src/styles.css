@@ -130,8 +130,16 @@ textarea { width: 100%; min-height: 90px; font-family: ui-monospace, Menlo, mono
   gap: 12px;
 }
 .shop-card h3 { margin: 0 0 4px; color: var(--moon); }
-.shop-card .items { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.shop-card .items { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
 .shop-card .items button { display: flex; justify-content: space-between; gap: 12px; }
+/* Item powers sit under the price, always readable — hover isn't a thing on
+   a phone, and what an item does is public knowledge anyway. */
+.shop-card .item .effect {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  padding: 4px 4px 0;
+}
 
 .overlay {
   position: fixed;

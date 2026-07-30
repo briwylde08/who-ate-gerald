@@ -235,7 +235,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           <h3>🛍✓ Done for today</h3>
           <p className="dim">
             The shopkeepers wave you off. Maude opens her office once the <b>whole village</b>{" "}
-            is done shopping — item powers stay listed below for reference.
+            is done shopping.
           </p>
         </div>
       )}
@@ -260,7 +260,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const key = `${shop.id}:${item.id}`;
                 const isArmed = armed === key;
                 return (
-                  <div key={item.id}>
+                  <div key={item.id} className="item">
                     <button
                       className={isArmed ? "armed" : ""}
                       style={{ width: "100%" }}
@@ -271,16 +271,13 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                           : setArmed(key)
                       }
                       onBlur={() => isArmed && setArmed(null)}
-                      title={item.effect}
                     >
                       <span>{isArmed ? "Confirm purchase?" : item.label}</span>
                       <span>{item.priceXlm} XLM</span>
                     </button>
-                    {doneToday && (
-                      <div className="dim" style={{ fontSize: "0.75rem", padding: "2px 4px" }}>
-                        {item.effect}
-                      </div>
-                    )}
+                    {/* Effects are public knowledge — no reason to hide them
+                        behind a hover that phones don't have. */}
+                    <div className="effect">{item.effect}</div>
                   </div>
                 );
               })}
@@ -291,8 +288,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       <p className="dim">
         Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,
-        never the amount. Hover an item for what it does — effects are public knowledge; your
-        shopping is not. Cheap wares make fine cover. The werebear is shopping too.
+        never the amount. What each item does is public knowledge — which one you bought is
+        not. The werebear is shopping too.
       </p>
     </div>
   );
