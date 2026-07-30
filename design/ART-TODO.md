@@ -6,15 +6,14 @@ here to `design/`). Wiring per icon is a one-line `icon:` field in
 `packages/app/src/lib/profile.ts`.
 
 ## Wanted
-- **Gravestone icon, greyer** — the current one (design/grave-icon.png) is
-  gold-lit like the candle and loaf; a headstone should read cold stone.
-- **Beer icon** — for the Drunk (still using 🍺).
+Nothing outstanding.
 
 ## Still on emoji (icon welcome any time)
 Poacher 🏹 · Beekeeper 🐝 · Rat Catcher 🐀 · Lamplighter 🔦
 
 ## Done
-Baker (loaf) · Midwife (candle) · Grave Digger (headstone — being replaced)
+Baker (loaf) · Midwife (candle) · Grave Digger (grey headstone, v2 —
+design/grave-icon.png is the retired gold one) · Drunk (tankard)
 
 ## Notes
 - Portraits: square sources crop best (the Lamplighter is portrait-ratio
