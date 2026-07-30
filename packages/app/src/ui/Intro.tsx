@@ -67,7 +67,8 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
 
       <h2>Pick your villager</h2>
       <p className="dim">
-        Flavor only — the werebear is dealt in secret and could be wearing any of these faces.
+        Whether you are a werebear or a villager will be determined after every character has
+        been chosen.
       </p>
       <div className="characters picker">
         {CHARACTERS.map((c) => {

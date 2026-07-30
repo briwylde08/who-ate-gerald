@@ -11,7 +11,7 @@ export function GeraldStory() {
       <p>
         There have been whispers of a werebear round these parts for years. And this is a
         remote town — nobody arrives, nobody leaves. Which means the werebear is{" "}
-        <i>someone in town</i>. Someone you know. Someone who shops at the same five stores
+        <i>someone in town</i>. Someone you know. Someone who shops at the same four stores
         you do.
       </p>
       <p>
@@ -19,19 +19,36 @@ export function GeraldStory() {
         <b>Unless the werebear is you.</b>
       </p>
       <details>
-        <summary>How the game works</summary>
+        <summary>What's actually happening under the hood</summary>
         <p className="dim">
-          Every day: collect your allowance, visit up to <b>two of the five stores</b>, and
-          buy what you can afford — gear that protects you, tools that avenge you, or cheap
-          junk that muddies your trail. Every purchase is a real confidential payment:{" "}
-          <b>the whole village sees which store you visited, but never the amount — and the
-          amount is the item.</b>
+          Your budget is a balance in a <b>confidential token</b> on Stellar testnet. You
+          deposit public XLM to fund it, and deposits are public — that's how everyone can
+          verify each player starts with the same 50 XLM and collects the same 15 per day.
+          Once the money is inside the token, your balance is stored as an encrypted
+          commitment: on the ledger it is ciphertext, not a number anyone can read.
         </p>
         <p className="dim">
-          Each day you also get <b>one private question</b> to Maude McLedger, the only soul
-          who can read the hidden amounts. Then the village votes to banish its best guess at
-          the werebear — and at night, the werebear eats someone. Find it before it finds
-          you.
+          Buying an item is one <b>confidential transfer</b> from your account to a store's
+          account. The ledger publicly records who paid whom; the amount is encrypted and
+          accompanied by a zero-knowledge proof — generated in your browser, which is the few
+          seconds of "sealing" you wait through — showing the transfer is valid: you had the
+          funds, no tokens were created, the balances reconcile. The chain reveals none of
+          the amount.
+        </p>
+        <p className="dim">
+          Each store sells at fixed prices, and every price in the game is unique, so{" "}
+          <b>the amount is the item</b>. Encrypting the amount is therefore what hides your
+          purchase — while the visit itself stays public. The public list of store visits (up
+          to two stores per day) and the private list of amounts are the two halves of the
+          game.
+        </p>
+        <p className="dim">
+          The token also supports an <b>auditor key</b>, held here by Maude McLedger. It
+          decrypts every transfer, which is how your one question per day gets answered from
+          real ledger data rather than guesswork. And when you are accused, you nominate a
+          single purchase to unseal: the server decrypts that one transfer and publishes the
+          item, so the disclosure comes from the chain and cannot be a lie — selective
+          disclosure, which is the point of the whole scheme.
         </p>
       </details>
     </>
