@@ -101,6 +101,16 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
 
   const me = view?.players.find((p) => p.address === wallet.address);
 
+  // A new day voids yesterday's ballot — clear the trial (and the hunt) so
+  // "Current vote" never carries over from a previous round.
+  const round = view?.round;
+  useEffect(() => {
+    setVoted(null);
+    setVoteTarget("");
+    setPicked(null);
+    setPickTarget("");
+  }, [round]);
+
   // The fate notification: once roles are dealt, fetch yours automatically
   // when the auth signature is already cached (no Freighter popup) — but
   // never DISPLAY it without a click, in case someone is screen-sharing.
@@ -147,6 +157,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     try {
       const r = await playerApi.vote(wallet, gameId, voteTarget);
       setVoted(r.voted);
+      setVoteTarget(""); // the ballot is cast; empty the hand
       await load(); // if this was the last vote, dawn just came
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -158,6 +169,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     try {
       const r = await playerApi.nightPick(wallet, gameId, pickTarget);
       setPicked(r.picked);
+      setPickTarget("");
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
