@@ -16,13 +16,13 @@ export interface Character {
 }
 
 export const CHARACTERS: Character[] = [
-  { id: "baker", emoji: "🍞", title: "the Baker", blurb: "Up before dawn. Saw nothing. Ever.", image: "/characters/baker.jpg" },
-  { id: "midwife", emoji: "🕯️", title: "the Midwife", blurb: "Knows everyone's secrets. Keeps most.", image: "/characters/midwife.jpg" },
+  { id: "baker", emoji: "🍞", title: "the Baker", blurb: "Everyone loves his buns. Gerald did too.", image: "/characters/baker.jpg" },
+  { id: "midwife", emoji: "🕯️", title: "the Midwife", blurb: "Delivered half the village. Regrets several of them.", image: "/characters/midwife.jpg" },
   { id: "gravedigger", emoji: "🪦", title: "the Grave Digger", blurb: "Business is, regrettably, booming.", image: "/characters/gravedigger.jpg" },
-  { id: "drunk", emoji: "🍺", title: "the Drunk", blurb: "Remembers everything. Believed about nothing.", image: "/characters/drunk.jpg" },
+  { id: "drunk", emoji: "🍺", title: "the Drunk", blurb: "Remembers the murder. Misplaced his trousers.", image: "/characters/drunk.jpg" },
   { id: "poacher", emoji: "🏹", title: "the Poacher", blurb: "Out in the woods that night. For reasons.", image: "/characters/poacher.jpg" },
-  { id: "beekeeper", emoji: "🐝", title: "the Beekeeper", blurb: "Talks to the hives. They talk back.", image: "/characters/beekeeper.jpg" },
-  { id: "ratcatcher", emoji: "🐀", title: "the Rat Catcher", blurb: "Knows every cellar in the village.", image: "/characters/ratcatcher.jpg" },
+  { id: "beekeeper", emoji: "🐝", title: "the Beekeeper", blurb: "Talks to the bees. They have concerns about you.", image: "/characters/beekeeper.jpg" },
+  { id: "ratcatcher", emoji: "🐀", title: "the Rat Catcher", blurb: "Keeps the vermin under control. The rats, too.", image: "/characters/ratcatcher.jpg" },
   { id: "lamplighter", emoji: "🔦", title: "the Lamplighter", blurb: "Lit Gerald's last lantern. Hasn't slept since.", image: "/characters/lamplighter.jpg" },
 ];
 
