@@ -118,6 +118,10 @@ export class GameRoom extends DurableObject<Env> {
   private state: GameState = freshState();
   /** Throttle for read-path indexer syncs (graph polls every 30s per client). */
   private lastGraphSync = 0;
+  /** In-flight lock: resolveDay awaits external I/O, and the DO delivers new
+   * events during those awaits — without this, a vote and the bear's pick
+   * landing together can resolve the same day twice. */
+  private resolving = false;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -513,8 +517,12 @@ export class GameRoom extends DurableObject<Env> {
     const bear = alive.find((p) => roles[p.address] === "werebear");
     const bearReady = !bear || this.state.nightPick !== null;
     if (allVoted && bearReady) {
-      await this.resolveDay();
-      return true;
+      try {
+        await this.resolveDay();
+        return true;
+      } catch {
+        return true; // dawn already breaking on another request — that counts
+      }
     }
     return false;
   }
@@ -526,6 +534,16 @@ export class GameRoom extends DurableObject<Env> {
   async resolveDay(): Promise<MorningReport> {
     this.requireDay();
     this.requireUnresolved(); // one dawn per day (guards GM double-clicks too)
+    if (this.resolving) throw new Error("dawn is already breaking");
+    this.resolving = true;
+    try {
+      return await this.resolveDayInner();
+    } finally {
+      this.resolving = false;
+    }
+  }
+
+  private async resolveDayInner(): Promise<MorningReport> {
     const round = this.state.round;
     await syncIndexer(this.env);
     const purchases = await this.loadAll();
