@@ -272,7 +272,7 @@ export function PlayerApp() {
         </div>
       )}
 
-      {!profile && <Intro onDone={setProfile} />}
+      {!profile && <Intro onDone={setProfile} address={wallet?.address} />}
 
       {profile && !wallet && (
         <div className="panel">
@@ -304,7 +304,7 @@ export function PlayerApp() {
         </div>
       )}
 
-      {wallet && !provisioned && (
+      {profile && wallet && !provisioned && (
         <div className="panel">
           <h2>Take your seat</h2>
           <p className="dim mono">{wallet.address}</p>
@@ -328,7 +328,9 @@ export function PlayerApp() {
         </div>
       )}
 
-      {wallet && provisioned && balances && (
+      {/* No profile means the intro owns the page — the tabs and every panel
+          below them must not render behind it. */}
+      {profile && wallet && provisioned && balances && (
         <>
           <div className="tabs">
             <button
