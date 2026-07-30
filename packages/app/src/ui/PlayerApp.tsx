@@ -220,7 +220,7 @@ export function PlayerApp() {
             {wallet.address.slice(0, 6)}…{wallet.address.slice(-6)} {copied ? "✓ copied" : "⧉"}
           </button>
         )}
-        <span className="dim">game</span>
+        <span className="dim">game:</span>
         <input
           type="text"
           value={gameId}
@@ -230,7 +230,7 @@ export function PlayerApp() {
           }}
           style={{ width: "110px", padding: "4px 6px", fontSize: "0.85rem" }}
         />
-        <span className="dim">confidential token contract</span>
+        <span className="dim">confidential token contract:</span>
         <a
           className="mono addr"
           href={`https://stellar.expert/explorer/testnet/contract/${DEPLOYMENT.token}`}
@@ -246,7 +246,9 @@ export function PlayerApp() {
             Rules
           </button>
         )}
-        {wallet && <button onClick={() => void logout()}>Log out</button>}
+        {/* Available from the moment there's an identity to shed — the picker
+            and connect screens are exactly where people want to start over. */}
+        {(wallet || profile) && <button onClick={() => void logout()}>Log out</button>}
       </div>
 
       {storyOpen && (
