@@ -6,7 +6,10 @@ here to `design/`). Wiring per icon is a one-line `icon:` field in
 `packages/app/src/lib/profile.ts`.
 
 ## Wanted
-Nothing outstanding.
+- **Bee icon** — for the Beekeeper (still 🐝).
+- **Torch icon** — for the Lamplighter (still 🔦).
+- **Favicon** — Bri has one in mind; the current /favicon.png is a
+  stand-in cropped from the werebear background (the roaring head).
 
 ## Still on emoji (icon welcome any time)
 Beekeeper 🐝 · Lamplighter 🔦
