@@ -203,15 +203,14 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       {deficit > 0n && excess === 0n && (
         <div className="panel">
-          <h3>⚖ The Order owes you a word</h3>
+          <h3>⚖ The Order owes you</h3>
           <p className="dim">
-            You hold {xlmString(balances.spendable)} XLM, but the allowance at this point is{" "}
-            {xlmString(remainingAllowance)} — your wallet arrived poorer than the law provides
-            (a previous game's spending, most likely). Top up the difference from your public
-            XLM; the deposit is public, so everyone can verify it's fair.
+            You hold {xlmString(balances.spendable)} XLM; the allowance at this point is{" "}
+            {xlmString(remainingAllowance)}. Daily income and old-wallet shortfalls both collect
+            here — the deposit is public, so everyone can verify it's fair.
           </p>
           <button className="primary" onClick={() => void topUp()}>
-            Top up {xlmString(deficit)} XLM
+            Collect {xlmString(deficit)} XLM
           </button>
         </div>
       )}
@@ -220,22 +219,21 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         <div className="panel">
           <h3>🛍✓ Done for today</h3>
           <p className="dim">
-            The shopkeepers wave you off. Your question to Maude is waiting — and buying
-            anything now would be noticed at dawn.
+            The shopkeepers wave you off. Maude opens her office once the <b>whole village</b>{" "}
+            is done shopping — item powers stay listed below for reference.
           </p>
         </div>
       )}
       {!doneToday && round >= 1 && (
         <div className="row">
-          <button onClick={() => void declareDone()}>Done buying for today → unlock Maude</button>
-          <span className="dim">locks your stores for the day; shop first, ask second</span>
+          <button onClick={() => void declareDone()}>Done buying for today</button>
+          <span className="dim">
+            locks your stores; when the whole village is done, Maude opens
+          </span>
         </div>
       )}
 
-      <div
-        className="shops"
-        style={excess > 0n || doneToday ? { opacity: 0.4, pointerEvents: "none" } : undefined}
-      >
+      <div className="shops" style={excess > 0n ? { opacity: 0.4, pointerEvents: "none" } : undefined}>
         {SHOPS.map((shop) => (
           <div key={shop.id} className="panel shop-card">
             <h3>{shop.label}</h3>
@@ -244,18 +242,28 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const key = `${shop.id}:${item.id}`;
                 const isArmed = armed === key;
                 return (
-                  <button
-                    key={item.id}
-                    className={isArmed ? "armed" : ""}
-                    onClick={() =>
-                      isArmed ? void pay(shop, item, stroopsFromXlm(item.priceXlm)) : setArmed(key)
-                    }
-                    onBlur={() => isArmed && setArmed(null)}
-                    title={item.effect}
-                  >
-                    <span>{isArmed ? "Confirm purchase?" : item.label}</span>
-                    <span>{item.priceXlm} XLM</span>
-                  </button>
+                  <div key={item.id}>
+                    <button
+                      className={isArmed ? "armed" : ""}
+                      style={{ width: "100%" }}
+                      disabled={doneToday}
+                      onClick={() =>
+                        isArmed
+                          ? void pay(shop, item, stroopsFromXlm(item.priceXlm))
+                          : setArmed(key)
+                      }
+                      onBlur={() => isArmed && setArmed(null)}
+                      title={item.effect}
+                    >
+                      <span>{isArmed ? "Confirm purchase?" : item.label}</span>
+                      <span>{item.priceXlm} XLM</span>
+                    </button>
+                    {doneToday && (
+                      <div className="dim" style={{ fontSize: "0.75rem", padding: "2px 4px" }}>
+                        {item.effect}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

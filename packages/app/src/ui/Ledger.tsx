@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { DisclosureRequest } from "@ctd/sdk";
 
 import type { VillagerWallet, TxPhase } from "../lib/wallet";
-import { loadHistory } from "../lib/history";
+import { loadHistory, type PurchaseRecord } from "../lib/history";
 import { xlmString } from "../lib/catalog";
 
 interface Props {
   wallet: VillagerWallet;
   gameId: string;
+  /** Tabs stay mounted for draft-survival; reload the list when shown. */
+  active: boolean;
   onPhase: (p: TxPhase) => void;
   setBusy: (b: string | null) => void;
   setError: (e: string | null) => void;
@@ -19,11 +21,11 @@ interface Props {
  * paste the GM's disclosure request, and produce an unforgeable proof of that
  * one payment. Nothing else is revealed, and nothing touches the chain.
  */
-export function Ledger({ wallet, gameId, onPhase, setBusy, setError }: Props) {
-  const history = useMemo(
-    () => loadHistory(wallet.address, gameId).slice().reverse(),
-    [wallet.address, gameId],
-  );
+export function Ledger({ wallet, gameId, active, onPhase, setBusy, setError }: Props) {
+  const [history, setHistory] = useState<PurchaseRecord[]>([]);
+  useEffect(() => {
+    if (active) setHistory(loadHistory(wallet.address, gameId).slice().reverse());
+  }, [active, wallet.address, gameId]);
   const [selected, setSelected] = useState<string | null>(null);
   const [requestJson, setRequestJson] = useState("");
   const [bundleJson, setBundleJson] = useState<string | null>(null);

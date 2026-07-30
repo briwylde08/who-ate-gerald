@@ -10,7 +10,7 @@ import {
   type GraphView,
 } from "../lib/player";
 import { CHARACTERS, loadProfile } from "../lib/profile";
-import { DAILY_INCOME_XLM, SHOPS, stroopsFromXlm } from "../lib/catalog";
+import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
 
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 
@@ -30,9 +30,10 @@ interface Props {
 
 type Role = "villager" | "werebear";
 
-const incomeKey = (address: string, gameId: string) => `gerald:income:${gameId}:${address}`;
 
 export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Props) {
+  void setBusy;
+  void refresh;
   void onPhase;
   const [view, setView] = useState<PublicView | null>(null);
   const [role, setRole] = useState<Role | null>(null);
@@ -123,8 +124,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.address, me?.character]);
   const living = (view?.players ?? []).filter((p) => p.alive && p.address !== wallet.address);
-  const lastIncomeRound = Number(localStorage.getItem(incomeKey(wallet.address, gameId)) ?? "1");
-  const incomeDue = view !== null && view.round >= 2 && lastIncomeRound < view.round && me?.alive;
 
   const fetchRole = async () => {
     setError(null);
@@ -138,22 +137,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
       setRoleShown(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  const collectIncome = async () => {
-    if (!view) return;
-    setBusy(`Collecting today's ${DAILY_INCOME_XLM} XLM…`);
-    setError(null);
-    try {
-      await wallet.deposit(stroopsFromXlm(DAILY_INCOME_XLM));
-      await wallet.merge();
-      localStorage.setItem(incomeKey(wallet.address, gameId), String(view.round));
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(null);
     }
   };
 
@@ -357,17 +340,11 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         </p>
       </div>
 
-      {incomeDue && (
-        <div className="panel">
-          <h2>The morning post</h2>
-          <p className="dim">
-            Day {view.round}'s allowance has arrived: {DAILY_INCOME_XLM} XLM. Deposits are
-            public — the whole village can verify nobody takes more.
-          </p>
-          <button className="primary" onClick={() => void collectIncome()}>
-            Collect {DAILY_INCOME_XLM} XLM income
-          </button>
-        </div>
+      {me?.alive && view.round >= 2 && view.phase === "day" && !view.winner && (
+        <p className="dim">
+          📯 Daily allowance ({DAILY_INCOME_XLM} XLM) collects at the Order's desk in{" "}
+          <b>The Shops</b> — it appears there whenever you're below the day's allowance.
+        </p>
       )}
 
       {view.marketClosed && view.phase === "day" && !view.winner && (

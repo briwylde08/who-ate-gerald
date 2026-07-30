@@ -309,7 +309,9 @@ export function PlayerApp() {
               My Ledger
             </button>
           </div>
-          {tab === "village" && (
+          {/* All tabs stay mounted (hidden with CSS) so half-typed chat
+              lines, questions, and pasted bundles survive tab switches. */}
+          <div style={{ display: tab === "village" ? "block" : "none" }}>
             <Village
               wallet={wallet}
               balances={balances}
@@ -320,9 +322,11 @@ export function PlayerApp() {
               setError={setError}
               refresh={() => refresh(wallet)}
             />
-          )}
-          {tab === "maude" && <Maude wallet={wallet} gameId={gameId} setError={setError} />}
-          {tab === "town" && (
+          </div>
+          <div style={{ display: tab === "maude" ? "block" : "none" }}>
+            <Maude wallet={wallet} gameId={gameId} setError={setError} />
+          </div>
+          <div style={{ display: tab === "town" ? "block" : "none" }}>
             <Town
               wallet={wallet}
               gameId={gameId}
@@ -331,16 +335,17 @@ export function PlayerApp() {
               setError={setError}
               refresh={() => refresh(wallet)}
             />
-          )}
-          {tab === "ledger" && (
+          </div>
+          <div style={{ display: tab === "ledger" ? "block" : "none" }}>
             <Ledger
               wallet={wallet}
               gameId={gameId}
+              active={tab === "ledger"}
               onPhase={onPhase}
               setBusy={setBusy}
               setError={setError}
             />
-          )}
+          </div>
         </>
       )}
 
