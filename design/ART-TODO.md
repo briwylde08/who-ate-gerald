@@ -9,11 +9,12 @@ here to `design/`). Wiring per icon is a one-line `icon:` field in
 Nothing outstanding.
 
 ## Still on emoji (icon welcome any time)
-Poacher 🏹 · Beekeeper 🐝 · Rat Catcher 🐀 · Lamplighter 🔦
+Beekeeper 🐝 · Lamplighter 🔦
 
 ## Done
 Baker (loaf) · Midwife (candle) · Grave Digger (grey headstone, v2 —
-design/grave-icon.png is the retired gold one) · Drunk (tankard)
+design/grave-icon.png is the retired gold one) · Drunk (tankard) ·
+Poacher (bow + arrow) · Rat Catcher (rat)
 
 ## Notes
 - Portraits: square sources crop best (the Lamplighter is portrait-ratio
