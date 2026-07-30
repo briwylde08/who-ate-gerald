@@ -752,10 +752,29 @@ export class GameRoom extends DurableObject<Env> {
       winner: this.state.winner,
       at: new Date().toISOString(),
     };
+    if (this.state.winner === null) {
+      report.notes.push("The village stirs — the next day begins in a minute.");
+    }
     this.state.mornings.push(report);
-    if (this.state.phase !== "ended") this.state.phase = "day"; // stays until next startDay
+    if (this.state.phase !== "ended") {
+      this.state.phase = "day"; // stays until the next day opens
+      // Dawn rolls into morning by itself: open the next day in 60s.
+      await this.ctx.storage.setAlarm(Date.now() + 60_000);
+    }
     await this.persist();
     return report;
+  }
+
+  /** The town crier: opens the next day a minute after dawn. */
+  async alarm(): Promise<void> {
+    const resolved = this.state.mornings.some((m) => m.round === this.state.round);
+    if (
+      this.state.phase === "day" &&
+      this.state.roles !== null &&
+      resolved // current day is done and nobody (GM) opened the next one yet
+    ) {
+      await this.startDay();
+    }
   }
 
   // -------------------------------------------------------------- public --
