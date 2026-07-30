@@ -269,20 +269,15 @@ export function PlayerApp() {
       {profile && !wallet && (
         <div className="panel">
           <p>
-            Welcome, {profile.name} {characterOf(profile)?.title}. The werebear shops among you —
-            its purchases hidden, like yours, on a confidential ledger only Maude McLedger, the
-            village fortune teller, can read.
+            Welcome, {profile.name} {characterOf(profile)?.title}. The werebear is amongst you,
+            purchasing items.
           </p>
           <p className="dim">
             You need the Freighter extension, set to <b>Testnet</b>. Freighter signs your
             transactions; a signed message derives your confidential key. Nothing secret leaves
             your browser.
           </p>
-          <p className="dim">
-            Your budget and registration live on-chain, per account — to play as a{" "}
-            <i>different</i> villager, switch accounts in the Freighter extension before
-            connecting.
-          </p>
+          <p className="dim">Your budget and registration live on-chain, per account.</p>
           <div className="row">
             <button className="primary" onClick={() => void connect()} disabled={busy !== null}>
               Connect your wallet
