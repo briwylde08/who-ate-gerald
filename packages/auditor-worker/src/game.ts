@@ -1044,14 +1044,18 @@ export class GameRoom extends DurableObject<Env> {
         address: p.address,
         alive: p.alive,
       })),
-      edges: purchases.map((p) => ({
-        round: p.round,
-        ledger: p.ledger,
-        from: hooded.has(`${p.from}:${p.round}`)
-          ? "a hooded figure"
-          : (p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`),
-        to: p.toLabel,
-      })),
+      // Round 0 is setup (funding, registration, settling up with the Order) —
+      // not a sighting anyone should be reading tea leaves from.
+      edges: purchases
+        .filter((p) => p.round >= 1)
+        .map((p) => ({
+          round: p.round,
+          ledger: p.ledger,
+          from: hooded.has(`${p.from}:${p.round}`)
+            ? "a hooded figure"
+            : (p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`),
+          to: p.toLabel,
+        })),
     };
   }
 

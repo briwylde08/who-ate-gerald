@@ -130,9 +130,13 @@ export async function loadPurchases(
   for (const ev of events) {
     if (ev.type !== "transfer") continue;
     const t = ev as TransferEvent;
+    // Every game ever played shares this token contract, so the event log
+    // holds strangers' transfers too. A sender with no seat in THIS game is
+    // somebody else's business: not a sighting, not a fact, not an audit.
+    const player = byAddress.get(t.from) ?? null;
+    if (!player) continue;
     const audit = auditTransfer(k, t);
     const shop = SHOP_BY_ADDRESS.get(t.to) ?? null;
-    const player = byAddress.get(t.from) ?? null;
     const isSurrender = ORDER_ADDRESS !== "" && t.to === ORDER_ADDRESS;
     purchases.push({
       round: roundOf(t.ledger, rounds),

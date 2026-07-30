@@ -371,7 +371,9 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         </div>
 
         <h3 className="seen-label">Today's sightings</h3>
-        {graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
+        {view.round < 1 ? (
+          <p className="dim">The stores open when the game begins.</p>
+        ) : graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
           <div className="sightings">
             {graph.edges
               .filter((e) => e.round === view.round)
