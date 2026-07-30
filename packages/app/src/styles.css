@@ -321,10 +321,29 @@ th { color: var(--ink-dim); font-weight: normal; }
   margin: -12px -4px 16px;
   border-bottom: 1px solid var(--line);
 }
-.topbar .spacer { flex: 1; }
+.topbar .spacer { flex: 1; min-width: 0; }
 .topbar .addr { border: none; background: none; padding: 4px 6px; color: var(--moon); text-decoration: none; }
 .topbar .addr:hover { color: var(--gold); }
-.topbar { flex-wrap: wrap; }
+.topbar { flex-wrap: wrap; gap: 8px 10px; }
+/* Rules + Log out are one unit, pinned right. */
+.topbar-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+.topbar .dim { white-space: nowrap; }
+/* The identity chip is who you are — give it presence, and let it be the one
+   elastic thing up here so the actions stay on the banner. */
+.topbar > button.addr:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.05rem;
+  color: var(--parchment);
+}
+.topbar > button.addr:first-child .char-icon { width: 1.4em; height: 1.4em; }
+/* Narrow viewports: the contract's label is the first thing worth dropping —
+   the linked address (with its tooltip) still says what it is. */
+@media (max-width: 980px) {
+  .topbar .contract-label { display: none; }
+}
 
 .characters {
   display: grid;

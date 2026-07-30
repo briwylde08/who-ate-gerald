@@ -230,7 +230,7 @@ export function PlayerApp() {
           }}
           style={{ width: "110px", padding: "4px 6px", fontSize: "0.85rem" }}
         />
-        <span className="dim">confidential token contract:</span>
+        <span className="dim contract-label">confidential token contract:</span>
         <a
           className="mono addr"
           href={`https://stellar.expert/explorer/testnet/contract/${DEPLOYMENT.token}`}
@@ -241,14 +241,20 @@ export function PlayerApp() {
           {DEPLOYMENT.token.slice(0, 6)}…{DEPLOYMENT.token.slice(-6)} ↗
         </a>
         <span className="spacer" />
-        {profile && (
-          <button title="The story, the rules, and how it works" onClick={() => setStoryOpen((s) => !s)}>
-            Rules
-          </button>
-        )}
-        {/* Available from the moment there's an identity to shed — the picker
-            and connect screens are exactly where people want to start over. */}
-        {(wallet || profile) && <button onClick={() => void logout()}>Log out</button>}
+        {/* Rules and Log out travel together so Log out can't wrap off the
+            banner on its own. Available from the moment there's an identity to
+            shed — the picker and connect screens are where people start over. */}
+        <div className="topbar-actions">
+          {profile && (
+            <button
+              title="The story, the rules, and how it works"
+              onClick={() => setStoryOpen((s) => !s)}
+            >
+              Rules
+            </button>
+          )}
+          {(wallet || profile) && <button onClick={() => void logout()}>Log out</button>}
+        </div>
       </div>
 
       {storyOpen && (
