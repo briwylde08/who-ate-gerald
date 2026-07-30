@@ -149,8 +149,17 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .character .emoji { font-size: 1.6rem; }
 .character .blurb { font-style: italic; font-size: 0.8rem; }
+.character .portrait {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover; /* the Lamplighter is portrait-ratio; crop, don't squash */
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
 .character.selected { border-color: var(--gold); background: var(--panel); }
+.character.selected .portrait { border-color: var(--gold); }
 .character.dead { opacity: 0.45; }
+.character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 div.character { border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
 
 .chat {

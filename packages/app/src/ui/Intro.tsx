@@ -72,9 +72,9 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
               disabled={isTaken}
               onClick={() => setCharacterId(c.id)}
             >
-              <span className="emoji">{c.emoji}</span>
+              <img className="portrait" src={c.image} alt={c.title} loading="lazy" />
               <span>
-                {c.title}
+                {c.emoji} {c.title}
                 {isTaken ? " — claimed" : ""}
               </span>
               <span className="dim blurb">{isTaken ? "Somebody already wears this face." : c.blurb}</span>
