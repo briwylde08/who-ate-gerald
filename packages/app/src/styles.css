@@ -361,6 +361,26 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.dead { opacity: 0.45; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 
+/* Maude's office: she leans in from the left, her ledger already open. */
+.maude-intro {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.maude-portrait {
+  width: 148px;
+  flex-shrink: 0;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.maude-words h2 { margin-top: 0; }
+@media (max-width: 560px) {
+  .maude-intro { flex-direction: column; }
+  .maude-portrait { width: 100%; aspect-ratio: 16 / 10; object-position: center 28%; }
+}
+
 /* ------------------------------------------------------- the town square --
    One lobby panel carries the phase, the readiness, the one button worth
    pressing, and the village itself. Information sits below it, not beside. */

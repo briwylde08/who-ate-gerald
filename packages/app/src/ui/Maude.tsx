@@ -68,13 +68,18 @@ export function Maude({ wallet, gameId, setError }: Props) {
 
   return (
     <div>
+      <div className="panel maude-intro">
+        <img className="maude-portrait" src="/characters/maude.jpg" alt="Maude McLedger" />
+        <div className="maude-words">
+          <h2>Maude McLedger — the fortune teller</h2>
+          <p className="dim">
+            She reads ledgers the way other women read palms. One question per villager per day;
+            her answer comes to <b>you alone</b>. Whether you tell the truth about it afterward
+            is between you and St. Ursula.
+          </p>
+        </div>
+      </div>
       <div className="panel">
-        <h2>Maude McLedger — the fortune teller</h2>
-        <p className="dim">
-          She reads ledgers the way other women read palms. One question per villager per day;
-          her answer comes to <b>you alone</b>. Whether you tell the truth about it afterward is
-          between you and St. Ursula.
-        </p>
         {doneToday === false && (
           <div className="answer-card">
             “Finish your errands first, dear — I don't read ledgers that are still being
