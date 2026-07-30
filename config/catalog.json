@@ -5,10 +5,13 @@
   "shops": {
     "blacksmith": {
       "label": "Blacksmith",
+      "icon": "🔨",
+      "subtitle": "Weapons, hardware, and plausible deniability.",
       "items": [
         {
           "id": "horseshoe_nail",
           "label": "Horseshoe nail",
+          "flavor": "Luck you can hold. Barely.",
           "priceXlm": 2,
           "class": "B-def",
           "effect": "Lucky iron: if the vote ties on you, luck excuses you — you reveal nothing. One nail, one escape."
@@ -16,6 +19,7 @@
         {
           "id": "bear_trap",
           "label": "Bear trap",
+          "flavor": "For bears. Allegedly.",
           "priceXlm": 21,
           "class": "V-off",
           "effect": "If you are eaten, the beast bleeds: it cannot kill the next night."
@@ -23,6 +27,7 @@
         {
           "id": "silver_charm",
           "label": "Silver charm",
+          "flavor": "Grandmother swore by it. Grandmother is dead.",
           "priceXlm": 45,
           "class": "V-def",
           "effect": "Survive one night attack. The charm shatters, everyone hears it, and you spend the next day in bed — too weak to vote. The werebear cannot buy silver."
@@ -31,10 +36,13 @@
     },
     "general_store": {
       "label": "General Store",
+      "icon": "🧺",
+      "subtitle": "Everything you need. Nothing you can explain.",
       "items": [
         {
           "id": "a_bottle",
           "label": "A bottle",
+          "flavor": "Loosens tongues. Yours included.",
           "priceXlm": 7,
           "class": "B-info",
           "effect": "Loose lips: tomorrow's morning report carries one true rumor about the day's shopping. You don't choose which."
@@ -42,6 +50,7 @@
         {
           "id": "ledger_book",
           "label": "The ledger book",
+          "flavor": "Somebody has to keep the books.",
           "priceXlm": 15,
           "class": "V-info",
           "effect": "Tax records: at dawn, Maude names who spent the most today. Names only — amounts stay sealed."
@@ -49,6 +58,7 @@
         {
           "id": "musk_salve",
           "label": "Musk salve",
+          "flavor": "Smells like nothing. Deliberately.",
           "priceXlm": 18,
           "class": "B-def",
           "effect": "Shop unseen: tomorrow the sightings log your store visits as a hooded figure instead of your name. Anyone may buy it. Anyone."
@@ -57,10 +67,13 @@
     },
     "butcher": {
       "label": "The Butcher's",
+      "icon": "🔪",
+      "subtitle": "No questions about the meat.",
       "items": [
         {
           "id": "soup_bone",
           "label": "Soup bone",
+          "flavor": "The dogs will love you for it.",
           "priceXlm": 8,
           "class": "V-info",
           "effect": "The dogs remember: at dawn, you privately learn whether the beast came to YOUR door last night — even on a quiet night."
@@ -68,6 +81,7 @@
         {
           "id": "smoked_ham",
           "label": "Smoked ham",
+          "flavor": "Feeds a family. Or something larger.",
           "priceXlm": 13,
           "class": "W-def",
           "effect": "A well-fed bear leaves quietly: if the night attack fails, the morning says nothing at all."
@@ -75,6 +89,7 @@
         {
           "id": "butchers_knife",
           "label": "The butcher's knife",
+          "flavor": "For the meat. Obviously.",
           "priceXlm": 35,
           "class": "B-off",
           "effect": "Conviction, sharpened: once bought, your vote counts twice for the rest of the game. Everyone hears a knife being ground; nobody knows whose."
@@ -83,10 +98,13 @@
     },
     "chapel": {
       "label": "Chapel",
+      "icon": "🕯",
+      "subtitle": "Candles, absolution, and limited guarantees.",
       "items": [
         {
           "id": "votive_candle",
           "label": "Votive candle",
+          "flavor": "Cheap light for a dark week.",
           "priceXlm": 5,
           "class": "B-info",
           "effect": "If you die, your candle gutters last: Maude posts your final words to the square."
@@ -94,6 +112,7 @@
         {
           "id": "lantern_oil",
           "label": "Lantern oil",
+          "flavor": "Gerald's lantern was still lit, you know.",
           "priceXlm": 12,
           "class": "V-info",
           "effect": "Posthumous: if you are eaten, Maude reads one true fact about the werebear's purchases by your still-lit lantern."
@@ -101,6 +120,7 @@
         {
           "id": "unsealing_ritual",
           "label": "Unsealing ritual",
+          "flavor": "The Order charges for the truth.",
           "priceXlm": 25,
           "class": "V-info",
           "effect": "At dawn, Maude unseals ONE purchase of the day's most-accused villager and names the item. The vote picks the target; the ritual pays for the reading."

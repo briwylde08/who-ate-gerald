@@ -43,7 +43,9 @@ async function live() {
     TOKEN_CONTRACT: dep.token as string,
     AUDITOR_K: auditorSecrets.k as string,
   };
-  const purchases = await loadPurchases(env, [], []);
+  // No roster here: this checks the decode/decrypt path itself, so it
+  // deliberately opts into every sender the token has ever seen.
+  const purchases = await loadPurchases(env, [], [], { allSenders: true });
   check("indexer served decodable transfers", purchases.length >= 1, purchases.length);
   const tithe = purchases.find((p) => p.shopId === "chapel" && p.amountXlm === "7");
   check("health-check 7-XLM Chapel tithe decrypts", tithe !== undefined);
@@ -95,13 +97,13 @@ function synthetic() {
     players,
     currentRound: 2,
     purchases: [
-      buy("Ron", "GRON", "blacksmith", "Blacksmith", 30, 2, "Silver charm"),
-      buy("Ron", "GRON", "chapel", "Chapel", 3.5, 2, null),
-      buy("Bri", "GBRI", "liquor_store", "Liquor Store", 7, 2, "A bottle"),
-      buy("Bri", "GBRI", "chapel", "Chapel", 12, 2, null),
-      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 1, 2, "Horseshoe nail"),
-      buy("Tyler", "GTYL", "chapel", "Chapel", 5, 2, null),
-      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 30, 1, "Silver charm"),
+      buy("Ron", "GRON", "blacksmith", "Blacksmith", 45, 2, "Silver charm"),
+      buy("Ron", "GRON", "chapel", "Chapel", 5, 2, "Votive candle"),
+      buy("Bri", "GBRI", "general_store", "General Store", 7, 2, "A bottle"),
+      buy("Bri", "GBRI", "chapel", "Chapel", 12, 2, "Lantern oil"),
+      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 2, 2, "Horseshoe nail"),
+      buy("Tyler", "GTYL", "chapel", "Chapel", 25, 2, "Unsealing ritual"),
+      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 45, 1, "Silver charm"),
     ],
   };
 
@@ -116,18 +118,8 @@ function synthetic() {
     silverEver,
   );
 
-  const tithe = executeFact(ctx, "tithe_amount", { player: "bri", round: 2 });
-  check("tithe_amount: case-insensitive, exact 12", tithe.totalXlm === "12", tithe);
-
-  const largest = executeFact(ctx, "largest_tithe", { round: 2 });
-  check(
-    "largest_tithe: Bri at 12",
-    largest.amountXlm === "12" && JSON.stringify(largest.payers) === '["Bri"]',
-    largest,
-  );
-
   const spent = executeFact(ctx, "total_spent", { player: "Ron", round: 2 });
-  check("total_spent: 33.5 incl. tithe", spent.totalXlm === "33.5" && spent.includesTithe === true, spent);
+  check("total_spent: Ron spent 50 in r2", spent.totalXlm === "50", spent);
 
   const atLeast = executeFact(ctx, "paid_at_least", {
     player: "Tyler",
@@ -139,12 +131,13 @@ function synthetic() {
 
   const mine = executeFact(ctx, "purchases_of_player", { player: "Ron", round: 2 });
   check(
-    "purchases_of_player excludes tithe",
-    mine.count === 1 && (mine.purchases as { item: string }[])[0]?.item === "Silver charm",
+    "purchases_of_player: both of Ron's buys, itemised",
+    mine.count === 2 &&
+      (mine.purchases as { item: string }[]).some((x) => x.item === "Silver charm"),
     mine,
   );
 
-  const ghost = executeFact(ctx, "tithe_amount", { player: "Gerald", round: 2 });
+  const ghost = executeFact(ctx, "total_spent", { player: "Gerald", round: 2 });
   check("unknown player → in-character error fact", typeof ghost.error === "string", ghost);
 
   const badItem = executeFact(ctx, "who_bought_item", { item: "moon rock" });

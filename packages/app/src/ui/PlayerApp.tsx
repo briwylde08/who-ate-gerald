@@ -329,16 +329,32 @@ export function PlayerApp() {
       {wallet && provisioned && balances && (
         <>
           <div className="tabs">
-            <button className={tab === "town" ? "active" : ""} onClick={() => setTab("town")}>
+            <button
+              className={tab === "town" ? "active" : ""}
+              aria-current={tab === "town" ? "page" : undefined}
+              onClick={() => setTab("town")}
+            >
               Town Square
             </button>
-            <button className={tab === "village" ? "active" : ""} onClick={() => setTab("village")}>
+            <button
+              className={tab === "village" ? "active" : ""}
+              aria-current={tab === "village" ? "page" : undefined}
+              onClick={() => setTab("village")}
+            >
               The Shops
             </button>
-            <button className={tab === "maude" ? "active" : ""} onClick={() => setTab("maude")}>
+            <button
+              className={tab === "maude" ? "active" : ""}
+              aria-current={tab === "maude" ? "page" : undefined}
+              onClick={() => setTab("maude")}
+            >
               Maude
             </button>
-            <button className={tab === "ledger" ? "active" : ""} onClick={() => setTab("ledger")}>
+            <button
+              className={tab === "ledger" ? "active" : ""}
+              aria-current={tab === "ledger" ? "page" : undefined}
+              onClick={() => setTab("ledger")}
+            >
               My Ledger
             </button>
           </div>

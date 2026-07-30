@@ -7,6 +7,7 @@ import {
   SHOPS,
   STARTING_BUDGET_XLM,
   stroopsFromXlm,
+  xlmDisplay,
   xlmString,
   type ShopInfo,
   type CatalogItem,
@@ -92,6 +93,15 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // ghost's transfers, but the shop floor won't offer them.
   const [doneToday, setDoneToday] = useState(false);
   const [dead, setDead] = useState(false);
+  // What this browser has bought in this game — drives the Owned badge.
+  // localStorage-backed, so it is this player's own record, not the chain's.
+  const [boughtItems, setBoughtItems] = useState<Set<string>>(new Set());
+  const [justBought, setJustBought] = useState<string | null>(null);
+  useEffect(() => {
+    // Keyed by item label — every one of the twelve is distinct, and that is
+    // what the stored records carry.
+    setBoughtItems(new Set(loadHistory(wallet.address, loadGameId()).map((r) => r.item)));
+  }, [wallet.address, round]);
   useEffect(() => {
     fetchPublicView(loadGameId())
       .then((v) => {
@@ -146,6 +156,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         amountStroops: amountStroops.toString(),
         txHash: hash,
       });
+      setBoughtItems((s) => new Set(s).add(item.label));
+      setJustBought(`${shop.id}:${item.id}`);
+      window.setTimeout(() => setJustBought(null), 3000);
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -155,38 +168,41 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   };
 
   return (
-    <div>
-      <div className="panel budget">
-        <div>
-          <div className="dim">hidden budget</div>
-          <div className="big">{xlmString(balances.spendable)} XLM</div>
+    <div className="shop-page">
+      <div className="panel purse">
+        <div className="purse-block">
+          <div className="purse-label">🔒 Private purse</div>
+          <div className="purse-amount">{xlmDisplay(balances.spendable)} XLM</div>
+          <div className="purse-note">Hidden from the village</div>
         </div>
         {balances.receiving > 0n && (
-          <div>
-            <div className="dim">received, uncollected</div>
-            <div>
-              {xlmString(balances.receiving)} XLM{" "}
-              <button
-                onClick={async () => {
-                  setBusy("Collecting…");
-                  try {
-                    await wallet.merge();
-                    await refresh();
-                  } catch (e) {
-                    setError(e instanceof Error ? e.message : String(e));
-                  } finally {
-                    setBusy(null);
-                  }
-                }}
-              >
-                collect
-              </button>
+          <div className="purse-block">
+            <div className="purse-label">📦 Uncollected</div>
+            <div className="purse-amount secondary">
+              {xlmDisplay(balances.receiving)} XLM
             </div>
+            <button
+              className="link"
+              onClick={async () => {
+                setBusy("Collecting…");
+                try {
+                  await wallet.merge();
+                  await refresh();
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                } finally {
+                  setBusy(null);
+                }
+              }}
+            >
+              Collect into purse
+            </button>
           </div>
         )}
-        <div>
-          <div className="dim">public XLM (everyone sees this)</div>
-          <div>{xlmString(balances.publicXlm)} XLM</div>
+        <div className="purse-block">
+          <div className="purse-label">👁 Public wallet</div>
+          <div className="purse-amount secondary">{xlmDisplay(balances.publicXlm)} XLM</div>
+          <div className="purse-note">Everyone can see this</div>
         </div>
       </div>
 
@@ -254,30 +270,66 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       >
         {SHOPS.map((shop) => (
           <div key={shop.id} className="panel shop-card">
-            <h3>{shop.label}</h3>
+            <h3>
+              {shop.icon && (
+                <span className="shop-icon" aria-hidden="true">
+                  {shop.icon}
+                </span>
+              )}
+              {shop.label}
+            </h3>
+            {shop.subtitle && <p className="shop-sub">“{shop.subtitle}”</p>}
             <div className="items">
               {shop.items.map((item) => {
                 const key = `${shop.id}:${item.id}`;
                 const isArmed = armed === key;
+                const price = stroopsFromXlm(item.priceXlm);
+                const owned = boughtItems.has(item.label);
+                const tooRich = price > balances.spendable;
+                const blocked = doneToday || tooRich;
+                const label = doneToday
+                  ? "Market closed"
+                  : tooRich
+                    ? "Too rich for your blood"
+                    : isArmed
+                      ? "Confirm?"
+                      : owned
+                        ? "Buy another"
+                        : "Buy";
                 return (
-                  <div key={item.id} className="item">
-                    <button
-                      className={isArmed ? "armed" : ""}
-                      style={{ width: "100%" }}
-                      disabled={doneToday}
-                      onClick={() =>
-                        isArmed
-                          ? void pay(shop, item, stroopsFromXlm(item.priceXlm))
-                          : setArmed(key)
-                      }
-                      onBlur={() => isArmed && setArmed(null)}
-                    >
-                      <span>{isArmed ? "Confirm purchase?" : item.label}</span>
-                      <span>{item.priceXlm} XLM</span>
-                    </button>
-                    {/* Effects are public knowledge — no reason to hide them
-                        behind a hover that phones don't have. */}
-                    <div className="effect">{item.effect}</div>
+                  <div
+                    key={item.id}
+                    className={`item${owned ? " owned" : ""}${tooRich ? " too-rich" : ""}`}
+                  >
+                    <div className="item-main">
+                      <div className="item-name">
+                        {item.label}
+                        {owned && <span className="badge">✓ Owned</span>}
+                      </div>
+                      {item.flavor && <p className="item-flavor">“{item.flavor}”</p>}
+                      {/* Effects are public knowledge — no reason to hide them
+                          behind a hover that phones don't have. */}
+                      <p className="effect">{item.effect}</p>
+                    </div>
+                    <div className="item-buy">
+                      <span className="price">{item.priceXlm} XLM</span>
+                      <button
+                        className={isArmed ? "armed" : ""}
+                        disabled={blocked}
+                        aria-label={`${label}: ${item.label}, ${item.priceXlm} XLM`}
+                        onClick={() =>
+                          isArmed ? void pay(shop, item, price) : setArmed(key)
+                        }
+                        onBlur={() => isArmed && setArmed(null)}
+                      >
+                        {label}
+                      </button>
+                      {justBought === key && (
+                        <span className="satchel" role="status">
+                          Added to satchel
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}

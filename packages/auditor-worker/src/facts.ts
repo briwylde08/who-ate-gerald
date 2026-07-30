@@ -117,6 +117,13 @@ export async function loadPurchases(
   env: IndexerEnv,
   players: PlayerRef[],
   rounds: RoundWindow[],
+  /**
+   * `allSenders` keeps transfers from wallets with no seat in this game.
+   * Gameplay must never set it — the whole point is that other games sharing
+   * this token stay invisible. Diagnostics that only care about "can we
+   * decode and decrypt at all" (npm run test:auditor) do.
+   */
+  opts: { allSenders?: boolean } = {},
 ): Promise<Purchase[]> {
   const indexer = new IndexerClient({ baseUrl: env.INDEXER_URL });
   const { events } = await indexer.fetchEvents({
@@ -134,7 +141,7 @@ export async function loadPurchases(
     // holds strangers' transfers too. A sender with no seat in THIS game is
     // somebody else's business: not a sighting, not a fact, not an audit.
     const player = byAddress.get(t.from) ?? null;
-    if (!player) continue;
+    if (!player && !opts.allSenders) continue;
     const audit = auditTransfer(k, t);
     const shop = SHOP_BY_ADDRESS.get(t.to) ?? null;
     const isSurrender = ORDER_ADDRESS !== "" && t.to === ORDER_ADDRESS;
