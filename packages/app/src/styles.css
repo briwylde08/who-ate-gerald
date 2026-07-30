@@ -19,6 +19,7 @@
 
 body {
   margin: 0;
+  overflow-x: clip; /* the full-bleed banner uses vw; never let it scroll */
   /* The werebear at its work (Bri's art) under a scrim dark enough to read
      by — the scrim carries the old --bg tone so panels still sit right. */
   background:
@@ -317,16 +318,26 @@ th { color: var(--ink-dim); font-weight: normal; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
-  margin: -12px -4px 16px;
+  /* Full-bleed: the page content is capped at 1000px, but the banner has more
+     to carry than that — let it span the window so nothing wraps beneath. */
+  margin-inline: calc(50% - 50vw);
+  padding: 8px clamp(16px, 3vw, 40px);
+  margin-top: -12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--line);
 }
 .topbar .spacer { flex: 1; min-width: 0; }
 .topbar .addr { border: none; background: none; padding: 4px 6px; color: var(--moon); text-decoration: none; }
 .topbar .addr:hover { color: var(--gold); }
 .topbar { flex-wrap: wrap; gap: 8px 10px; }
-/* Rules + Log out are one unit, pinned right. */
-.topbar-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+/* Rules + Log out are one unit, pinned right, on the banner's centre line. */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
 .topbar .dim { white-space: nowrap; }
 /* The identity chip is who you are — give it presence, and let it be the one
    elastic thing up here so the actions stay on the banner. */
