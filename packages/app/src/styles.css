@@ -9,6 +9,9 @@
   --blood: #b3423f;
   --gold: #d4a94e;
   --green: #6f9e6f;
+  /* Masthead type: aged lantern-gold on warm off-white. */
+  --lantern: #d5aa63;
+  --parchment: #f4eee2;
   font-family: Georgia, "Times New Roman", serif;
 }
 
@@ -30,6 +33,34 @@ body {
 h1, h2, h3 { font-weight: normal; letter-spacing: 0.02em; }
 h1 { font-size: 2rem; margin: 0 0 4px; }
 h2 { font-size: 1.25rem; margin: 24px 0 8px; color: var(--moon); }
+
+/* The masthead: title + subtitle read as one unit, then a clear break. */
+.masthead { margin: 0 0 28px; }
+
+.masthead .title {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-size: clamp(2.6rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  color: var(--parchment);
+  text-shadow:
+    0 2px 0 #090b12,
+    0 4px 14px rgba(0, 0, 0, 0.75);
+  text-wrap: balance; /* keeps "Gerald?" company on narrow screens */
+  margin: 0;
+}
+
+.masthead .title-accent { color: var(--lantern); }
+
+.masthead .subtitle {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  color: #d5d0c8;
+  margin: 8px 0 0;
+}
 
 .tagline {
   color: #ffffff;

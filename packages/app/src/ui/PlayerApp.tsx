@@ -251,8 +251,12 @@ export function PlayerApp() {
           </div>
         </div>
       )}
-      <h1>Who Ate Gerald?</h1>
-      <p className="tagline">Trust is scarce. Gerald is dead.</p>
+      <div className="masthead">
+        <h1 className="title">
+          Who Ate <span className="title-accent">Gerald?</span>
+        </h1>
+        <p className="subtitle">Trust is scarce. Gerald is dead.</p>
+      </div>
 
       {error && (
         <div className="error">
