@@ -63,7 +63,7 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
       <p className="dim">
         Flavor only — the werebear is dealt in secret and could be wearing any of these faces.
       </p>
-      <div className="characters">
+      <div className="characters picker">
         {CHARACTERS.map((c) => {
           const isTaken = taken.has(c.id);
           return (

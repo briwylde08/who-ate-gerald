@@ -205,6 +205,17 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.selected .portrait { border-color: var(--gold); }
 .character.dead { opacity: 0.45; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
+
+/* The villager picker: bigger cards so the portraits carry the page.
+   (The Town Square roster shares .character but has no portraits, so it
+   keeps the compact grid above.) */
+.characters.picker {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.picker .character { padding: 16px; gap: 6px; }
+.picker .character > span:not(.blurb) { font-size: 1.1rem; }
+.picker .character .blurb { font-size: 0.88rem; }
 div.character { border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
 
 .chat {
