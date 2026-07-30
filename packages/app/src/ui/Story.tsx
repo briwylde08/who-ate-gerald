@@ -19,6 +19,52 @@ export function GeraldStory() {
         <b>Unless the werebear is you.</b>
       </p>
       <details>
+        <summary>The rules</summary>
+        <p className="dim">
+          Everyone starts with <b>50 XLM</b> of hidden budget and collects <b>15 more</b> each
+          morning. Once every player is ready, roles are dealt in secret: <b>one werebear</b>,
+          everyone else villagers. The werebear plays the whole day as a villager — it shops,
+          talks, and votes like anyone else — and then picks who dies that night.
+        </p>
+        <p className="dim">Each day runs in this order:</p>
+        <ol className="dim rules">
+          <li>
+            <b>Shop.</b> Visit at most <b>two of the four stores</b> and buy whatever you can
+            afford there. Every item's effect is public knowledge; which one you bought is not.
+            Press <b>Done</b> when you've finished.
+          </li>
+          <li>
+            <b>The market closes</b> once every living player has declared Done.
+          </li>
+          <li>
+            <b>Maude.</b> Each player may ask her <b>one private question</b> per day. She
+            answers from the ledger, so she cannot be wrong — but she answers only you.
+          </li>
+          <li>
+            <b>The square.</b> Open chat. Accuse, defend, lie.
+          </li>
+          <li>
+            <b>The trial.</b> Everyone still alive votes for the player they believe is the
+            werebear. Most votes is banished. A tie banishes nobody — instead the tied players
+            must each unseal one purchase before they may vote again.
+          </li>
+          <li>
+            <b>Night.</b> The werebear chooses someone to eat. Dawn breaks as soon as the last
+            vote and that choice are in.
+          </li>
+          <li>
+            <b>Morning.</b> The village learns who was banished, who was eaten, and whatever
+            the night's items did.
+          </li>
+        </ol>
+        <p className="dim">
+          <b>The village wins</b> by banishing the werebear. <b>The werebear wins</b> if it is
+          the last one standing beside a single villager, or if it is still unfound at the end
+          of <b>day five</b>. Banished and eaten players keep chatting as ghosts, but cast no
+          votes.
+        </p>
+      </details>
+      <details>
         <summary>What's actually happening under the hood</summary>
         <p className="dim">
           Your budget is a balance in a <b>confidential token</b> on Stellar testnet. You

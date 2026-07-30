@@ -236,8 +236,8 @@ export function PlayerApp() {
         </a>
         <span className="spacer" />
         {profile && (
-          <button title="Read the story again" onClick={() => setStoryOpen((s) => !s)}>
-            📜
+          <button title="The story, the rules, and how it works" onClick={() => setStoryOpen((s) => !s)}>
+            Rules
           </button>
         )}
         {wallet && <button onClick={() => void logout()}>Log out</button>}

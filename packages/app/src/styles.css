@@ -260,3 +260,6 @@ div.character { border: 1px solid var(--line); border-radius: 6px; background: v
 
 details { margin: 8px 0; }
 summary { cursor: pointer; color: var(--ink-dim); }
+/* Numbered day sequence in the rules — room to breathe between steps. */
+ol.rules { margin: 8px 0 12px; padding-left: 1.4em; }
+ol.rules li { margin: 0 0 6px; }
