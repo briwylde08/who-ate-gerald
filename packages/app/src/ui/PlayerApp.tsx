@@ -275,13 +275,10 @@ export function PlayerApp() {
       {profile && !wallet && (
         <div className="panel">
           <p>
-            Welcome, {profile.name} {characterOf(profile)?.title}. The werebear is amongst you,
-            purchasing items.
+            Welcome, {profile.name} {characterOf(profile)?.title}.
           </p>
           <p className="dim">
-            You need the Freighter extension, set to <b>Testnet</b>. Freighter signs your
-            transactions; a signed message derives your confidential key. Nothing secret leaves
-            your browser.
+            You need the Freighter extension, set to <b>Testnet</b>.
           </p>
           <p className="dim">
             Your hidden budget lives on-chain, tied to this account — as does your{" "}
