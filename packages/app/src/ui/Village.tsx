@@ -111,9 +111,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const pay = async (shop: ShopInfo, item: CatalogItem, amountStroops: bigint) => {
     setArmed(null);
     setError(null);
-    if (visitedShops.length >= 2 && !visitedShops.includes(shop.label)) {
+    // The cap counts BOTH the public graph (other devices, authoritative but
+    // laggy) and this browser's own instant purchase log — no sync window to
+    // slip a third store through.
+    const localVisited = loadHistory(wallet.address, loadGameId())
+      .filter((r) => r.round === round)
+      .map((r) => r.shopLabel);
+    const visited = [...new Set([...visitedShops, ...localVisited])];
+    if (visited.length >= 2 && !visited.includes(shop.label)) {
       setError(
-        `The village is small, but spread out: two shops a day is the custom. Today you've been to ${visitedShops.join(" and ")}. (Maude audits.)`,
+        `The village is small, but spread out: two stores a day is the custom. Today you've been to ${visited.join(" and ")}. (Maude audits.)`,
       );
       return;
     }
@@ -128,6 +135,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       recordPurchase(wallet.address, {
         at: new Date().toISOString(),
         gameId: loadGameId(),
+        round,
         shopId: shop.id,
         shopLabel: shop.label,
         item: item.label,

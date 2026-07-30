@@ -10,6 +10,8 @@ export interface PurchaseRecord {
   at: string;
   /** Which game this purchase belonged to — a new game starts a clean ledger. */
   gameId?: string;
+  /** Which game day — drives the two-stores-a-day cap without chain lag. */
+  round?: number;
   shopId: string;
   shopLabel: string;
   /** Item label from the catalog. */
