@@ -396,8 +396,8 @@ th { color: var(--ink-dim); font-weight: normal; }
    then the ritual of composing one question. Narrower than the rest of the
    app on purpose. */
 
-.maude-page { max-width: 860px; margin: 0 auto; }
-
+/* No width cap here: Maude's panels line up with the Town Square and the
+   Shops, which fill the page column. */
 .maude-intro {
   display: flex;
   gap: 18px;
