@@ -116,6 +116,8 @@ for (const shop of SHOP_BY_ID.values()) {
 
 export class GameRoom extends DurableObject<Env> {
   private state: GameState = freshState();
+  /** Throttle for read-path indexer syncs (graph polls every 30s per client). */
+  private lastGraphSync = 0;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -820,6 +822,12 @@ export class GameRoom extends DurableObject<Env> {
 
   /** Public payment graph — who paid whom, NO amounts. Spectator-safe. */
   async graphView(): Promise<Record<string, unknown>> {
+    // Keep the sightings fresh: poke the mirror, at most once per 20s no
+    // matter how many spectators are polling.
+    if (Date.now() - this.lastGraphSync > 20_000) {
+      this.lastGraphSync = Date.now();
+      await syncIndexer(this.env);
+    }
     const purchases = await this.loadAll();
     return {
       round: this.state.round,
