@@ -206,6 +206,16 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.dead { opacity: 0.45; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 
+/* Quiet backwards navigation — present, never competing with the primary. */
+button.back {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+button.back:hover { color: var(--gold); }
+
 /* The villager picker: bigger cards so the portraits carry the page.
    (The Town Square roster shares .character but has no portraits, so it
    keeps the compact grid above.) */

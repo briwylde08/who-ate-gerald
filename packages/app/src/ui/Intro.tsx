@@ -42,6 +42,12 @@ export function Intro({ onDone }: { onDone: (p: Profile) => void }) {
 
   return (
     <div>
+      <div className="row">
+        <button className="back" onClick={() => setPage("story")}>
+          ← Back to the story
+        </button>
+      </div>
+
       <div className="panel">
         <p>
           The village needs to know who you are — or at least, who you claim to be.
