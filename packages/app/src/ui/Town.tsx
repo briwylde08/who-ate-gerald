@@ -230,15 +230,18 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
 
         {!me && !view.dealt && (
           <div className="answer-card">
-            <b>Take a seat in “{gameId}”.</b> Joining asks Freighter for one signature — that's
-            you proving your seat to the record-keeper.
+            <b>Take a seat in “{gameId}”.</b> Freighter will ask you to sign one message — it's
+            free, it's not a transaction, and you'll only do it once. Signing proves this wallet
+            is yours so nobody else can play as you.
             <div className="row">
               <button
                 className="primary"
                 onClick={() => {
                   const prof = loadProfile();
                   if (!prof) {
-                    setError("Pick a name and villager first (📜 → log out if you need to start over).");
+                    setError(
+                      "Pick a name and villager first — use Log out in the top bar to start over.",
+                    );
                     return;
                   }
                   playerApi
