@@ -10,6 +10,7 @@ import {
   type GraphView,
 } from "../lib/player";
 import { CHARACTERS, loadProfile } from "../lib/profile";
+import { loadHistory } from "../lib/history";
 import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
 
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
@@ -44,6 +45,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   const [picked, setPicked] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
+  const [discloseTx, setDiscloseTx] = useState("");
 
   const sendChat = async () => {
     setChatBusy(true);
@@ -352,20 +354,56 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           <h2>The square</h2>
           <p className="dim">
             Accuse, defend, bluff — the square hears everything and forgets it at dawn.
-            {me?.alive ? "" : " The dead may listen, not speak."}
+            {me && !me.alive ? " You are a ghost now: whisper wisely, certified innocent." : ""}
           </p>
           <div className="chat">
             {(view.chat ?? []).length === 0 ? (
               <p className="dim">Nobody has said anything yet. Suspicious, honestly.</p>
             ) : (
               (view.chat ?? []).slice(-60).map((m, i) => (
-                <p key={i} className="chat-line">
-                  <b>{m.name}:</b> {m.text}
+                <p key={i} className="chat-line" style={m.ghost ? { opacity: 0.65, fontStyle: "italic" } : undefined}>
+                  <b>
+                    {m.ghost ? "👻 " : ""}
+                    {m.name}:
+                  </b>{" "}
+                  {m.text}
                 </p>
               ))
             )}
           </div>
-          {me?.alive && (
+
+          {me?.standsAccused && (
+            <div className="answer-card">
+              <b>⚖ You stand accused.</b> The vote split on you yesterday — pick one purchase
+              and Maude will unseal it for the whole square (she reads the chain, so it cannot
+              be a lie). Your vote unlocks after.
+              <div className="row">
+                <select value={discloseTx} onChange={(e) => setDiscloseTx(e.target.value)}>
+                  <option value="">reveal which purchase?</option>
+                  {loadHistory(wallet.address, gameId)
+                    .filter((r) => (r.round ?? 0) >= 1)
+                    .map((r) => (
+                      <option key={r.txHash} value={r.txHash}>
+                        {r.shopLabel}: {r.item}
+                      </option>
+                    ))}
+                </select>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    playerApi
+                      .disclose(wallet, gameId, discloseTx)
+                      .then(() => void load())
+                      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+                  }}
+                >
+                  Let Maude unseal it
+                </button>
+              </div>
+            </div>
+          )}
+
+          {me && (
             <div className="row">
               <input
                 type="text"
@@ -416,10 +454,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             </select>
             <button
               className="primary"
-              disabled={!voteTarget || !view.marketClosed}
+              disabled={!voteTarget || !view.marketClosed || me?.standsAccused}
               onClick={() => void castVote()}
             >
-              Cast vote
+              {me?.standsAccused ? "Reveal a purchase first (see the square)" : "Cast vote"}
             </button>
           </div>
         </div>

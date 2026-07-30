@@ -59,7 +59,9 @@ interface GameState {
   /** address → {round, ledger} of their "done shopping" declaration. */
   doneShopping: Record<string, { round: number; ledger: number }>;
   /** The town square chat — per-day threads, capped. */
-  chat: { round: number; name: string; text: string; at: string }[];
+  chat: { round: number; name: string; text: string; at: string; ghost?: boolean }[];
+  /** Tied-vote consequence: address → round in which they must disclose. */
+  mustDisclose: Record<string, number>;
   askLog: AskRecord[];
   /** This round's votes: voter address → target player name. */
   votes: Record<string, string>;
@@ -87,6 +89,7 @@ const freshState = (): GameState => ({
   asked: {},
   doneShopping: {},
   chat: [],
+  mustDisclose: {},
   askLog: [],
   votes: {},
   nightPick: null,
@@ -438,6 +441,11 @@ export class GameRoom extends DurableObject<Env> {
     const voter = this.playerByAddress(voterAddress);
     if (!voter) throw new Error("that address holds no seat in this game");
     if (!voter.alive) throw new Error("the dead do not vote");
+    if (this.state.mustDisclose[voterAddress] === this.state.round) {
+      throw new Error(
+        "you stand accused — reveal one purchase (in the town square) before you may vote",
+      );
+    }
     const target = this.playerByName(targetName);
     if (!target || !target.alive) throw new Error(`no living player named "${targetName}"`);
     this.state.votes[voterAddress] = target.name;
@@ -467,8 +475,9 @@ export class GameRoom extends DurableObject<Env> {
 
   /**
    * Town square chat (identity pre-verified). Opens when the market closes,
-   * closes at dawn; the dead hold their peace. Say anything — convincing
-   * people is the whole game.
+   * closes at dawn. The dead may speak — as ghosts. (Everyone dead mid-game
+   * is a certified villager, so ghost counsel mildly helps the village;
+   * counterweighted on the werebear's shelf.)
    */
   async chat(address: string, text: string): Promise<{ posted: boolean }> {
     this.requireDay();
@@ -478,7 +487,6 @@ export class GameRoom extends DurableObject<Env> {
     }
     const player = this.playerByAddress(address);
     if (!player) throw new Error("that address holds no seat in this game");
-    if (!player.alive) throw new Error("the dead hold their peace");
     const clean = String(text).trim().slice(0, 280);
     if (!clean) throw new Error("say something or say nothing");
     this.state.chat.push({
@@ -486,10 +494,48 @@ export class GameRoom extends DurableObject<Env> {
       name: player.name,
       text: clean,
       at: new Date().toISOString(),
+      ghost: !player.alive || undefined,
     });
     if (this.state.chat.length > 500) this.state.chat = this.state.chat.slice(-500);
     await this.persist();
     return { posted: true };
+  }
+
+  /**
+   * Stand-accused disclosure: the accused PICKS the purchase (by tx hash),
+   * Maude does the revealing — the server decrypts that exact transaction,
+   * so the reveal cannot lie. Clears the accusation and unlocks their vote.
+   */
+  async discloseOne(address: string, txHash: string): Promise<{ revealed: string }> {
+    this.requireDay();
+    this.requireUnresolved();
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("that address holds no seat in this game");
+    if (this.state.mustDisclose[address] !== this.state.round) {
+      throw new Error("you do not stand accused today");
+    }
+    await syncIndexer(this.env);
+    const purchases = await this.loadAll();
+    const mine = purchases.filter(
+      (p) => p.from === address && p.round >= 1 && !p.isSurrender,
+    );
+    let line: string;
+    if (mine.length === 0) {
+      line = `⚖ ${player.name}, standing accused, opens their ledger — empty. Not one coin spent this game.`;
+    } else {
+      const pick = mine.find((p) => p.txHash === String(txHash));
+      if (!pick) throw new Error("pick one of your own purchases to reveal");
+      line = `⚖ ${player.name}, standing accused, lets Maude unseal one purchase: ${pick.toLabel} — ${pick.amountXlm} XLM${pick.itemGuess ? ` (${pick.itemGuess})` : ""}.`;
+    }
+    delete this.state.mustDisclose[address];
+    this.state.chat.push({
+      round: this.state.round,
+      name: "the Order",
+      text: line,
+      at: new Date().toISOString(),
+    });
+    await this.persist();
+    return { revealed: line };
   }
 
   /** True once every living villager has finished today's shopping. */
@@ -573,7 +619,17 @@ export class GameRoom extends DurableObject<Env> {
       const max = Math.max(...weights.values());
       const top = [...weights.entries()].filter(([, w]) => w === max).map(([n]) => n);
       if (top.length === 1) banished = this.playerByName(top[0]!) ?? null;
-      else notes.push("The vote tied. The village dithered. Somewhere, something licked its chops.");
+      else {
+        // A tie has teeth: the tied STAND ACCUSED — each must let Maude
+        // reveal one purchase of their choosing before voting tomorrow.
+        notes.push(
+          `The vote split between ${top.join(" and ")} — the village could not choose. They stand accused: each must reveal one purchase before voting tomorrow.`,
+        );
+        for (const name of top) {
+          const p = this.playerByName(name);
+          if (p?.alive) this.state.mustDisclose[p.address] = round + 1;
+        }
+      }
     } else {
       notes.push("Nobody voted. Gerald would be disappointed, if he still had opinions.");
     }
@@ -815,6 +871,7 @@ export class GameRoom extends DurableObject<Env> {
         ready: p.ready === true,
         doneToday: this.state.doneShopping[p.address]?.round === this.state.round,
         askedToday: (this.state.asked[p.address] ?? 0) >= this.state.round && this.state.round >= 1,
+        standsAccused: this.state.mustDisclose[p.address] === this.state.round,
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,
