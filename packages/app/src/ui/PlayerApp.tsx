@@ -150,8 +150,10 @@ export function PlayerApp() {
     return () => clearInterval(t);
   }, [wallet, refresh]);
 
-  const provisioned =
-    balances !== null && balances.registered && balances.spendable + balances.receiving > 0n;
+  // Registered = provisioned. Being BROKE mid-game (spendable 0) is a
+  // legitimate state — the Shops' top-up desk handles refills, not the
+  // welcome flow.
+  const provisioned = balances !== null && balances.registered;
 
   const [copied, setCopied] = useState(false);
   const logout = async () => {
