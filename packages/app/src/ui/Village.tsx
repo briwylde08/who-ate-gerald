@@ -88,12 +88,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   };
 
   // Done-for-the-day: locks your stores and unlocks your Maude question.
+  // Dead players get neither stores nor the Order — the chain can't stop a
+  // ghost's transfers, but the shop floor won't offer them.
   const [doneToday, setDoneToday] = useState(false);
+  const [dead, setDead] = useState(false);
   useEffect(() => {
     fetchPublicView(loadGameId())
       .then((v) => {
         const me = v.players.find((p) => p.address === wallet.address);
         setDoneToday(me?.doneToday === true);
+        setDead(me ? !me.alive : false);
       })
       .catch(() => undefined);
   }, [wallet.address, round]);
@@ -186,7 +190,18 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       </div>
 
-      {excess > 0n && (
+      {dead && (
+        <div className="panel">
+          <h3>🪦 The shops serve no ghosts</h3>
+          <p className="dim">
+            You are dead — banished or eaten, the market no longer concerns you. Whatever coin
+            you carry, purchases from beyond the grave hold no power at dawn. Haunt the square
+            instead; the living can hear you.
+          </p>
+        </div>
+      )}
+
+      {!dead && excess > 0n && (
         <div className="panel">
           <h3>⚖ The Order requires a word</h3>
           <p className="dim">
@@ -201,7 +216,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
 
-      {deficit > 0n && excess === 0n && (
+      {!dead && deficit > 0n && excess === 0n && (
         <div className="panel">
           <h3>⚖ The Order owes you</h3>
           <p className="dim">
@@ -215,7 +230,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
 
-      {doneToday && (
+      {!dead && doneToday && (
         <div className="panel">
           <h3>🛍✓ Done for today</h3>
           <p className="dim">
@@ -224,7 +239,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           </p>
         </div>
       )}
-      {!doneToday && round >= 1 && (
+      {!dead && !doneToday && round >= 1 && (
         <div className="row">
           <button onClick={() => void declareDone()}>Done buying for today</button>
           <span className="dim">
@@ -233,7 +248,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
 
-      <div className="shops" style={excess > 0n ? { opacity: 0.4, pointerEvents: "none" } : undefined}>
+      <div
+        className="shops"
+        style={excess > 0n || dead ? { opacity: 0.4, pointerEvents: "none" } : undefined}
+      >
         {SHOPS.map((shop) => (
           <div key={shop.id} className="panel shop-card">
             <h3>{shop.label}</h3>
