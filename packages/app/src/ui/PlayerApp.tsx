@@ -4,7 +4,7 @@ import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wall
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, type Profile } from "../lib/profile";
-import { fetchGraph, loadGameId, saveGameId } from "../lib/player";
+import { fetchGraph, fetchPublicView, loadGameId, saveGameId } from "../lib/player";
 import { Intro } from "./Intro";
 import { GeraldStory } from "./Story";
 import { Village } from "./Village";
@@ -149,6 +149,29 @@ export function PlayerApp() {
     const t = setInterval(() => void refresh(wallet), 30_000);
     return () => clearInterval(t);
   }, [wallet, refresh]);
+
+  // Day awareness: the public view is a cheap in-memory read, so poll it
+  // fast — a new day should flip the whole app (shops unlock, allowance
+  // grows, Done resets) without anyone touching F5.
+  useEffect(() => {
+    if (!wallet) return;
+    const t = setInterval(async () => {
+      try {
+        const v = await fetchPublicView(gameId);
+        setRound((r) => (v.round !== r ? v.round : r));
+      } catch {
+        // no game yet — the slow refresh will catch up
+      }
+    }, 5_000);
+    return () => clearInterval(t);
+  }, [wallet, gameId]);
+
+  // Dawn broke: re-read balances and sightings immediately so the top-up
+  // desk and the two-shops cap reflect today, not yesterday.
+  useEffect(() => {
+    if (wallet && round >= 1) void refresh(wallet);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round]);
 
   // Registered = provisioned. Being BROKE mid-game (spendable 0) is a
   // legitimate state — the Shops' top-up desk handles refills, not the
