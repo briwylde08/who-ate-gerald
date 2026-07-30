@@ -67,6 +67,26 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     }
   };
 
+  // The mirror of the surrender: a wallet that arrives BELOW the allowance
+  // (spent down in a previous game) may top up to it. Deposits are public,
+  // so the whole village can verify the top-up stays within the schedule.
+  const deficit =
+    remainingAllowance > balances.spendable ? remainingAllowance - balances.spendable : 0n;
+
+  const topUp = async () => {
+    setError(null);
+    setBusy("Topping up your budget (deposit + collect)…");
+    try {
+      await wallet.deposit(deficit);
+      await wallet.merge();
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   // Done-for-the-day: locks your stores and unlocks your Maude question.
   const [doneToday, setDoneToday] = useState(false);
   useEffect(() => {
@@ -169,6 +189,21 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           </p>
           <button className="primary" onClick={() => void surrender()}>
             Surrender {xlmString(excess)} XLM to the Order
+          </button>
+        </div>
+      )}
+
+      {deficit > 0n && excess === 0n && (
+        <div className="panel">
+          <h3>⚖ The Order owes you a word</h3>
+          <p className="dim">
+            You hold {xlmString(balances.spendable)} XLM, but the allowance at this point is{" "}
+            {xlmString(remainingAllowance)} — your wallet arrived poorer than the law provides
+            (a previous game's spending, most likely). Top up the difference from your public
+            XLM; the deposit is public, so everyone can verify it's fair.
+          </p>
+          <button className="primary" onClick={() => void topUp()}>
+            Top up {xlmString(deficit)} XLM
           </button>
         </div>
       )}
