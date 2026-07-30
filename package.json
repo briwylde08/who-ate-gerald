@@ -14,6 +14,7 @@
     "test:auditor": "tsx scripts/test-auditor-facts.ts",
     "mini-game": "tsx scripts/mini-game.ts",
     "mini-game:v2": "tsx scripts/mini-game-v2.ts",
+    "bots": "tsx scripts/bots.ts",
     "test:auth": "tsx scripts/test-auth.ts",
     "deploy:app": "npm run build --workspace @gerald/app && wrangler pages deploy packages/app/dist --project-name who-ate-gerald --branch main"
   },
