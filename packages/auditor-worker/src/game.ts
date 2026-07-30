@@ -523,7 +523,8 @@ export class GameRoom extends DurableObject<Env> {
     if (mine.length === 0) {
       line = `⚖ ${player.name}, standing accused, opens their ledger — empty. Not one coin spent this game.`;
     } else {
-      const pick = mine.find((p) => p.txHash === String(txHash));
+      // Empty txHash = "Maude's choice" (used by bots): the latest purchase.
+      const pick = txHash ? mine.find((p) => p.txHash === String(txHash)) : mine[mine.length - 1];
       if (!pick) throw new Error("pick one of your own purchases to reveal");
       line = `⚖ ${player.name}, standing accused, lets Maude unseal one purchase: ${pick.toLabel} — ${pick.amountXlm} XLM${pick.itemGuess ? ` (${pick.itemGuess})` : ""}.`;
     }

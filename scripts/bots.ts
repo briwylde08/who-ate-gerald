@@ -222,7 +222,14 @@ interface PublicView {
   dealt: boolean;
   winner: string | null;
   marketClosed?: boolean;
-  players: { name: string; address: string; alive: boolean; ready?: boolean; doneToday?: boolean }[];
+  players: {
+    name: string;
+    address: string;
+    alive: boolean;
+    ready?: boolean;
+    doneToday?: boolean;
+    standsAccused?: boolean;
+  }[];
   mornings: { round: number }[];
 }
 
@@ -318,6 +325,11 @@ async function main() {
           }
 
           if (view.marketClosed) {
+            // Stand accused? Comply — let Maude pick the purchase to unseal.
+            if (me.standsAccused) {
+              const ok = await bot.call("disclose", { txHash: "" }).catch(() => null);
+              if (ok) console.log(`  ${bot.name}: stood accused, disclosed`);
+            }
             // A little table talk, once a day.
             if (bot.chattedRound < view.round && Math.random() < 0.8) {
               bot.chattedRound = view.round;
