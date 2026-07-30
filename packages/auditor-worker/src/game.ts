@@ -826,8 +826,22 @@ export class GameRoom extends DurableObject<Env> {
           (p) => p.alive && roles[p.address] !== "werebear",
         ).length;
         if (livingVillagers <= 1) {
+          // Parity: one villager cannot win a vote against one bear. The
+          // game is decided — and the bear doesn't leave leftovers.
           this.state.winner = "werebear";
           this.state.phase = "ended";
+          const last = this.state.players.filter(
+            (p) => p.alive && roles[p.address] !== "werebear",
+          );
+          for (const villager of last) {
+            villager.alive = false;
+            notes.push(
+              `With no one left to stand between them, the werebear stopped pretending. ${villager.name} never saw another dawn. The village belongs to the bear.`,
+            );
+          }
+          if (last.length === 0) {
+            notes.push("The werebear stands alone in an empty village. It has won.");
+          }
         } else if (round >= MAX_DAYS) {
           // The clock: outlast the village and the moon keeps its secret.
           this.state.winner = "werebear";
