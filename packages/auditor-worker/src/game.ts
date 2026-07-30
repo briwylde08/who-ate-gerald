@@ -883,6 +883,13 @@ export class GameRoom extends DurableObject<Env> {
       phase: this.state.phase,
       dealt: this.state.roles !== null,
       winner: this.state.winner,
+      // The game is over: the masks come off. Until then, roles are sealed.
+      bear:
+        this.state.winner !== null && this.state.roles
+          ? (this.state.players.find(
+              (p) => this.state.roles?.[p.address] === "werebear",
+            )?.name ?? null)
+          : null,
       players: this.state.players.map((p) => ({
         seat: p.seat,
         name: p.name,

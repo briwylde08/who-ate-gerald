@@ -201,6 +201,14 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             {view.maxDays}, it wins.
           </p>
         )}
+        {view.winner && view.bear && (
+          <div className="answer-card" style={{ fontSize: "1.1rem" }}>
+            🐻 <b>{view.bear} was the werebear.</b>{" "}
+            {view.winner === "werebear"
+              ? "They shopped beside you, voted beside you, and outlasted you all."
+              : "The village sleeps safe — and owes some apologies to the wrongly banished."}
+          </div>
+        )}
         <p className="dim">
           {view.players.filter((p) => p.alive).length}/{view.players.length} alive
           {me ? (me.alive ? "" : " · you are among the departed") : ""}

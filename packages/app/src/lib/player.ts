@@ -129,6 +129,8 @@ export interface PublicView {
   phase: "lobby" | "day" | "ended";
   dealt: boolean;
   winner: "village" | "werebear" | null;
+  /** Revealed only once the game has a winner; null while roles are sealed. */
+  bear?: string | null;
   players: {
     seat: number;
     name: string;
