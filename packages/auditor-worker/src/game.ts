@@ -73,6 +73,8 @@ interface GameState {
   baneConsumed: Record<string, boolean>;
   /** address → silver charms shattered (each purchase = one save). */
   charmUsed: Record<string, number>;
+  /** address → round they spend in critical condition (no vote) after a save. */
+  recovering: Record<string, number>;
   /** Pierces spent — each venison purchase grants exactly one. */
   venisonUsed: number;
   mornings: MorningReport[];
@@ -96,6 +98,7 @@ const freshState = (): GameState => ({
   wounded: false,
   baneConsumed: {},
   charmUsed: {},
+  recovering: {},
   venisonUsed: 0,
   mornings: [],
   phase: "lobby",
@@ -446,6 +449,9 @@ export class GameRoom extends DurableObject<Env> {
         "you stand accused — reveal one purchase (in the town square) before you may vote",
       );
     }
+    if (this.state.recovering[voterAddress] === this.state.round) {
+      throw new Error("you are in critical condition — too weak to raise a hand at today's trial");
+    }
     const target = this.playerByName(targetName);
     if (!target || !target.alive) throw new Error(`no living player named "${targetName}"`);
     this.state.votes[voterAddress] = target.name;
@@ -559,7 +565,13 @@ export class GameRoom extends DurableObject<Env> {
   /** Dawn comes by itself when the last vote and the bear's pick are in. */
   private async maybeResolve(): Promise<boolean> {
     const alive = this.state.players.filter((p) => p.alive);
-    const allVoted = alive.every((p) => this.state.votes[p.address] !== undefined);
+    // Players in critical condition CANNOT vote today — dawn doesn't wait
+    // for a hand that can't be raised.
+    const allVoted = alive.every(
+      (p) =>
+        this.state.votes[p.address] !== undefined ||
+        this.state.recovering[p.address] === this.state.round,
+    );
     const roles = this.state.roles ?? {};
     const bear = alive.find((p) => roles[p.address] === "werebear");
     const bearReady = !bear || this.state.nightPick !== null;
@@ -667,9 +679,9 @@ export class GameRoom extends DurableObject<Env> {
     }
     if (this.state.winner === null && bear?.alive && bearAddress) {
       const target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
-      const muskTonight = boughtThisRound(bearAddress, "musk_salve");
+      const hamTonight = boughtThisRound(bearAddress, "smoked_ham");
       const announceFail = (line: string) => {
-        if (!muskTonight) notes.push(line);
+        if (!hamTonight) notes.push(line);
       };
       if (this.state.wounded) {
         this.state.wounded = false;
@@ -683,13 +695,21 @@ export class GameRoom extends DurableObject<Env> {
         (this.state.charmUsed[target.address] ?? 0)
       ) {
         // Silver is absolute — venison does not pierce it — but the charm
-        // SHATTERS: one save per charm bought.
+        // SHATTERS (one save per charm bought), and the survivor spends the
+        // next day in CRITICAL CONDITION: alive, but too weak to vote.
+        // If the bear brought smoked ham, the whole thing stays secret —
+        // no announcement AND no visible recovery: the ham trades
+        // trial-silencing for secrecy.
         this.state.charmUsed[target.address] =
           (this.state.charmUsed[target.address] ?? 0) + 1;
-        announceFail(
-          `${target.name} was attacked in the night — and stands at dawn among the shards of a silver charm. It shattered on the werebear's hide, and it will not save them twice.`,
-        );
-        if (muskTonight) notes.push("A quiet night."); // musk hides even a silver save
+        if (hamTonight) {
+          notes.push("A quiet night."); // the ham hides even a silver save
+        } else {
+          this.state.recovering[target.address] = round + 1;
+          notes.push(
+            `${target.name} was attacked in the night — and lives, barely, among the shards of a silver charm. It shattered on the werebear's hide and will not save them twice. They spend today in bed, too weak to raise a hand at the trial.`,
+          );
+        }
       } else {
         const hasBane =
           boughtEver(target.address, "bearsbane_tincture") && !this.state.baneConsumed[target.address];
@@ -873,6 +893,7 @@ export class GameRoom extends DurableObject<Env> {
         doneToday: this.state.doneShopping[p.address]?.round === this.state.round,
         askedToday: (this.state.asked[p.address] ?? 0) >= this.state.round && this.state.round >= 1,
         standsAccused: this.state.mustDisclose[p.address] === this.state.round,
+        recovering: this.state.recovering[p.address] === this.state.round,
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,

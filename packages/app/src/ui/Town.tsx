@@ -293,6 +293,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
                   {!view.dealt && p.ready ? " ✅" : ""}
                   {view.dealt && p.alive && p.doneToday ? " 🛍✓" : ""}
                   {view.dealt && p.alive && p.askedToday ? " 🔮" : ""}
+                  {view.dealt && p.alive && p.recovering ? " 🤕" : ""}
                 </span>
                 <span className="dim blurb">{p.alive ? (c?.blurb ?? "New in town.") : "Eaten or banished. Gerald has company."}</span>
               </div>
@@ -454,10 +455,14 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             </select>
             <button
               className="primary"
-              disabled={!voteTarget || !view.marketClosed || me?.standsAccused}
+              disabled={!voteTarget || !view.marketClosed || me?.standsAccused || me?.recovering}
               onClick={() => void castVote()}
             >
-              {me?.standsAccused ? "Reveal a purchase first (see the square)" : "Cast vote"}
+              {me?.recovering
+                ? "🤕 Recovering — too weak to vote today"
+                : me?.standsAccused
+                  ? "Reveal a purchase first (see the square)"
+                  : "Cast vote"}
             </button>
           </div>
         </div>

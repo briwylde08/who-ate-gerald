@@ -139,6 +139,7 @@ export interface PublicView {
     doneToday?: boolean;
     askedToday?: boolean;
     standsAccused?: boolean;
+    recovering?: boolean;
   }[];
   readyCount?: number;
   minPlayers?: number;
