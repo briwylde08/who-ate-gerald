@@ -27,10 +27,24 @@ export interface MessageSigner extends Signer {
 }
 
 export async function connectFreighter(): Promise<MessageSigner> {
-  const conn = await isConnected();
-  if (!conn.isConnected) {
+  // The extension's page bridge can take a beat to inject — retry before
+  // concluding it's absent (first-click failures are usually this race).
+  let detected = false;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      const conn = await isConnected();
+      if (conn.isConnected) {
+        detected = true;
+        break;
+      }
+    } catch {
+      // bridge not answering yet — keep waiting
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!detected) {
     throw new Error(
-      "Freighter not detected. The village requires a wallet: install the Freighter extension (freighter.app) and switch it to Testnet.",
+      "Freighter isn't answering in this browser. Check: the Freighter icon exists in THIS browser profile (extensions are per-profile), it's unlocked, you're not in a private/incognito window, and it's not Safari (unsupported). Then refresh and try again.",
     );
   }
   const access = await requestAccess();
