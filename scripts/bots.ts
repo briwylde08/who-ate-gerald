@@ -81,6 +81,15 @@ const CHAT_LINES = [
   "Somebody's spending like they've got something to prepare for.",
 ];
 
+/** Pointed fingers — feeds the herd: mentions raise suspicion for everyone. */
+const ACCUSE_LINES: ((n: string) => string)[] = [
+  (n) => `I've had my eye on ${n} all day.`,
+  (n) => `${n} has been awfully quiet about where their coin goes.`,
+  (n) => `Did anyone else see ${n} near the Butcher's? Just asking.`,
+  (n) => `Something about ${n} doesn't sit right with me.`,
+  (n) => `If it isn't ${n}, I'll eat my hat.`,
+];
+
 /** Shop list with priced items, from the catalog (chapel included — cover). */
 const STORES: { id: string; address: string; prices: bigint[] }[] = Object.entries(
   catalog.shops as Record<string, { items?: { priceXlm: number }[] }>,
@@ -114,6 +123,8 @@ class BotVillager {
   votedRound = 0;
   chattedRound = 0;
   pickedRound = 0;
+  /** Bear memory: last night's target — if they're still breathing, pick elsewhere. */
+  lastPick: string | null = null;
 
   constructor(
     readonly name: string,
@@ -229,13 +240,111 @@ interface PublicView {
     ready?: boolean;
     doneToday?: boolean;
     standsAccused?: boolean;
+    recovering?: boolean;
   }[];
-  mornings: { round: number }[];
+  mornings: { round: number; eaten?: string | null; notes?: string[] }[];
+  chat?: { name: string; text: string }[];
+}
+
+interface GraphView {
+  round: number;
+  players: { name: string; address: string }[];
+  edges: { round: number; from: string; to: string }[];
 }
 
 async function publicView(): Promise<PublicView> {
   const resp = await fetch(`${AUDITOR_URL}/games/${gameId}/public`);
   return (await resp.json()) as PublicView;
+}
+
+async function graphView(): Promise<GraphView | null> {
+  try {
+    const resp = await fetch(`${AUDITOR_URL}/games/${gameId}/graph`);
+    return (await resp.json()) as GraphView;
+  } catch {
+    return null;
+  }
+}
+
+/** "Widow Marta" is mentioned by "Marta" too — match full name or last token. */
+function mentions(text: string, name: string): boolean {
+  const t = text.toLowerCase();
+  const lower = name.toLowerCase();
+  if (t.includes(lower)) return true;
+  const parts = lower.split(" ");
+  return parts.length > 1 && t.includes(parts[parts.length - 1]!);
+}
+
+/**
+ * Village instincts: score each living candidate's suspicion the way a
+ * distractible neighbor would — believe the square, distrust the Butcher's
+ * door, never doubt the proven-innocent.
+ */
+function scoreSuspicion(
+  view: PublicView,
+  graph: GraphView | null,
+  self: { name: string; address: string },
+): Map<string, number> {
+  const scores = new Map<string, number>();
+  const candidates = view.players.filter((p) => p.alive && p.address !== self.address);
+  for (const c of candidates) scores.set(c.name, Math.random()); // jitter breaks symmetry
+
+  // The square talks: every mention of a name today is a point of suspicion.
+  for (const m of view.chat ?? []) {
+    for (const c of candidates) {
+      if (m.name !== c.name && mentions(m.text, c.name)) {
+        scores.set(c.name, (scores.get(c.name) ?? 0) + 2);
+      }
+    }
+  }
+
+  // The Butcher's door: carnivore-aisle visits raise eyebrows (capped).
+  if (graph) {
+    for (const c of candidates) {
+      const visits = graph.edges.filter(
+        (e) => e.from === c.name && e.to === "The Butcher's",
+      ).length;
+      scores.set(c.name, (scores.get(c.name) ?? 0) + Math.min(visits * 2, 4));
+    }
+  }
+
+  // Disclosures that smelled of meat.
+  for (const m of view.chat ?? []) {
+    if (m.name !== "the Order") continue;
+    for (const c of candidates) {
+      if (m.text.includes(c.name) && /venison|Smoked ham/i.test(m.text)) {
+        scores.set(c.name, (scores.get(c.name) ?? 0) + 3);
+      }
+    }
+  }
+
+  // Certified innocents: a charm save proves villagerhood (the bear cannot
+  // buy silver). Never vote for the recovering or the once-saved.
+  for (const c of candidates) {
+    if (c.recovering) scores.set(c.name, -100);
+  }
+  for (const morning of view.mornings ?? []) {
+    for (const note of morning.notes ?? []) {
+      if (note.includes("silver charm")) {
+        for (const c of candidates) {
+          if (note.startsWith(c.name)) scores.set(c.name, -100);
+        }
+      }
+    }
+  }
+  return scores;
+}
+
+function topSuspect(scores: Map<string, number>): string | null {
+  let best: string | null = null;
+  let bestScore = -Infinity;
+  for (const [name, score] of scores) {
+    if (score > bestScore) {
+      best = name;
+      bestScore = score;
+    }
+  }
+  return best;
 }
 
 async function main() {
@@ -300,6 +409,8 @@ async function main() {
         console.log(`\nTHE ${view.winner.toUpperCase()} HAS WON — bots retiring.`);
         break;
       }
+      // One look at the public sightings per poll — shared by every bot's nose.
+      const graph = view.marketClosed ? await graphView() : null;
 
       for (const bot of bots) {
         const me = view.players.find((p) => p.address === bot.address);
@@ -330,16 +441,27 @@ async function main() {
               const ok = await bot.call("disclose", { txHash: "" }).catch(() => null);
               if (ok) console.log(`  ${bot.name}: stood accused, disclosed`);
             }
-            // A little table talk, once a day.
-            if (bot.chattedRound < view.round && Math.random() < 0.8) {
+            // Table talk, once a day — half the time, point a finger at the
+            // current top suspect. (The bear frames right along with them.)
+            if (bot.chattedRound < view.round) {
               bot.chattedRound = view.round;
-              await bot.call("chat", { text: rand(CHAT_LINES) }).catch(() => undefined);
+              if (Math.random() < 0.8) {
+                const suspect = topSuspect(scoreSuspicion(view, graph, bot));
+                const text =
+                  suspect && Math.random() < 0.5 ? rand(ACCUSE_LINES)(suspect) : rand(CHAT_LINES);
+                await bot.call("chat", { text }).catch(() => undefined);
+              }
             }
-            // Vote: random living non-self (the bear frames villagers).
-            if (bot.votedRound < view.round) {
-              const targets = view.players.filter((p) => p.alive && p.address !== bot.address);
-              if (targets.length > 0) {
-                const target = rand(targets).name;
+            // Vote: herd instinct over the day's chat and the graph. Votes
+            // stagger across polls so later voters read the earlier fingers.
+            if (
+              bot.chattedRound >= view.round &&
+              bot.votedRound < view.round &&
+              !me.recovering &&
+              Math.random() < 0.6
+            ) {
+              const target = topSuspect(scoreSuspicion(view, graph, bot));
+              if (target) {
                 const ok = await bot
                   .call<{ dawn: boolean }>("vote", { target })
                   .catch(() => null);
@@ -349,9 +471,14 @@ async function main() {
                 }
               }
             }
-            // The hunt.
+            // The hunt: finish the wounded first (a shattered charm doesn't
+            // grow back); otherwise never test the same door twice.
             if (bot.role === "werebear" && bot.pickedRound < view.round) {
-              const prey = view.players.filter((p) => p.alive && p.address !== bot.address);
+              let prey = view.players.filter((p) => p.alive && p.address !== bot.address);
+              const weak = prey.filter((p) => p.recovering);
+              if (weak.length > 0) prey = weak;
+              else if (bot.lastPick && prey.length > 1)
+                prey = prey.filter((p) => p.name !== bot.lastPick);
               if (prey.length > 0) {
                 const target = rand(prey).name;
                 const ok = await bot
@@ -359,6 +486,7 @@ async function main() {
                   .catch(() => null);
                 if (ok) {
                   bot.pickedRound = view.round;
+                  bot.lastPick = target;
                   console.log(`  (the bot-bear has chosen${ok.dawn ? " — DAWN" : ""})`);
                 }
               }
