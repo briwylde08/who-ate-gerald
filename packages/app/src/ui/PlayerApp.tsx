@@ -234,9 +234,11 @@ export function PlayerApp() {
           {DEPLOYMENT.token.slice(0, 6)}…{DEPLOYMENT.token.slice(-6)} ↗
         </a>
         <span className="spacer" />
-        <button title="Read the story again" onClick={() => setStoryOpen((s) => !s)}>
-          📜
-        </button>
+        {profile && (
+          <button title="Read the story again" onClick={() => setStoryOpen((s) => !s)}>
+            📜
+          </button>
+        )}
         {wallet && <button onClick={() => void logout()}>Log out</button>}
       </div>
 
