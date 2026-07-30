@@ -361,6 +361,201 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character.dead { opacity: 0.45; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 
+/* ------------------------------------------------------- the town square --
+   One lobby panel carries the phase, the readiness, the one button worth
+   pressing, and the village itself. Information sits below it, not beside. */
+
+.lobby { padding: 20px 18px; }
+.phase-label {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.phase-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--parchment);
+  margin: 2px 0 10px;
+}
+
+.lobby-state { margin: 14px 0 4px; }
+.lobby-state h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.1rem;
+  color: var(--moon);
+  margin: 0 0 8px;
+}
+.seat-dots { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.seat-dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid #5b6284;
+  background: transparent;
+}
+.seat-dots .dot.on {
+  background: var(--lantern);
+  border-color: var(--lantern);
+  box-shadow: 0 0 8px rgba(213, 170, 99, 0.4);
+}
+.seat-count {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--ink);
+  margin-left: 6px;
+}
+
+.ready-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.ready-btn {
+  background: linear-gradient(#d9b06c, #b98f4a);
+  border: 1px solid #e2c184;
+  color: #12141c;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 26px;
+  min-height: 46px;
+  border-radius: 7px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.ready-btn:hover { background: linear-gradient(#e2bd7c, #c69a52); color: #12141c; }
+.ready-btn.is-ready {
+  background: none;
+  border-color: var(--green);
+  color: var(--green);
+  box-shadow: none;
+}
+
+.invite-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+.lobby-flavor {
+  margin: 14px 0 0;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--moon);
+  opacity: 0.7;
+}
+
+/* The village: portraits at lobby size, consistent with the picker. */
+.villagers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 16px 0 4px;
+}
+.villager-card {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel-2);
+  padding: 10px;
+}
+.villager-card.you { border-color: var(--lantern); }
+.villager-card.dead { opacity: 0.5; }
+.villager-card.empty { border-style: dashed; background: transparent; }
+.v-portrait { position: relative; margin-bottom: 8px; }
+.v-portrait img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+}
+.villager-card.dead .v-portrait img { filter: grayscale(1) brightness(0.65); }
+.v-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  font-size: 1.8rem;
+  border-radius: 5px;
+  background: rgba(18, 20, 28, 0.5);
+}
+.v-tomb {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 1.2rem;
+  text-shadow: 0 1px 3px #000;
+}
+.you-badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: var(--lantern);
+  color: #12141c;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.v-name { font-size: 0.95rem; color: var(--ink); }
+.v-role {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.v-blurb {
+  margin: 6px 0 0;
+  font-style: italic;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--ink-dim);
+}
+/* Status text is always present, so readiness never reflows the card. */
+.v-status {
+  margin-top: 8px;
+  min-height: 1.2em;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.68rem;
+  color: var(--ink-dim);
+}
+.v-status.ok { color: var(--green); }
+
+/* Below the lobby: privacy on one side, the crier's board on the other. */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.privacy-more { margin-top: 12px; }
+.privacy-more p { margin: 8px 0 0; }
+.notices {
+  background: linear-gradient(rgba(46, 38, 26, 0.55), rgba(33, 30, 26, 0.6));
+  border-color: #4a4130;
+}
+.notices .notice {
+  margin: 0 0 8px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(213, 170, 99, 0.45);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #ded5c4;
+}
+.notices .sightings { margin-bottom: 10px; }
+
 /* "What the village sees": the privacy boundary as two facing columns. */
 .seen-grid {
   display: grid;
@@ -378,7 +573,6 @@ th { color: var(--ink-dim); font-weight: normal; }
 .seen-card ul { margin: 0; padding-left: 1.1em; }
 .seen-card li { color: var(--ink-dim); font-size: 0.9rem; margin: 0 0 4px; }
 
-.seen-label { margin: 18px 0 6px; font-size: 0.95rem; color: var(--moon); }
 .sightings { display: flex; flex-wrap: wrap; gap: 6px; }
 .sighting {
   background: var(--panel-2);
@@ -387,8 +581,6 @@ th { color: var(--ink-dim); font-weight: normal; }
   padding: 3px 10px;
   font-size: 0.85rem;
 }
-.seen-foot { margin-top: 14px; }
-
 /* Quiet backwards navigation — present, never competing with the primary. */
 button.back {
   background: none;

@@ -16,6 +16,22 @@ import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
 
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 
+/** One quiet line of village life. Picked per (game, day) — never rotating. */
+const LOBBY_FLAVOR = [
+  "A lantern flickers in the butcher's window.",
+  "Someone insists Gerald always looked edible.",
+  "Maude is taking notes.",
+  "The Drunk claims this is not his first lobby.",
+  "Nobody has asked where the bones went.",
+  "The chapel bell is rung twice, by nobody.",
+];
+
+function flavorFor(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return h % LOBBY_FLAVOR.length;
+}
+
 /**
  * The town square: your role (fetched privately), the day's income, the
  * vote, the werebear's hunt, and every morning's report.
@@ -47,6 +63,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   const [chatText, setChatText] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
   const [discloseTx, setDiscloseTx] = useState("");
+  const [copiedId, setCopiedId] = useState(false);
 
   const sendChat = async () => {
     setChatBusy(true);
@@ -201,14 +218,27 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     );
   }
 
+  const flavorIndex = flavorFor(`${gameId}:${view.round}`);
+  const minPlayers = view.minPlayers ?? 3;
+  const readyCount = view.readyCount ?? 0;
+  const seats = Math.max(minPlayers, view.players.length);
+  const seatsNeeded = Math.max(0, minPlayers - view.players.length);
+  const phaseLabel =
+    view.round >= 1 && view.maxDays ? `Day ${view.round} of ${view.maxDays}` : `Day ${view.round}`;
+  const phaseTitle = view.winner
+    ? "The Reckoning"
+    : !view.dealt
+      ? "The Village Assembles"
+      : view.marketClosed
+        ? "The Square Fills"
+        : "The Market Is Open";
+
   return (
     <div>
-      <div className="panel">
-        <h2>
-          Day {view.round}
-          {view.round >= 1 && view.maxDays ? ` of ${view.maxDays}` : ""}
-          {view.winner && ` — THE ${view.winner.toUpperCase()} HAS WON`}
-        </h2>
+      <div className="panel lobby">
+        <div className="phase-label">{phaseLabel}</div>
+        <h2 className="phase-title">{phaseTitle}</h2>
+
         {view.round >= 1 && view.maxDays && !view.winner && (
           <p className="dim">
             The clock runs for the village: if the werebear survives the dusk of day{" "}
@@ -223,10 +253,49 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               : "The village sleeps safe — and owes some apologies to the wrongly banished."}
           </div>
         )}
-        <p className="dim">
-          {view.players.filter((p) => p.alive).length}/{view.players.length} alive
-          {me ? (me.alive ? "" : " · you are among the departed") : ""}
-        </p>
+        {view.dealt && (
+          <p className="dim">
+            {view.players.filter((p) => p.alive).length} of {view.players.length} still breathing
+            {me ? (me.alive ? "" : " · you are among the departed") : ""}
+          </p>
+        )}
+
+        {/* The lobby's whole job: say what we're waiting for and give one
+            obvious thing to press. */}
+        {!view.dealt && (
+          <div className="lobby-state">
+            <h3>Waiting for the village</h3>
+            <div className="seat-dots" role="img" aria-label={`${readyCount} of ${seats} ready`}>
+              {Array.from({ length: seats }).map((_, i) => (
+                <span key={i} className={`dot${i < readyCount ? " on" : ""}`} aria-hidden="true" />
+              ))}
+              <span className="seat-count">
+                {readyCount} of {seats} ready
+              </span>
+            </div>
+            <p className="dim">
+              The game begins automatically when at least {minPlayers} villagers are seated and
+              everyone is ready.
+            </p>
+            {me && (
+              <div className="ready-row">
+                <button
+                  className={`ready-btn${me.ready ? " is-ready" : ""}`}
+                  aria-pressed={me.ready === true}
+                  onClick={() => {
+                    playerApi
+                      .ready(wallet, gameId, !me.ready)
+                      .then(() => void load())
+                      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+                  }}
+                >
+                  {me.ready ? "Ready ✓" : "I'm Ready"}
+                </button>
+                <span className="dim">You can change your mind until the game begins.</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {!me && !view.dealt && (
           <div className="answer-card">
@@ -261,27 +330,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           </p>
         )}
 
-        {me && !view.dealt && (
-          <div className="answer-card">
-            <b>The lobby.</b> {view.readyCount ?? 0}/{Math.max(view.minPlayers ?? 3, view.players.length)}{" "}
-            ready — the game starts itself the moment everyone seated is ready (minimum{" "}
-            {view.minPlayers ?? 3}).
-            <div className="row">
-              <button
-                className={me.ready ? "" : "primary"}
-                onClick={() => {
-                  playerApi
-                    .ready(wallet, gameId, !me.ready)
-                    .then(() => void load())
-                    .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-                }}
-              >
-                {me.ready ? "✓ Ready (tap to unready)" : "Ready?"}
-              </button>
-            </div>
-          </div>
-        )}
-
         {me && view.dealt && !roleShown && (
           <div className="answer-card">
             <b>📜 Your fate has been dealt.</b>{" "}
@@ -314,93 +362,185 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             </div>
           </div>
         )}
-      </div>
 
-      <div className="panel">
-        <h2>The village</h2>
-        <div className="characters">
+        {/* The village itself: portraits, not a roster line. */}
+        <div className="villagers">
           {view.players.map((p) => {
             const c = p.character ? CHAR_BY_ID.get(p.character) : null;
+            const isYou = p.address === wallet.address;
+            const status = !p.alive
+              ? "Eaten or banished"
+              : !view.dealt
+                ? p.ready
+                  ? "Ready ✓"
+                  : "Waiting…"
+                : [
+                    p.doneToday ? "🛍 Done" : null,
+                    p.askedToday ? "🔮 Asked" : null,
+                    p.recovering ? "🤕 Abed" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "In the square";
             return (
-              <div key={p.seat} className={`character ${p.alive ? "" : "dead"}`}>
-                <span className="emoji">{p.alive ? <CharEmoji c={c} /> : "🪦"}</span>
-                <span>
-                  {p.name} {c ? c.title : ""}
-                  {p.address === wallet.address ? " (you)" : ""}
-                  {!view.dealt && p.ready ? " ✅" : ""}
-                  {view.dealt && p.alive && p.doneToday ? " 🛍✓" : ""}
-                  {view.dealt && p.alive && p.askedToday ? " 🔮" : ""}
-                  {view.dealt && p.alive && p.recovering ? " 🤕" : ""}
-                </span>
-                <span className="dim blurb">{p.alive ? (c?.blurb ?? "New in town.") : "Eaten or banished. Gerald has company."}</span>
+              <div
+                key={p.seat}
+                className={`villager-card${p.alive ? "" : " dead"}${isYou ? " you" : ""}`}
+              >
+                <div className="v-portrait">
+                  {c?.image ? (
+                    <img src={c.image} alt="" loading="lazy" />
+                  ) : (
+                    <span className="v-fallback" aria-hidden="true">
+                      <CharEmoji c={c} />
+                    </span>
+                  )}
+                  {!p.alive && (
+                    <span className="v-tomb" aria-hidden="true">
+                      🪦
+                    </span>
+                  )}
+                  {isYou && <span className="you-badge">You</span>}
+                </div>
+                <div className="v-name">{p.name}</div>
+                <div className="v-role">{c?.title ?? "new in town"}</div>
+                {c?.blurb && <p className="v-blurb">“{c.blurb}”</p>}
+                <div className={`v-status${p.alive && p.ready && !view.dealt ? " ok" : ""}`}>
+                  {status}
+                </div>
               </div>
             );
           })}
+
+          {/* Empty seats, so a thin lobby still looks deliberate. */}
+          {!view.dealt &&
+            Array.from({ length: seatsNeeded }).map((_, i) => (
+              <div key={`seat-${i}`} className="villager-card empty">
+                <div className="v-portrait">
+                  <span className="v-fallback" aria-hidden="true">
+                    🕳
+                  </span>
+                </div>
+                <div className="v-name">Empty seat</div>
+                <p className="v-blurb">
+                  {seatsNeeded === 1
+                    ? "Waiting for another villager."
+                    : i === 0
+                      ? `${seatsNeeded} more suspicious people required.`
+                      : "This seat is probably not cursed."}
+                </p>
+              </div>
+            ))}
         </div>
-        <p className="dim">One of these fine people is the werebear. Possibly you.</p>
-        {view.round >= 1 && !view.winner && (
-          <p className="dim">
-            {view.marketClosed
-              ? "🔮 The market has closed — Maude's office is open for questions."
-              : `🛍 The market is open. Maude waits for: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
+
+        {!view.dealt && (
+          <div className="invite-row">
+            <span className="dim">
+              Others join by entering the game id <b>{gameId}</b> in the top bar.
+            </span>
+            <button
+              className="link"
+              onClick={() => {
+                void navigator.clipboard.writeText(gameId);
+                setCopiedId(true);
+                window.setTimeout(() => setCopiedId(false), 1500);
+              }}
+            >
+              {copiedId ? "Copied ✓" : "Copy game id"}
+            </button>
+          </div>
+        )}
+
+        <p className="lobby-flavor">{LOBBY_FLAVOR[flavorIndex]}</p>
+      </div>
+
+      <div className="info-grid">
+        <div className="panel">
+          <h2>What the village sees</h2>
+          <div className="seen-grid">
+            <div className="seen-card">
+              <h3>👁 Public</h3>
+              <ul>
+                <li>Store visits and timing</li>
+                <li>Income deposits</li>
+                <li>Item names and prices</li>
+              </ul>
+            </div>
+            <div className="seen-card">
+              <h3>🔒 Private</h3>
+              <ul>
+                <li>The exact amount you paid</li>
+                <li>What you purchased</li>
+                <li>Maude's answer to you</li>
+                <li>Your vote</li>
+              </ul>
+            </div>
+          </div>
+          <details className="privacy-more">
+            <summary>How privacy works</summary>
+            <p className="dim">
+              Every purchase is a confidential transfer. The ledger shows <b>which store you
+              paid and when</b>, never the amount — and because each price in the game is
+              unique, hiding the amount is what hides the item. Your income arrives as a{" "}
+              <b>public deposit</b>, amount included, which is how the village verifies nobody
+              smuggled in extra budget.
+            </p>
+            <p className="dim">
+              One person can read the amounts: <b>Maude McLedger</b>, who holds the token's
+              auditor key. That is how her answers are true — and they go only to the villager
+              who asked. Votes stay sealed too: the morning report announces the verdict, and
+              the tied names when a trial deadlocks, but never who voted for whom.
+            </p>
+            <p className="dim">
+              Two things can pull a purchase into the open, and both need you: standing accused
+              after a tie (you nominate one purchase and the server unseals it) and items whose
+              effect is to reveal — the ledger book, the unsealing ritual, a lantern left
+              burning.
+            </p>
+          </details>
+        </div>
+
+        <div className="panel notices">
+          <h2>Town Notices</h2>
+          {view.round >= 1 && !view.winner && (
+            <p className="notice">
+              {view.marketClosed
+                ? "The market has closed. Maude's office is open for questions."
+                : `The market is open. Maude waits for: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
+            </p>
+          )}
+          {view.round < 1 ? (
+            <p className="notice">The shops open when the game begins.</p>
+          ) : graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
+            <>
+              <p className="notice">Seen at the stores today:</p>
+              <div className="sightings">
+                {graph.edges
+                  .filter((e) => e.round === view.round)
+                  .map((e, i) => (
+                    <span key={i} className="sighting">
+                      {e.from} <span className="dim">→</span> {e.to}
+                    </span>
+                  ))}
+              </div>
+            </>
+          ) : (
+            <p className="notice">Nobody has been seen at a store yet today.</p>
+          )}
+          {me?.alive && view.round >= 2 && view.phase === "day" && !view.winner && (
+            <p className="notice">
+              The day's allowance of {DAILY_INCOME_XLM} XLM waits at the Order's desk, in{" "}
+              <b>The Shops</b>.
+            </p>
+          )}
+          <p className="notice">
+            {SHOPS.length} stores. {SHOPS.reduce((n, s) => n + s.items.length, 0)} wares. Two
+            visits per day.
           </p>
-        )}
-      </div>
-
-      <div className="panel">
-        <h2>What the village sees</h2>
-        <div className="seen-grid">
-          <div className="seen-card">
-            <h3>👁 Public</h3>
-            <ul>
-              <li>Which store you visited, and when</li>
-              <li>Your income deposits — amounts included, so nobody smuggles extra budget</li>
-              <li>What every item does and costs (the Shops tab)</li>
-            </ul>
-          </div>
-          <div className="seen-card">
-            <h3>🔒 Hidden</h3>
-            <ul>
-              <li>
-                How much you paid — and since the price <i>is</i> the item, what you bought
-              </li>
-              <li>Maude's answer to your question. Yours alone.</li>
-              <li>Who voted for whom. Only the verdict is announced.</li>
-            </ul>
-          </div>
+          <p className="notice">
+            The shops never run out. Apparently capitalism survived Gerald.
+          </p>
         </div>
-
-        <h3 className="seen-label">Today's sightings</h3>
-        {view.round < 1 ? (
-          <p className="dim">The stores open when the game begins.</p>
-        ) : graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
-          <div className="sightings">
-            {graph.edges
-              .filter((e) => e.round === view.round)
-              .map((e, i) => (
-                <span key={i} className="sighting">
-                  {e.from} <span className="dim">→</span> {e.to}
-                </span>
-              ))}
-          </div>
-        ) : (
-          <p className="dim">Nobody has been seen at a store yet today.</p>
-        )}
-
-        <p className="dim seen-foot">
-          {SHOPS.length} stores · {SHOPS.reduce((n, s) => n + s.items.length, 0)} wares · two
-          stores a day · one price per item. <b>The shops never run out</b>, so any number of
-          players can own the same thing — what the dead carried proves nothing about the
-          living.
-        </p>
       </div>
-
-      {me?.alive && view.round >= 2 && view.phase === "day" && !view.winner && (
-        <p className="dim">
-          📯 Daily allowance ({DAILY_INCOME_XLM} XLM) collects at the Order's desk in{" "}
-          <b>The Shops</b> — it appears there whenever you're below the day's allowance.
-        </p>
-      )}
 
       {view.marketClosed && view.phase === "day" && !view.winner && (
         <div className="panel">
