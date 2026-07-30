@@ -69,6 +69,8 @@ interface GameState {
   wounded: boolean;
   /** address → bearsbane already consumed. */
   baneConsumed: Record<string, boolean>;
+  /** address → silver charms shattered (each purchase = one save). */
+  charmUsed: Record<string, number>;
   /** Pierces spent — each venison purchase grants exactly one. */
   venisonUsed: number;
   mornings: MorningReport[];
@@ -90,6 +92,7 @@ const freshState = (): GameState => ({
   nightPick: null,
   wounded: false,
   baneConsumed: {},
+  charmUsed: {},
   venisonUsed: 0,
   mornings: [],
   phase: "lobby",
@@ -99,6 +102,9 @@ const freshState = (): GameState => ({
 
 /** Minimum lobby size before ready-up can start the game (7 for the real thing). */
 const MIN_PLAYERS = 3;
+
+/** The clock: if the werebear survives the dusk of this day, it wins. */
+const MAX_DAYS = 5;
 
 /** itemId → { shopId, price } for gear checks (prices are globally unique). */
 const ITEM_INDEX = new Map<string, { shopId: string; price: bigint }>();
@@ -595,10 +601,16 @@ export class GameRoom extends DurableObject<Env> {
         notes.push("A quiet night.");
       } else if (boughtThisRound(target.address, "the_good_barrel")) {
         announceFail("A quiet night — though something scratched at a door and gave up.");
-      } else if (boughtEver(target.address, "silver_charm")) {
-        // Silver is absolute — venison does not pierce it.
+      } else if (
+        this.countBought(purchases, target.address, "silver_charm") >
+        (this.state.charmUsed[target.address] ?? 0)
+      ) {
+        // Silver is absolute — venison does not pierce it — but the charm
+        // SHATTERS: one save per charm bought.
+        this.state.charmUsed[target.address] =
+          (this.state.charmUsed[target.address] ?? 0) + 1;
         announceFail(
-          `${target.name} was attacked in the night — and stands at dawn, silver charm scorched. The werebear burned itself on honest metal.`,
+          `${target.name} was attacked in the night — and stands at dawn among the shards of a silver charm. It shattered on the werebear's hide, and it will not save them twice.`,
         );
         if (muskTonight) notes.push("A quiet night."); // musk hides even a silver save
       } else {
@@ -707,7 +719,7 @@ export class GameRoom extends DurableObject<Env> {
       }
     }
 
-    // --- WIN CHECK: parity. -------------------------------------------------
+    // --- WIN CHECK: parity, then the clock. ---------------------------------
     if (this.state.winner === null && bear) {
       if (!bear.alive) {
         this.state.winner = "village";
@@ -719,6 +731,13 @@ export class GameRoom extends DurableObject<Env> {
         if (livingVillagers <= 1) {
           this.state.winner = "werebear";
           this.state.phase = "ended";
+        } else if (round >= MAX_DAYS) {
+          // The clock: outlast the village and the moon keeps its secret.
+          this.state.winner = "werebear";
+          this.state.phase = "ended";
+          notes.push(
+            `${MAX_DAYS} days, and the village never found it. The whispers were right all along — and they will stay whispers. The werebear has won.`,
+          );
         }
       }
     }
@@ -760,6 +779,7 @@ export class GameRoom extends DurableObject<Env> {
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,
+      maxDays: MAX_DAYS,
       /** Maude's office opens only when every living villager is done shopping. */
       marketClosed:
         this.state.round >= 1 &&

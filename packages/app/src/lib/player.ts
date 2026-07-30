@@ -138,6 +138,8 @@ export interface PublicView {
   }[];
   readyCount?: number;
   minPlayers?: number;
+  /** If the werebear survives the dusk of this day, it wins. */
+  maxDays?: number;
   /** True when every living villager has finished shopping — Maude opens. */
   marketClosed?: boolean;
   stillShopping?: string[];

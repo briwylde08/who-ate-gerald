@@ -195,8 +195,15 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
       <div className="panel">
         <h2>
           Day {view.round}
+          {view.round >= 1 && view.maxDays ? ` of ${view.maxDays}` : ""}
           {view.winner && ` — THE ${view.winner.toUpperCase()} HAS WON`}
         </h2>
+        {view.round >= 1 && view.maxDays && !view.winner && (
+          <p className="dim">
+            The clock runs for the village: if the werebear survives the dusk of day{" "}
+            {view.maxDays}, it wins.
+          </p>
+        )}
         <p className="dim">
           {view.players.filter((p) => p.alive).length}/{view.players.length} alive
           {me ? (me.alive ? "" : " · you are among the departed") : ""}
