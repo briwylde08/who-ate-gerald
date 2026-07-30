@@ -16,7 +16,11 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* The werebear at its work (Bri's art) under a scrim dark enough to read
+     by — the scrim carries the old --bg tone so panels still sit right. */
+  background:
+    linear-gradient(rgba(18, 20, 28, 0.82), rgba(18, 20, 28, 0.9)),
+    url("/bg.jpg") center / cover no-repeat fixed var(--bg);
   color: var(--ink);
   min-height: 100vh;
 }
@@ -39,7 +43,8 @@ h2 { font-size: 1.25rem; margin: 24px 0 8px; color: var(--moon); }
 .mono { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
 
 .panel {
-  background: var(--panel);
+  background: rgba(27, 30, 42, 0.92); /* --panel, letting a whisper of moon through */
+  backdrop-filter: blur(2px);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 16px;
