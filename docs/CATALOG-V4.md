@@ -20,14 +20,14 @@ copy that explains itself.
 |---|---|---|
 | A bottle | 7 | Loose lips: tomorrow's morning report includes one true rumor about someone's shopping. You don't choose whose. |
 | The ledger book | 15 | Tax records: at dawn, Maude names who spent the most today. Names only — amounts stay sealed. |
-| Musk salve | 18 | Cover your scent: tomorrow, your shop visits appear in the sightings as "a hooded figure." Anyone may buy it. Anyone. |
+| Musk salve | 18 | Shop unseen: tomorrow the sightings log your store visits as "a hooded figure" instead of your name. Anyone may buy it. Anyone. |
 
 ### The Butcher's — meat and consequences
 | Item | XLM | Effect |
 |---|---|---|
 | Soup bone | 8 | The dogs remember: at dawn, you privately learn whether the werebear came for YOU last night — even on a quiet night. |
-| Smoked ham | 13 | A well-fed bear leaves quietly: if the bear's attack fails tonight, the village is never told it happened. |
-| Fresh venison | 21 | The bear's next attack tears through bearsbane and bear traps. In villager hands: pure chaos. |
+| Smoked ham | 13 | The counter to the charm: a charm save tonight is announced to no one — the survivor's name, the shattered silver, the attack itself. The morning reads "a quiet night." |
+| Fresh venison | 21 | Fresh meat quiets the dogs: tonight, the dogs remember nothing — soup bones learn no truth at dawn. |
 
 ### Chapel — light and revelation
 | Item | XLM | Effect |
@@ -54,8 +54,13 @@ copy that explains itself.
 - Ritual targeting rides the vote (items can't carry targets — the
   amount is the whole payload). It fires on the day's most-voted player
   even if the vote ties; ties finally produce information either way.
-- Musk vs the dogs/ledger: the bear's counter-info arrives in the same
-  patch as the village's info. Watch the balance in playtest-8.
+- The bear shelf is three kinds of HIDING, each countering one village
+  sense: ham hides failure (anti-charm), venison hides presence
+  (anti-dogs/soup bone), musk hides movement (anti-sightings). All
+  dual-use enough for villagers to buy — that's the cover story.
+  (v3 venison "pierces bane/traps" died with bane and traps; silver
+  stays absolute on purpose — a 45 XLM save must not lose to a 21 XLM
+  steak. Caught by Bri in review.)
 - Bear kit check: ham 13 + venison 21 + musk 18 = 52 > 50, so the full
   kit is unaffordable on day 1 — the bear must sequence, which leaks.
 
