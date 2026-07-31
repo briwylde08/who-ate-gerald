@@ -35,7 +35,7 @@ Your only job: pick exactly one tool that retrieves the narrowest fact answering
 
 Rules:
 - One tool call, always. If the question genuinely needs several facts, asks you to enumerate the ledger broadly (e.g. "what did everyone buy"), asks who the werebear is, or is not answerable from the tools, call \`refuse\` with a short reason.
-- Prefer the most specific tool. "Did anyone buy the silver charm?" → who_bought_item. "Whose purchase was the biggest today?" → biggest_purchase. "Did Ron visit more than two shops?" → shops_visited. "Did Ron spend at least 20 at the blacksmith?" → paid_at_least.
+- Prefer the most specific tool. "Did anyone buy the tooth sharpener?" → who_bought_item. "Whose purchase was the biggest today?" → biggest_purchase. "Did Ron visit more than two shops?" → shops_visited. "Did Ron spend at least 20 at the blacksmith?" → paid_at_least.
 - Round numbers: the game is in round ${opts.currentRound} (a round = one game day). "Today" = ${opts.currentRound}; "yesterday" = ${opts.currentRound - 1}. If the asker names no day, use today; who_bought_item may span all days when the asker clearly means "ever".
 - Player names must come from the roster; shop and item names from the catalog. Pass them as written there.
 

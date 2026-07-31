@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v7 (2026-07-31, per Bri) — 11 items, all prices globally unique so any revealed amount identifies the item. Retired: a bottle, the ledger book, musk salve, lantern oil, the unsealing ritual. Items with an \"aim\" field need a second, server-private action (p/aim) because a purchase carries only an amount — never a target; aim \"self\" means the buyer declares they used it (the barrel). The werebear may buy anything. Economy: 50 XLM buy-in, +15 XLM/day.",
+  "$comment": "Catalog v8 (2026-07-31, per Bri's balance pass) — 11 items, all prices globally unique so any revealed amount identifies the item. One saving item: the barrel of beer (45) beats everything including the sharpened tooth, at the cost of your vote. The silver charm is retired. Aimed items (aim field) take a second, server-private action (p/aim); aim \"self\" means the buyer declares they used it. The werebear may buy anything. Economy: 50 XLM buy-in, +15 XLM/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -24,14 +24,6 @@
           "class": "B-off",
           "effect": "Aim it: one villager finds one store locked to them tomorrow. The village learns which store was locked, never who turned the key.",
           "aim": "player+shop"
-        },
-        {
-          "id": "silver_charm",
-          "label": "Silver charm",
-          "flavor": "Grandmother swore by it. Grandmother is dead.",
-          "priceXlm": 45,
-          "class": "V-def",
-          "effect": "Survive one night attack. The charm shatters, everyone hears it, and you spend the next day in bed — too weak to vote."
         }
       ]
     },
@@ -62,9 +54,9 @@
           "id": "barrel_of_beer",
           "label": "Barrel of beer",
           "flavor": "Finish it and the night finishes you.",
-          "priceXlm": 30,
+          "priceXlm": 45,
           "class": "V-def",
-          "effect": "Drink it and pass out: you cast no vote today, and nothing can wake you — the beast included. The werebear is too big for beer to touch.",
+          "effect": "Drink it and pass out: you cast no vote today, and NOTHING takes you in the night — not the beast, not even a sharpened tooth. The one sure escape in the village. The werebear is too big for beer to touch.",
           "aim": "self"
         }
       ]
@@ -97,7 +89,7 @@
           "flavor": "Ask no questions about the previous owner.",
           "priceXlm": 33,
           "class": "B-off",
-          "effect": "Werebear: tonight nothing saves your prey. Villager: leave it out as an offering — an even chance the beast takes it and spares you."
+          "effect": "Werebear: tonight your prey is caught wherever it hides — offerings fail, bones at gates fail; only a villager dead drunk in the road is beyond you. Villager: leave it out as an offering — an even chance the beast takes it and spares you."
         }
       ]
     },
@@ -118,7 +110,7 @@
           "id": "unquiet_rest",
           "label": "Unquiet rest",
           "flavor": "The Order accepts coin for almost anything.",
-          "priceXlm": 40,
+          "priceXlm": 25,
           "class": "B-def",
           "effect": "Pay the Order early: when you die, an even chance your ghost returns with a vote. Either way, the village is told."
         },

@@ -97,20 +97,20 @@ function synthetic() {
     players,
     currentRound: 2,
     purchases: [
-      buy("Ron", "GRON", "blacksmith", "Blacksmith", 45, 2, "Silver charm"),
-      buy("Ron", "GRON", "chapel", "Chapel", 5, 2, "Votive candle"),
-      buy("Bri", "GBRI", "general_store", "General Store", 7, 2, "A bottle"),
-      buy("Bri", "GBRI", "chapel", "Chapel", 12, 2, "Lantern oil"),
-      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 2, 2, "Horseshoe nail"),
-      buy("Tyler", "GTYL", "chapel", "Chapel", 25, 2, "Unsealing ritual"),
-      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 45, 1, "Silver charm"),
+      buy("Ron", "GRON", "general_store", "General Store", 45, 2, "Barrel of beer"),
+      buy("Ron", "GRON", "chapel", "Chapel", 1, 2, "Gerald's finger"),
+      buy("Bri", "GBRI", "general_store", "General Store", 23, 2, "Shopkeeper's holiday"),
+      buy("Bri", "GBRI", "chapel", "Chapel", 42, 2, "The long candle"),
+      buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 20, 2, "Horseshoe nail"),
+      buy("Tyler", "GTYL", "chapel", "Chapel", 25, 2, "Unquiet rest"),
+      buy("Tyler", "GTYL", "general_store", "General Store", 45, 1, "Barrel of beer"),
     ],
   };
 
-  const silver = executeFact(ctx, "who_bought_item", { item: "silver charm", round: 2 });
-  check("who_bought_item: Ron bought silver in r2", JSON.stringify(silver.buyers) === '["Ron"]', silver);
+  const silver = executeFact(ctx, "who_bought_item", { item: "barrel of beer", round: 2 });
+  check("who_bought_item: Ron bought the barrel in r2", JSON.stringify(silver.buyers) === '["Ron"]', silver);
 
-  const silverEver = executeFact(ctx, "who_bought_item", { item: "silver charm" });
+  const silverEver = executeFact(ctx, "who_bought_item", { item: "barrel of beer" });
   check(
     "who_bought_item (all rounds): Ron + Tyler",
     JSON.stringify(silverEver.buyers) === '["Tyler","Ron"]' ||
@@ -119,21 +119,21 @@ function synthetic() {
   );
 
   const spent = executeFact(ctx, "total_spent", { player: "Ron", round: 2 });
-  check("total_spent: Ron spent 50 in r2", spent.totalXlm === "50", spent);
+  check("total_spent: Ron spent 46 in r2", spent.totalXlm === "46", spent);
 
   const atLeast = executeFact(ctx, "paid_at_least", {
     player: "Tyler",
     shop: "Blacksmith",
-    min_xlm: 20,
+    min_xlm: 25,
     round: 2,
   });
-  check("paid_at_least: Tyler r2 blacksmith ≥20 → false", atLeast.answer === false, atLeast);
+  check("paid_at_least: Tyler r2 blacksmith ≥25 → false", atLeast.answer === false, atLeast);
 
   const mine = executeFact(ctx, "purchases_of_player", { player: "Ron", round: 2 });
   check(
     "purchases_of_player: both of Ron's buys, itemised",
     mine.count === 2 &&
-      (mine.purchases as { item: string }[]).some((x) => x.item === "Silver charm"),
+      (mine.purchases as { item: string }[]).some((x) => x.item === "Barrel of beer"),
     mine,
   );
 

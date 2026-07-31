@@ -777,11 +777,9 @@ export class GameRoom extends DurableObject<Env> {
       if (drunk.has(voter.name)) continue; // asleep in the road; no vote to count
       // A sock in the mouth: they spoke all day, but the tally cannot hear it.
       if (socked.has(voter.name)) {
-        ((this.state.privateNotes ??= {})[voterAddr] ??= []).push({
-          round,
-          text: "🧦 Your vote did not carry today. Somebody had paid for your silence.",
-        });
-        notes.push("🧦 One voice was stopped at the trial. It was not stopped for free.");
+        notes.push(
+          `🧦 ${voter.name}'s voice was stopped at the trial — their vote did not carry. It was not stopped for free.`,
+        );
         continue;
       }
       // The butcher's knife, once bought, stays sharp for the whole game.
@@ -859,6 +857,8 @@ export class GameRoom extends DurableObject<Env> {
     const bear = bearAddress ? this.playerByAddress(bearAddress) : null;
     if (this.state.winner === null && bear?.alive && bearAddress) {
       let target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
+      // A sharpened tooth in the beast's mouth: only the barrel is beyond it.
+      const sharpTonight = boughtThisRound(bearAddress, "tooth_sharpener");
       // A bone at somebody else's gate: one chance in four the beast is
       // distracted on its way. Never onto the beast itself, never onto a corpse.
       if (target) {
@@ -866,6 +866,7 @@ export class GameRoom extends DurableObject<Env> {
         const elsewhere = bone?.target ? this.playerByName(bone.target) : null;
         if (
           bone &&
+          !sharpTonight && // a sharpened tooth is not distracted by bones
           elsewhere?.alive &&
           elsewhere.address !== bearAddress &&
           randomIndex(4) === 0
@@ -877,8 +878,6 @@ export class GameRoom extends DurableObject<Env> {
           target = elsewhere;
         }
       }
-      // A sharpened tooth in the beast's mouth: tonight nothing saves the prey.
-      const sharpTonight = boughtThisRound(bearAddress, "tooth_sharpener");
       // The same purchase in villager hands is an offering left on the step.
       const hasOffering =
         target !== null &&
@@ -906,19 +905,6 @@ export class GameRoom extends DurableObject<Env> {
           round: round + 1,
           text: "🦷 Your offering is gone from the step, and so are the tracks. The beast came, and took it instead of you.",
         });
-      } else if (
-        !sharpTonight &&
-        this.countBought(effective, target.address, "silver_charm") >
-          (this.state.charmUsed[target.address] ?? 0)
-      ) {
-        // Silver saves, but the charm SHATTERS (one save per charm bought) and
-        // the survivor spends the next day in bed: alive, too weak to vote.
-        this.state.charmUsed[target.address] =
-          (this.state.charmUsed[target.address] ?? 0) + 1;
-        this.state.recovering[target.address] = round + 1;
-        notes.push(
-          `${target.name} was attacked in the night — and lives, barely, among the shards of a silver charm. It shattered on the werebear's hide and will not save them twice. They spend today in bed, too weak to raise a hand at the trial.`,
-        );
       } else {
         eaten = target;
         target.alive = false;
