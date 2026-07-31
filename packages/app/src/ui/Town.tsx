@@ -16,14 +16,6 @@ import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
 
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 
-/** One quiet line of village life. Picked per (game, day) — never rotating. */
-const LOBBY_FLAVOR = [
-  "A lantern flickers in the butcher's window.",
-  "The Drunk claims this is not their first lobby.",
-  "Nobody has asked where the bones went.",
-  "The chapel bell is rung twice, by nobody.",
-];
-
 /**
  * The night's film: when a villager is eaten, their character's "gets got"
  * reel plays once for everyone at dawn. Files live in public/videos/ as
@@ -31,12 +23,6 @@ const LOBBY_FLAVOR = [
  * means no film, handled by onError.
  */
 const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.mp4`;
-
-function flavorFor(seed: string): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return h % LOBBY_FLAVOR.length;
-}
 
 /**
  * The town square: your role (fetched privately), the day's income, the
@@ -244,7 +230,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     );
   }
 
-  const flavorIndex = flavorFor(`${gameId}:${view.round}`);
   const minPlayers = view.minPlayers ?? 3;
   const readyCount = view.readyCount ?? 0;
   const seats = Math.max(minPlayers, view.players.length);
@@ -489,7 +474,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           </div>
         )}
 
-        <p className="lobby-flavor">{LOBBY_FLAVOR[flavorIndex]}</p>
       </div>
 
       <div className="info-grid">
