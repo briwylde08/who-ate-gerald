@@ -4,69 +4,78 @@
 
 > Villager Gerald has been eaten.
 
-A multiplayer social-deduction game (7 players, one secret werebear) where the
-evidence is a real confidential-token ledger on Stellar testnet: every
-purchase is a confidential transfer — everyone sees *who* paid *which* shop,
-nobody sees *how much* — and **Maude McLedger**, the AI Auditor who can see
-everything, answers exactly one question per round.
+A multiplayer social-deduction game where the evidence is a real
+confidential-token ledger on Stellar testnet. Every purchase is a confidential
+transfer: the whole village sees **who paid which shop**, nobody sees **how
+much** — and because every price in the game is unique, the amount *is* the
+item. **Maude McLedger**, who holds the token's auditor key, answers one
+private question per villager per day.
 
-## Play
-
-| | |
-|---|---|
-| **Player app** | https://who-ate-gerald.pages.dev (Freighter on Testnet required) |
-| **GM dashboard** | https://who-ate-gerald.pages.dev/#gm (token in `config/local.gm.json`) |
-| **The Auditor** | https://gerald-auditor.briana-761.workers.dev (Maude's API) |
-| **GM runbook** | [docs/PLAYTEST.md](docs/PLAYTEST.md) |
+Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
 
 ## How the tech IS the game
 
 | Game mechanic | Protocol reality |
 |---|---|
-| Shop visits are public, purchases aren't | Confidential transfer: parties visible, amounts hidden |
-| The price *is* the item | Exact-amount matching against the shop catalog |
-| The kill hides in the nightly tithe | Hidden amounts in a universal payment |
-| Maude sees all, answers little | Auditor key decrypts every transfer's ciphertext — one question per round, enforced in code |
-| Trial defenses can't be faked | Off-chain selective-disclosure proofs, verified against the chain |
+| Shop visits are public; what you bought is not | Confidential transfer — parties visible, amount encrypted |
+| The price *is* the item | Exact-amount matching against the catalog; every price globally unique |
+| Everyone verifiably starts with the same budget | Buy-in and daily income arrive as *public* deposits |
+| Maude sees all, answers little | The auditor key decrypts every transfer; one question per villager per day, enforced in code |
+| An accused villager's reveal cannot be a lie | The server decrypts the purchase they nominate, straight from the chain |
 
-Maude's truthfulness is architectural, not behavioral: facts are computed in
-code (event decryption + one narrow fact tool per question); the LLM only
-selects the tool and phrases the result. It never sees ciphertexts and cannot
+Maude's truthfulness is architectural, not behavioural: facts are computed in
+code (event decryption plus one narrow fact tool per question); the model only
+picks the tool and phrases the answer. It never sees ciphertexts and cannot
 invent an amount.
+
+## A day in the village
+
+Shop (at most two of four stores, one of each ware) → everyone presses Done →
+Maude opens for one question each → the square argues → the trial banishes on
+a plurality → the werebear eats someone → the morning report says what the
+night's items did. The village wins by banishing the bear; the bear wins at
+parity, or by surviving to the end of day six.
 
 ## Repo tour
 
-- `packages/app` — player kit + GM dashboard (Vite/React, Freighter,
+- `packages/app` — the player app and GM dashboard (Vite/React, Freighter,
   in-browser UltraHonk proving)
-- `packages/auditor-worker` — Maude: Cloudflare Worker + one Durable Object
-  per game (rounds, the one-question seal, ask log)
-- `packages/ctd-sdk` — vendored confidential-token SDK (Grumpkin/Poseidon2
-  crypto, proving, chain + indexer clients, selective disclosure)
-- `packages/ctd-disclosure` — shared disclosure circuits + pinned
-  verification keys (the trust anchor of the trial flow)
-- `scripts/` — deploy-stack, setup-shops, health, test-auditor-facts,
-  mini-game (the scripted 3-villager exit exam)
-- `config/` — committed: deployment addresses, shop addresses, catalog.
-  Gitignored `local.*`: auditor key, deployer, shop keypairs, GM token.
-- `docs/` — DESIGN.md, PLAYTEST.md, benign-crimes.md (future "Auditor
-  Noir" single-player case files)
+- `packages/auditor-worker` — the game itself: a Cloudflare Worker with one
+  Durable Object per game (roles, the day gate, dawn resolution, Maude)
+- `packages/ctd-sdk`, `packages/ctd-disclosure` — vendored confidential-token
+  SDK and the shared disclosure circuits with pinned verification keys
+- `config/` — committed: deployment addresses, shop addresses, `catalog.json`
+  (the shelf). Gitignored `local.*`: auditor key, deployer, shop keypairs, GM
+  token.
+- `design/` — original art (portraits, icons, the death films) before
+  compression; `packages/app/public/` ships the web-sized copies
+- `docs/` — see below
 
-## Useful commands
+| Doc | What it's for |
+|---|---|
+| [docs/CATALOG.md](docs/CATALOG.md) | The shelf: every item, the design laws, standing rulings, balance watch list |
+| [docs/CONFIDENTIAL-TOKENS.md](docs/CONFIDENTIAL-TOKENS.md) | What the cryptography actually does, mapped onto the game |
+| [docs/DESIGN-V2.md](docs/DESIGN-V2.md) | Architecture of the automated game (carries a drift warning) |
+| [docs/TOMORROW.md](docs/TOMORROW.md) | Where things stand and what's next |
+| [docs/POSTGAME-10.md](docs/POSTGAME-10.md) | Open items from the last playtest |
+
+## Commands
 
 ```sh
-npm run health         # Phase 0 stack check (chain, shops, auditor decrypt)
-npm run test:auditor   # fact-layer exit exam (live indexer + synthetic)
-npm run mini-game      # full scripted round vs the deployed stack (~5 min)
-npm run deploy:app     # build + CF Pages Direct Upload
+npm run deploy:app       # build + ship the player app (Pages, direct upload)
+npm run bots <game> [n]  # fill a lobby with bot villagers — they play for real
+npm run item-test        # scripted game asserting every item's effect fires
+npm run test:auditor     # Maude's fact layer (fast, no chain writes)
+npm run test:auth        # SEP-53 player-signature verification
+npm run health           # end-to-end stack check against testnet
 # worker: cd packages/auditor-worker && npx wrangler deploy
 ```
+
+The GM dashboard is at `/#gm` with the token from `config/local.gm.json`. It
+shows decrypted purchases for every player — **never screen-share it.**
 
 ## Sibling project
 
 [Axe & Ember](../axe-and-ember) — the single-player tutorial for the same
-confidential-token mechanics; the wallet layer, indexer, and disclosure
-machinery ported from there. The ember-indexer worker mirrors both tokens.
-
-Status: **playtest-ready.** Phases 0–2 built, deployed, and verified
-(2026-07-28); awaiting catalog tuning, the wolf's tithe rule, and seven
-brave villagers.
+confidential-token mechanics. The wallet layer, indexer, and disclosure
+machinery were ported from there; the ember-indexer worker mirrors both tokens.
