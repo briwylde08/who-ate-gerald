@@ -18,9 +18,15 @@
   },
 
   "durable_objects": {
-    "bindings": [{ "name": "GAMES", "class_name": "GameRoom" }]
+    "bindings": [
+      { "name": "GAMES", "class_name": "GameRoom" },
+      { "name": "LOBBIES", "class_name": "LobbyRegistry" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["GameRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["LobbyRegistry"] }
+  ],
 
   "observability": {
     "enabled": true,

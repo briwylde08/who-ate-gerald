@@ -116,6 +116,19 @@ export const playerApi = {
     playerCall<{ aimed: string; at: string }>(w, game, "aim", { item, target, shop }),
 };
 
+/** The notice-board: games in lobby phase, seating players right now. */
+export interface OpenLobby {
+  id: string;
+  seated: number;
+  ready: number;
+  minPlayers: number;
+}
+export async function fetchLobbies(): Promise<OpenLobby[]> {
+  const resp = await fetch(`${AUDITOR_URL}/lobbies`);
+  const body = (await resp.json()) as { lobbies?: OpenLobby[] };
+  return body.lobbies ?? [];
+}
+
 /** Public game view — no auth. */
 export async function fetchPublicView(gameId: string): Promise<PublicView> {
   const resp = await fetch(`${AUDITOR_URL}/games/${encodeURIComponent(gameId)}/public`);

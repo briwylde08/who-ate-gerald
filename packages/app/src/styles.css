@@ -880,6 +880,24 @@ th { color: var(--ink-dim); font-weight: normal; }
   margin: 12px 0;
 }
 
+/* The town notice-board: open games, one row each. */
+.lobby-board { display: flex; flex-direction: column; gap: 8px; }
+.lobby-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+.lobby-row .lobby-id {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color: var(--parchment);
+}
+.lobby-row button { margin-left: auto; }
+
 /* Quiet backwards navigation — present, never competing with the primary. */
 button.back {
   background: none;

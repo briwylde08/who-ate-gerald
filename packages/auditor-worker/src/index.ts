@@ -13,10 +13,11 @@
  *   Public (open):       GET graph · public
  */
 import { GameRoom } from "./game";
+import { LobbyRegistry } from "./registry";
 import { verifyPlayerSignature } from "./auth";
 import type { Env } from "./env";
 
-export { GameRoom };
+export { GameRoom, LobbyRegistry };
 
 const CORS = {
   "access-control-allow-origin": "*",
@@ -66,6 +67,41 @@ export default {
       });
     }
 
+    // The notice-board: every game in lobby phase, with live seat counts.
+    // The registry only remembers names; each game's own DO is the truth.
+    if (url.pathname === "/lobbies" && req.method === "GET") {
+      const registry = env.LOBBIES.getByName("board");
+      const ids = (await registry.list()).slice(0, 25);
+      const lobbies = (
+        await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const view = (await env.GAMES.getByName(id).publicView()) as {
+                phase: string;
+                dealt: boolean;
+                players: unknown[];
+                readyCount?: number;
+                minPlayers?: number;
+              };
+              if (view.phase !== "lobby" || view.dealt) {
+                await registry.remove(id); // started or ended — off the board
+                return null;
+              }
+              return {
+                id,
+                seated: view.players.length,
+                ready: view.readyCount ?? 0,
+                minPlayers: view.minPlayers ?? 3,
+              };
+            } catch {
+              return null;
+            }
+          }),
+        )
+      ).filter((l) => l !== null);
+      return json({ lobbies });
+    }
+
     const m = /^\/games\/([A-Za-z0-9_-]{1,64})\/(.+?)\/?$/.exec(url.pathname);
     if (!m) return json({ error: "not found" }, 404);
     const [, gameId, action] = m;
@@ -84,10 +120,15 @@ export default {
           return json({ error: "the village record-keeper does not recognize that signature" }, 401);
         }
         switch (action) {
-          case "p/join":
-            return json(
-              await room.join(address, String(body.name ?? ""), String(body.character ?? "")),
+          case "p/join": {
+            const seat = await room.join(
+              address,
+              String(body.name ?? ""),
+              String(body.character ?? ""),
             );
+            await env.LOBBIES.getByName("board").touch(gameId!);
+            return json(seat);
+          }
           case "p/ready":
             return json(await room.setReady(address, body.ready !== false));
           case "p/done":

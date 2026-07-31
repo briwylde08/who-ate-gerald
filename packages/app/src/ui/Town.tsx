@@ -5,7 +5,10 @@ import {
   playerApi,
   fetchPublicView,
   fetchGraph,
+  fetchLobbies,
   hasCachedAuth,
+  saveGameId,
+  type OpenLobby,
   type PublicView,
   type GraphView,
 } from "../lib/player";
@@ -58,6 +61,18 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   const [copiedId, setCopiedId] = useState(false);
   /** The night's film: {src, caption} while showing, null otherwise. */
   const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
+  /** The notice-board: other games seating players right now. */
+  const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
+  useEffect(() => {
+    const pull = () => void fetchLobbies().then(setLobbies).catch(() => undefined);
+    pull();
+    const t = setInterval(pull, 15_000);
+    return () => clearInterval(t);
+  }, []);
+  const switchGame = (id: string) => {
+    saveGameId(id);
+    window.location.reload(); // gameId threads through everything — cleanest reset
+  };
 
   const sendChat = async () => {
     setChatBusy(true);
@@ -219,13 +234,36 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     }
   };
 
+  const noticeBoard = (heading: string) =>
+    lobbies.filter((l) => l.id !== gameId).length > 0 && (
+      <div className="panel">
+        <h2>{heading}</h2>
+        <div className="lobby-board">
+          {lobbies
+            .filter((l) => l.id !== gameId)
+            .map((l) => (
+              <div key={l.id} className="lobby-row">
+                <span className="lobby-id">{l.id}</span>
+                <span className="dim">
+                  {l.seated} seated · {l.ready} ready · needs {l.minPlayers}
+                </span>
+                <button onClick={() => switchGame(l.id)}>Join</button>
+              </div>
+            ))}
+        </div>
+      </div>
+    );
+
   if (!view) {
     return (
-      <div className="panel">
-        <p className="dim">
-          No word from the town crier yet — either the game “{gameId}” hasn't been seated, or
-          the record-keeper is asleep. (Set the game id in the banner.)
-        </p>
+      <div>
+        <div className="panel">
+          <p className="dim">
+            No word from the town crier yet — either the game “{gameId}” hasn't been seated, or
+            the record-keeper is asleep. (Set the game id in the banner.)
+          </p>
+        </div>
+        {noticeBoard("Games awaiting players")}
       </div>
     );
   }
@@ -363,6 +401,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             This game is already underway — you can spectate, or join the next one.
           </p>
         )}
+        {!me && noticeBoard("Other games awaiting players")}
 
         {me && view.dealt && !roleShown && (
           <div className="answer-card">

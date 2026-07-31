@@ -1,7 +1,9 @@
 import type { GameRoom } from "./game";
+import type { LobbyRegistry } from "./registry";
 
 export interface Env {
   GAMES: DurableObjectNamespace<GameRoom>;
+  LOBBIES: DurableObjectNamespace<LobbyRegistry>;
   /** vars (wrangler.jsonc) */
   INDEXER_URL: string;
   TOKEN_CONTRACT: string;
