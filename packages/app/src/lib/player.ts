@@ -152,6 +152,8 @@ export interface PublicView {
     recovering?: boolean;
     /** A ghost the Order granted a vote (Unquiet rest). */
     ghostVoter?: boolean;
+    /** Declared a barrel today — cannot vote, cannot be killed tonight. */
+    drunkToday?: boolean;
   }[];
   readyCount?: number;
   minPlayers?: number;
@@ -159,6 +161,10 @@ export interface PublicView {
   maxDays?: number;
   /** Stores shut for everyone today (Shopkeeper's holiday). */
   closedShops?: string[];
+  /** Who the trial is still waiting on. */
+  awaitingVotes?: string[];
+  /** Whether the night has been decided (never says by whom). */
+  nightDecided?: boolean;
   /** True when every living villager has finished shopping — Maude opens. */
   marketClosed?: boolean;
   stillShopping?: string[];

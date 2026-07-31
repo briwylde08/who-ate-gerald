@@ -502,6 +502,9 @@ export class GameRoom extends DurableObject<Env> {
         "you stand accused — reveal one purchase (in the town square) before you may vote",
       );
     }
+    if (this.drunkToday(voterAddress)) {
+      throw new Error("you are dead drunk in the road — the trial will manage without you");
+    }
     if (this.state.recovering[voterAddress] === this.state.round) {
       throw new Error("you are in critical condition — too weak to raise a hand at today's trial");
     }
@@ -679,9 +682,7 @@ export class GameRoom extends DurableObject<Env> {
     // Players in critical condition CANNOT vote today — dawn doesn't wait
     // for a hand that can't be raised.
     const allVoted = voters.every(
-      (p) =>
-        this.state.votes[p.address] !== undefined ||
-        this.state.recovering[p.address] === this.state.round,
+      (p) => this.state.votes[p.address] !== undefined || this.drunkToday(p.address),
     );
     const alive = this.state.players.filter((p) => p.alive);
     const roles = this.state.roles ?? {};
@@ -1171,6 +1172,8 @@ export class GameRoom extends DurableObject<Env> {
         recovering: this.state.recovering[p.address] === this.state.round,
         /** A ghost the Order granted a vote — public by design. */
         ghostVoter: this.state.ghostVote?.[p.address] === "granted",
+        /** Declared a barrel today: no vote, and nothing can wake them. */
+        drunkToday: this.drunkToday(p.address),
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,
@@ -1181,6 +1184,20 @@ export class GameRoom extends DurableObject<Env> {
         this.state.players
           .filter((p) => p.alive)
           .every((p) => this.state.doneShopping[p.address]?.round === this.state.round),
+      /** Living (and ghost-voting) players who still owe a vote today. */
+      awaitingVotes:
+        this.state.round >= 1
+          ? this.state.players
+              .filter(
+                (p) =>
+                  (p.alive || this.state.ghostVote?.[p.address] === "granted") &&
+                  this.state.votes[p.address] === undefined &&
+                  !this.drunkToday(p.address),
+              )
+              .map((p) => p.name)
+          : [],
+      /** Has the werebear chosen tonight? Never says who is choosing. */
+      nightDecided: this.state.nightPick !== null,
       stillShopping: this.state.players
         .filter((p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round)
         .map((p) => p.name),
@@ -1227,6 +1244,14 @@ export class GameRoom extends DurableObject<Env> {
           to: p.toLabel,
         })),
     };
+  }
+
+  /** Did this villager declare a barrel today? (The beast is unaffected.) */
+  private drunkToday(address: string): boolean {
+    if (this.state.roles?.[address] === "werebear") return false;
+    return this.state.aims.some(
+      (a) => a.round === this.state.round && a.by === address && a.item === "barrel_of_beer",
+    );
   }
 
   /** Private dawn facts (the dogs) for ONE player — identity pre-verified. */

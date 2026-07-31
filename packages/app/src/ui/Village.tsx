@@ -104,6 +104,14 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [aimTarget, setAimTarget] = useState<Record<string, string>>({});
   const [aimShop, setAimShop] = useState<Record<string, string>>({});
   const [aimed, setAimed] = useState<Record<string, string>>({});
+  const aimsKey = `gerald:aims:${loadGameId()}:${round}`;
+  useEffect(() => {
+    try {
+      setAimed(JSON.parse(localStorage.getItem(aimsKey) ?? "{}") as Record<string, string>);
+    } catch {
+      setAimed({});
+    }
+  }, [aimsKey]);
   useEffect(() => {
     // Keyed by item label — every one of the twelve is distinct, and that is
     // what the stored records carry.
@@ -127,6 +135,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // rounds >= 1), so the coin would simply be burned. Bar the doors.
   const marketOpen = round >= 1;
 
+  /** Bought today, needs aiming, still unaimed — dead weight until pointed. */
+  const unaimed = SHOPS.flatMap((sh) => sh.items).filter(
+    (it) =>
+      it.aim &&
+      !aimed[it.id] &&
+      loadHistory(wallet.address, loadGameId()).some(
+        (r) => r.round === round && r.item === it.label,
+      ),
+  );
+
   const declareDone = async () => {
     setError(null);
     try {
@@ -147,7 +165,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         aimTarget[item.id] || undefined,
         aimShop[item.id] || undefined,
       );
-      setAimed((a) => ({ ...a, [item.id]: r.at }));
+      setAimed((a) => {
+        const next = { ...a, [item.id]: r.at };
+        localStorage.setItem(aimsKey, JSON.stringify(next));
+        return next;
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -296,6 +318,17 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           <p className="dim">
             The shopkeepers wave you off. Maude opens her office once the <b>whole village</b>{" "}
             is done shopping.
+          </p>
+        </div>
+      )}
+      {!dead && !doneToday && round >= 1 && unaimed.length > 0 && (
+        <div className="panel">
+          <h3>⚠ Not aimed yet</h3>
+          <p className="dim">
+            {unaimed.map((it) => it.label).join(", ")}{" "}
+            {unaimed.length === 1 ? "needs" : "need"} pointing at somebody before the day ends —
+            until then {unaimed.length === 1 ? "it does" : "they do"} nothing at all. The picker
+            is under {unaimed.length === 1 ? "the item" : "each item"} above.
           </p>
         </div>
       )}

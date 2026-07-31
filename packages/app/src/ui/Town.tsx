@@ -259,6 +259,21 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             day, then press <b>Done buying for today</b>.
           </div>
         )}
+        {me && !me.alive && me.ghostVoter && !view.winner && (
+          <div className="answer-card">
+            👻 <b>The Order honoured your coin.</b> You are dead, but your ghost keeps its vote —
+            scroll down to <b>The trial</b> and cast it. The living can hear you in the square,
+            too.
+          </div>
+        )}
+        {view.marketClosed && view.round >= 1 && !view.winner && me?.alive && (
+          <div className="answer-card">
+            <b>The market has closed.</b>{" "}
+            {me.askedToday
+              ? "Say your piece in the square below, then cast your vote."
+              : "Maude's office is open — you have one question today. Then argue it out in the square and vote."}
+          </div>
+        )}
         {view.round >= 1 && view.maxDays && !view.winner && (
           <p className="dim">
             The clock runs for the village: if the werebear survives the dusk of day{" "}
@@ -394,7 +409,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
                 </span>
               ) : null,
               p.askedToday ? "🔮 Asked" : null,
-              p.recovering ? "🤕 Abed" : null,
+              p.drunkToday ? "🍺 Asleep" : null,
             ].filter(Boolean);
             const status: React.ReactNode = !p.alive ? (
               p.ghostVoter ? (
@@ -683,6 +698,14 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               </>
             )}
           </p>
+          {view.marketClosed && (
+            <p className="dim">
+              {(view.awaitingVotes ?? []).length > 0
+                ? `Still to vote: ${(view.awaitingVotes ?? []).join(", ")}.`
+                : "Every vote is in."}
+              {view.nightDecided === false && " The night has not been decided yet."}
+            </p>
+          )}
           <div className="row">
             <select value={voteTarget} onChange={(e) => setVoteTarget(e.target.value)}>
               <option value="">accuse whom?</option>
@@ -694,11 +717,13 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             </select>
             <button
               className="primary"
-              disabled={!voteTarget || !view.marketClosed || me?.standsAccused || me?.recovering}
+              disabled={
+                !voteTarget || !view.marketClosed || me?.standsAccused || me?.drunkToday
+              }
               onClick={() => void castVote()}
             >
-              {me?.recovering
-                ? "🤕 Recovering — too weak to vote today"
+              {me?.drunkToday
+                ? "🍺 Dead drunk — no vote today"
                 : me?.standsAccused
                   ? "Reveal a purchase first (see the square)"
                   : "Cast vote"}
