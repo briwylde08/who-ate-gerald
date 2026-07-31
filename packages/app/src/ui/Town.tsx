@@ -365,7 +365,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               : "Receiving it will ask Freighter for one signature — that's you proving your seat."}
             <div className="row">
               <button className="primary" onClick={() => (role ? setRoleShown(true) : void fetchRole())}>
-                {role ? "Break the seal (private)" : "Receive your fate (private)"}
+                {role ? "Are you a werebear or a villager?" : "Receive your fate (private)"}
               </button>
             </div>
           </div>
