@@ -286,6 +286,7 @@ interface PublicView {
     doneToday?: boolean;
     standsAccused?: boolean;
     recovering?: boolean;
+    ghostVoter?: boolean;
   }[];
   mornings: { round: number; eaten?: string | null; notes?: string[] }[];
   chat?: { name: string; text: string }[];
@@ -483,7 +484,9 @@ async function main() {
 
       for (const bot of bots) {
         const me = view.players.find((p) => p.address === bot.address);
-        if (!me?.alive) continue;
+        if (!me) continue;
+        if (!me.alive && !me.ghostVoter) continue;
+        const isGhost = !me.alive;
 
         // Learn our fate once dealt.
         if (view.dealt && bot.role === null) {
@@ -495,8 +498,8 @@ async function main() {
         }
 
         if (view.round >= 1 && view.phase === "day") {
-          // Income, shopping, done — once per day.
-          if ((shoppedRound.get(bot.address) ?? 0) < view.round && !me.doneToday) {
+          // Income, shopping, done — once per day. (Ghosts buy nothing.)
+          if (!isGhost && (shoppedRound.get(bot.address) ?? 0) < view.round && !me.doneToday) {
             await bot.collectIncome(view.round).catch(() => undefined);
             const others = view.players
               .filter((p) => p.alive && p.address !== bot.address)
@@ -515,7 +518,7 @@ async function main() {
             }
             // Table talk, once a day — half the time, point a finger at the
             // current top suspect. (The bear frames right along with them.)
-            if (bot.chattedRound < view.round) {
+            if (!isGhost && bot.chattedRound < view.round) {
               bot.chattedRound = view.round;
               if (Math.random() < 0.8) {
                 const suspect = topSuspect(scoreSuspicion(view, graph, bot));
@@ -527,7 +530,7 @@ async function main() {
             // Vote: herd instinct over the day's chat and the graph. Votes
             // stagger across polls so later voters read the earlier fingers.
             if (
-              bot.chattedRound >= view.round &&
+              (isGhost || bot.chattedRound >= view.round) &&
               bot.votedRound < view.round &&
               !me.recovering &&
               Math.random() < 0.6
@@ -545,7 +548,7 @@ async function main() {
             }
             // The hunt: finish the wounded first (a shattered charm doesn't
             // grow back); otherwise never test the same door twice.
-            if (bot.role === "werebear" && bot.pickedRound < view.round) {
+            if (!isGhost && bot.role === "werebear" && bot.pickedRound < view.round) {
               let prey = view.players.filter((p) => p.alive && p.address !== bot.address);
               const weak = prey.filter((p) => p.recovering);
               if (weak.length > 0) prey = weak;
