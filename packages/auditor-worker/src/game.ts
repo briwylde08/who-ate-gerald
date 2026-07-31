@@ -586,6 +586,8 @@ export class GameRoom extends DurableObject<Env> {
     if (!item?.aim) throw new Error("that item does not need aiming");
 
     const round = this.state.round;
+    // The purchase is seconds old: poke the mirror before looking for it.
+    await syncIndexer(this.env);
     const purchases = await this.loadAll();
     const owned = this.countBought(purchases, address, itemId, { round });
     const alreadyAimed = this.state.aims.filter(
@@ -596,6 +598,10 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     let targetName: string | undefined;
+    if (item.aim === "self") {
+      // Nothing to point at — declaring it IS the action. Verified against the
+      // ledger above, so the trial can trust it without a second thought.
+    }
     if (item.aim === "player" || item.aim === "player+shop") {
       const t = target ? this.playerByName(target) : null;
       if (!t || !t.alive) throw new Error(`no living villager named "${target ?? ""}"`);
@@ -744,6 +750,19 @@ export class GameRoom extends DurableObject<Env> {
       );
 
     // --- TRIAL: knife-doubled plurality, minus any stopped mouths. ---------
+    // Dead drunk: villagers who declared a barrel today. The beast is too big
+    // for beer, so its own declaration does nothing at all.
+    const drunk = new Set(
+      aimsToday
+        .filter(
+          (a) =>
+            a.item === "barrel_of_beer" &&
+            roles[a.by] !== "werebear" &&
+            this.bought(effective, a.by, "barrel_of_beer", { round }),
+        )
+        .map((a) => this.playerByAddress(a.by)?.name)
+        .filter((n): n is string => !!n),
+    );
     const socked = new Set(
       aimsToday
         .filter((a) => a.item === "sock_in_mouth" && this.bought(effective, a.by, "sock_in_mouth", { round }))
@@ -755,6 +774,7 @@ export class GameRoom extends DurableObject<Env> {
       const voter = this.playerByAddress(voterAddr);
       // A granted ghost is counted with the living at the trial.
       if (!voter || (!voter.alive && this.state.ghostVote?.[voterAddr] !== "granted")) continue;
+      if (drunk.has(voter.name)) continue; // asleep in the road; no vote to count
       // A sock in the mouth: they spoke all day, but the tally cannot hear it.
       if (socked.has(voter.name)) {
         ((this.state.privateNotes ??= {})[voterAddr] ??= []).push({
@@ -869,6 +889,13 @@ export class GameRoom extends DurableObject<Env> {
         notes.push("A quiet night. Something large limped past the mill and took nothing.");
       } else if (!target || !target.alive) {
         notes.push("A quiet night.");
+      } else if (drunk.has(target.name)) {
+        // Nothing wakes a drunk villager, the beast included.
+        notes.push("A quiet night.");
+        ((this.state.privateNotes ??= {})[target.address] ??= []).push({
+          round: round + 1,
+          text: "🍺 You woke in the road at noon, unbitten. Something had sniffed you and thought better of it.",
+        });
       } else if (!sharpTonight && hasOffering && randomIndex(2) === 0) {
         // The beast took the gift and went. Publicly this is just a quiet
         // night; the villager who paid learns why, and only them.
@@ -930,60 +957,6 @@ export class GameRoom extends DurableObject<Env> {
     // when the same day's tie hanged them — invisible and unguessable.)
     const boughtToday = (itemId: string): PlayerRef[] =>
       this.state.players.filter((p) => boughtThisRound(p.address, itemId));
-
-    // The bottle: one true rumor from today's shopping (buyer doesn't choose).
-    if (boughtToday("a_bottle").length > 0) {
-      const todays = purchases.filter((p) => p.round === round && !p.isSurrender);
-      if (todays.length > 0) {
-        const pick = todays[randomIndex(todays.length)]!;
-        const band = Math.floor(Number(pick.amountXlm ?? 0) / 10) * 10;
-        notes.push(
-          `🍻 Tavern talk: something worth more than ${band} XLM left ${placePhrase(pick.toLabel)} today.`,
-        );
-      } else {
-        notes.push("🍻 Tavern talk: nobody bought a thing today. Suspicious in itself.");
-      }
-    }
-
-    // The ledger book: dawn names today's biggest spender (names only).
-    if (boughtToday("ledger_book").length > 0) {
-      const spent = new Map<string, bigint>();
-      for (const p of purchases.filter((x) => x.round === round && !x.isSurrender)) {
-        const who = this.playerByAddress(p.from);
-        if (who) spent.set(who.name, (spent.get(who.name) ?? 0n) + p.amountStroops);
-      }
-      if (spent.size > 0) {
-        const maxSpent = [...spent.values()].reduce((a, b) => (b > a ? b : a), 0n);
-        const names = [...spent.entries()].filter(([, v]) => v === maxSpent).map(([n]) => n);
-        notes.push(
-          `📖 The ledger book falls open: ${names.join(" and ")} spent the most today. The amounts stay sealed.`,
-        );
-      }
-    }
-
-    // The unsealing ritual: one purchase of the day's most-accused, named.
-    if (boughtToday("unsealing_ritual").length > 0) {
-      const accusedName =
-        weights.size > 0
-          ? [...weights.entries()].sort((a, b) => b[1] - a[1])[0]![0]
-          : null;
-      const accused = accusedName ? this.playerByName(accusedName) : null;
-      if (accused) {
-        const theirBuys = purchases
-          .filter((p) => p.from === accused.address && p.round >= 1 && !p.isSurrender)
-          .sort((a, b) => b.ledger - a.ledger);
-        const latest = theirBuys[0];
-        notes.push(
-          latest
-            ? `🕯 The ritual unseals a purchase of ${accused.name}, the most accused: ${
-                latest.itemGuess ? itemPhrase(latest.itemGuess) : `${latest.amountXlm} XLM of something`
-              } at ${placePhrase(latest.toLabel)}.`
-            : `🕯 The ritual reaches for ${accused.name}'s ledger and finds it empty. They have bought nothing at all.`,
-        );
-      } else {
-        notes.push("🕯 The ritual was paid for, but with no accusation to aim it at, the smoke just rose.");
-      }
-    }
 
     // Locks and holidays take effect TOMORROW; the village sees the door, never
     // the hand. A key names no one; a holiday shuts the shop for everybody.
@@ -1222,15 +1195,6 @@ export class GameRoom extends DurableObject<Env> {
       await syncIndexer(this.env);
     }
     const purchases = await this.loadAll();
-    // Musk salve: a buyer's NEXT-day sightings are logged as "a hooded
-    // figure". Computed per (address, round) so the hiding never depends on
-    // — and never leaks — anything but the ledger itself.
-    const hooded = new Set<string>();
-    for (const p of purchases) {
-      if (this.bought(purchases, p.from, "musk_salve", { round: p.round - 1 })) {
-        hooded.add(`${p.from}:${p.round}`);
-      }
-    }
     return {
       round: this.state.round,
       players: this.state.players.map((p) => ({
@@ -1246,9 +1210,7 @@ export class GameRoom extends DurableObject<Env> {
         .map((p) => ({
           round: p.round,
           ledger: p.ledger,
-          from: hooded.has(`${p.from}:${p.round}`)
-            ? "a hooded figure"
-            : (p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`),
+          from: p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`,
           to: p.toLabel,
         })),
     };

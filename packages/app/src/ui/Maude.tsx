@@ -18,7 +18,7 @@ const QUESTION_GROUPS: { label: string; questions: string[] }[] = [
       "Did anyone buy the silver charm this game?",
       "What did [player] buy at the Butcher's today?",
       "Did anyone buy the tooth sharpener? Asking for no particular reason.",
-      "Has anyone bought the musk salve this game?",
+      "Has anyone bought the barrel of beer today?",
     ],
   },
   {

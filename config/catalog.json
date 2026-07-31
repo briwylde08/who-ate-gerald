@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v6 (2026-07-31, per Bri) — 15 items, all prices globally unique so any revealed amount identifies the item. Laws: one clause referencing core rules only; no rare triggers (an item acts the day it is bought or on an event that happens most rounds); stores stay mixed-purpose; dual-use where possible. Items with an \"aim\" field need a second, server-private action (p/aim) because a purchase carries only an amount — never a target. The werebear may buy anything, silver included. Economy: 50 XLM buy-in, +15 XLM/day.",
+  "$comment": "Catalog v7 (2026-07-31, per Bri) — 11 items, all prices globally unique so any revealed amount identifies the item. Retired: a bottle, the ledger book, musk salve, lantern oil, the unsealing ritual. Items with an \"aim\" field need a second, server-private action (p/aim) because a purchase carries only an amount — never a target; aim \"self\" means the buyer declares they used it (the barrel). The werebear may buy anything. Economy: 50 XLM buy-in, +15 XLM/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -41,30 +41,6 @@
       "subtitle": "Everything you need. Nothing you can explain.",
       "items": [
         {
-          "id": "a_bottle",
-          "label": "A bottle",
-          "flavor": "Loosens tongues. Yours included.",
-          "priceXlm": 7,
-          "class": "B-info",
-          "effect": "Loose lips: at dawn the morning report carries one true rumour about the day's shopping. You don't choose which."
-        },
-        {
-          "id": "ledger_book",
-          "label": "The ledger book",
-          "flavor": "Somebody has to keep the books.",
-          "priceXlm": 15,
-          "class": "V-info",
-          "effect": "Tax records: at dawn, Maude names who spent the most today. Names only — amounts stay sealed."
-        },
-        {
-          "id": "musk_salve",
-          "label": "Musk salve",
-          "flavor": "Smells like nothing. Deliberately.",
-          "priceXlm": 18,
-          "class": "B-def",
-          "effect": "Shop unseen: tomorrow the sightings log your store visits as a hooded figure instead of your name. Anyone may buy it. Anyone."
-        },
-        {
           "id": "shopkeepers_vacation",
           "label": "Shopkeeper's holiday",
           "flavor": "Everyone deserves a rest. Tomorrow, ideally.",
@@ -81,6 +57,15 @@
           "class": "B-off",
           "effect": "Aim it: that villager may still talk and defend themselves, but their vote does not count at today's trial.",
           "aim": "player"
+        },
+        {
+          "id": "barrel_of_beer",
+          "label": "Barrel of beer",
+          "flavor": "Finish it and the night finishes you.",
+          "priceXlm": 30,
+          "class": "V-def",
+          "effect": "Drink it and pass out: you cast no vote today, and nothing can wake you — the beast included. The werebear is too big for beer to touch.",
+          "aim": "self"
         }
       ]
     },
@@ -110,7 +95,7 @@
           "id": "tooth_sharpener",
           "label": "Tooth sharpener",
           "flavor": "Ask no questions about the previous owner.",
-          "priceXlm": 30,
+          "priceXlm": 33,
           "class": "B-off",
           "effect": "Werebear: tonight nothing saves your prey. Villager: leave it out as an offering — an even chance the beast takes it and spares you."
         }
@@ -127,23 +112,7 @@
           "flavor": "The Order swears it is his. The Order swears a lot.",
           "priceXlm": 1,
           "class": "cover",
-          "effect": "Does nothing. Absolutely nothing — though the village still sees you visit."
-        },
-        {
-          "id": "lantern_oil",
-          "label": "Lantern oil",
-          "flavor": "Gerald's lantern was still lit, you know.",
-          "priceXlm": 12,
-          "class": "V-info",
-          "effect": "Posthumous: if you are eaten, Maude reads one true fact about the werebear's purchases by your still-lit lantern."
-        },
-        {
-          "id": "unsealing_ritual",
-          "label": "Unsealing ritual",
-          "flavor": "The Order charges for the truth.",
-          "priceXlm": 25,
-          "class": "V-info",
-          "effect": "At dawn, Maude unseals ONE purchase of the day's most-accused villager and names the item. The vote picks the target; the ritual pays for the reading."
+          "effect": "Does nothing. Absolutely nothing."
         },
         {
           "id": "unquiet_rest",

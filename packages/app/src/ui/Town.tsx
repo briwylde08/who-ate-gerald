@@ -490,8 +490,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             <p className="dim">
               Two things can pull a purchase into the open, and both need you: standing accused
               after a tie (you nominate one purchase and the server unseals it) and items whose
-              effect is to reveal — the ledger book, the unsealing ritual, a lantern left
-              burning.
+              effect is to reveal — a long candle burning all night in the Chapel.
             </p>
           </details>
         </div>
