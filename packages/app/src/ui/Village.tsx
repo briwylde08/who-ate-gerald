@@ -196,6 +196,14 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
   return (
     <div className="shop-page">
+      <div className="panel shop-howto">
+        <p>
+          You may buy items from two shops every day. The amount of items you purchase is up to
+          you, as long as you can afford them. You will be given an additional{" "}
+          {DAILY_INCOME_XLM} XLM per day. Once you're done purchasing your items for the day,
+          click the “Done buying for today” button.
+        </p>
+      </div>
       <div className="panel purse">
         <div className="purse-block">
           <div className="purse-label">🔒 Private purse</div>
