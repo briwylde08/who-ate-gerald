@@ -25,6 +25,14 @@ const LOBBY_FLAVOR = [
   "The chapel bell is rung twice, by nobody.",
 ];
 
+/**
+ * The night's film: when a villager is eaten, their character's "gets got"
+ * reel plays once for everyone at dawn. Files live in public/videos/ as
+ * <characterId>_gets_got.mp4 — a missing file (the midwife, for now) just
+ * means no film, handled by onError.
+ */
+const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.mp4`;
+
 function flavorFor(seed: string): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
@@ -63,6 +71,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   const [chatBusy, setChatBusy] = useState(false);
   const [discloseTx, setDiscloseTx] = useState("");
   const [copiedId, setCopiedId] = useState(false);
+  /** The night's film: {src, caption} while showing, null otherwise. */
+  const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
 
   const sendChat = async () => {
     setChatBusy(true);
@@ -153,6 +163,24 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.address, round]);
+
+  // When a new morning carries a victim, roll their film — once per morning
+  // per browser, marked seen on show so a refresh doesn't replay the horror.
+  useEffect(() => {
+    if (!view) return;
+    const m = [...view.mornings].reverse().find((x) => x.eaten);
+    if (!m?.eaten) return;
+    const victim = view.players.find((p) => p.name === m.eaten);
+    if (!victim?.character) return;
+    const seenKey = `gerald:film:${gameId}:${m.round}`;
+    if (localStorage.getItem(seenKey)) return;
+    localStorage.setItem(seenKey, "1");
+    setFilm({
+      src: nightFilmSrc(victim.character),
+      caption: `${m.eaten} was taken in the night.`,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view?.mornings.length]);
 
   // Share our cosmetic character with the village once we're seated.
   useEffect(() => {
@@ -726,6 +754,30 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           {m.winner && <p className="tagline">The {m.winner} has won.</p>}
         </div>
       ))}
+
+      {film && (
+        <div
+          className="film-overlay"
+          role="dialog"
+          aria-label={film.caption}
+          onClick={() => setFilm(null)}
+        >
+          <div className="film-frame" onClick={(e) => e.stopPropagation()}>
+            <video
+              src={film.src}
+              autoPlay
+              muted
+              playsInline
+              controls
+              onError={() => setFilm(null)} // no reel for this villager (yet)
+            />
+            <p className="film-caption">{film.caption}</p>
+            <button className="primary" onClick={() => setFilm(null)}>
+              Close the curtains
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
