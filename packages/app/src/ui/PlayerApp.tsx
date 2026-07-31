@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wallet";
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
-import { loadProfile, clearProfile, characterOf, type Profile } from "../lib/profile";
+import { loadProfile, clearProfile, characterOf, saveProfile, type Profile } from "../lib/profile";
 import { fetchGraph, fetchPublicView, loadGameId, saveGameId } from "../lib/player";
 import { CharEmoji } from "./CharIcon";
 import { Intro } from "./Intro";
@@ -168,6 +168,23 @@ export function PlayerApp() {
       try {
         const v = await fetchPublicView(gameId);
         setRound((r) => (v.round !== r ? v.round : r));
+        // One wallet, one identity: the SEAT is the truth. If the local
+        // profile has drifted (picked a new name/face while already seated),
+        // snap back to the seat rather than show two different people.
+        const seat = v.players.find((p) => p.address === wallet.address);
+        if (seat?.character) {
+          setProfile((prof) => {
+            if (prof && (prof.name !== seat.name || prof.characterId !== seat.character)) {
+              const fixed = { name: seat.name, characterId: seat.character! };
+              saveProfile(fixed);
+              setError(
+                `This wallet is already seated in “${gameId}” as ${seat.name} — one wallet, one villager. To be somebody else, use a different game or wallet.`,
+              );
+              return fixed;
+            }
+            return prof;
+          });
+        }
       } catch {
         // no game yet — the slow refresh will catch up
       }
