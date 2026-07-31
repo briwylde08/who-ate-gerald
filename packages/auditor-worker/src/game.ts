@@ -131,6 +131,11 @@ function itemPhrase(label: string): string {
   return `the ${label.toLowerCase().replace(/^(the|a|an)\s+/, "")}`;
 }
 
+/** Name a shop in running prose — "The Butcher's" already has its article. */
+function placePhrase(label: string): string {
+  return `the ${label.replace(/^The\s+/i, "")}`;
+}
+
 /** Uniform random index from real randomness (same source as the role deal). */
 function randomIndex(n: number): number {
   const buf = new Uint32Array(1);
@@ -712,6 +717,8 @@ export class GameRoom extends DurableObject<Env> {
     let banishedRole: Role | null = null;
     if (banished) {
       banished.alive = false;
+      delete this.state.mustDisclose[banished.address];
+      delete this.state.recovering[banished.address];
       banishedRole = roles[banished.address] ?? "villager";
       const totalWeight = [...weights.values()].reduce((a, b) => a + b, 0);
       const voterCount = Object.keys(this.state.votes).length;
@@ -780,6 +787,8 @@ export class GameRoom extends DurableObject<Env> {
       } else {
         eaten = target;
         target.alive = false;
+        delete this.state.mustDisclose[target.address];
+        delete this.state.recovering[target.address];
         if (sharpTonight) {
           notes.push(
             `🦷 Whatever ${target.name} was carrying did not matter. Something came with its teeth already sharpened.`,
@@ -821,7 +830,7 @@ export class GameRoom extends DurableObject<Env> {
         const pick = todays[randomIndex(todays.length)]!;
         const band = Math.floor(Number(pick.amountXlm ?? 0) / 10) * 10;
         notes.push(
-          `🍻 Tavern talk: something worth more than ${band} XLM left the ${pick.toLabel} today.`,
+          `🍻 Tavern talk: something worth more than ${band} XLM left ${placePhrase(pick.toLabel)} today.`,
         );
       } else {
         notes.push("🍻 Tavern talk: nobody bought a thing today. Suspicious in itself.");
@@ -860,7 +869,7 @@ export class GameRoom extends DurableObject<Env> {
           latest
             ? `🕯 The ritual unseals a purchase of ${accused.name}, the most accused: ${
                 latest.itemGuess ? itemPhrase(latest.itemGuess) : `${latest.amountXlm} XLM of something`
-              } at the ${latest.toLabel}.`
+              } at ${placePhrase(latest.toLabel)}.`
             : `🕯 The ritual reaches for ${accused.name}'s ledger and finds it empty. They have bought nothing at all.`,
         );
       } else {
@@ -1215,7 +1224,7 @@ export class GameRoom extends DurableObject<Env> {
       .sort((a, b) => b.ledger - a.ledger);
     const latest = bearBuys[0];
     if (!latest) return "the werebear has not spent a single coin since Gerald died. Frugal, for a monster.";
-    return `the werebear's most recent purchase was at the ${latest.toLabel}: ${
+    return `the werebear's most recent purchase was at ${placePhrase(latest.toLabel)}: ${
       latest.itemGuess ? itemPhrase(latest.itemGuess) : `${latest.amountXlm} XLM of something`
     }.`;
   }
