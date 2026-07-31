@@ -136,10 +136,11 @@ async function finishDay(round: number): Promise<Morning> {
   try {
     return await gmCall<Morning>("resolve-day", {});
   } catch (e) {
-    if (!String(e).includes("dawn has already come")) throw e;
+    const msg = String(e);
+    if (!msg.includes("dawn has already come") && !msg.includes("game over")) throw e;
     const morning = (await publicView()).mornings.find((m) => m.round === round);
     if (!morning) throw new Error(`round ${round} resolved itself but wrote no morning`);
-    console.log("  (dawn broke on its own — the last vote and the pick were in)");
+    console.log("  (the game closed the day itself — the last vote was in)");
     return morning;
   }
 }
@@ -356,8 +357,13 @@ async function main() {
       beforeDay3.players,
     );
     check(
-      "yesterday's tie leaves both sides accused",
-      beforeDay3.players.filter((p) => p.standsAccused).length === 2,
+      "death discharges the dead player's disclosure debt",
+      beforeDay3.players.find((p) => p.name === v1.name)?.standsAccused !== true,
+      beforeDay3.players,
+    );
+    check(
+      "the living half of yesterday's tie still owes one",
+      beforeDay3.players.filter((p) => p.alive && p.standsAccused).length === 1,
       beforeDay3.players,
     );
     await done([v3, v4, bear]);
