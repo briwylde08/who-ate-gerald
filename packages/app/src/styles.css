@@ -392,13 +392,8 @@ th { color: var(--ink-dim); font-weight: normal; }
 .character:disabled .portrait { filter: grayscale(1) brightness(0.6); }
 
 /* ------------------------------------------------------------- my ledger --
-   A cool, private account book on the left; a warmer, more theatrical
-   defense bench on the right. */
-
-.ledger-page { display: grid; gap: 12px; }
-@media (min-width: 900px) {
-  .ledger-page.two-up { grid-template-columns: 2fr 3fr; align-items: start; }
-}
+   A cool, private account book. Nothing to act on here: accusations are
+   answered in the square, so this page only remembers. */
 
 .ledger-panel { background: rgba(24, 29, 44, 0.94); }
 .privacy-banner {
@@ -425,12 +420,11 @@ th { color: var(--ink-dim); font-weight: normal; }
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  text-align: left;
   padding: 9px 11px;
+  border: 1px solid var(--line);
   border-radius: 6px;
+  background: var(--panel-2);
 }
-.entry:hover { border-color: #4a5170; }
-.entry.selected { border-color: var(--lantern); background: rgba(213, 170, 99, 0.09); }
 .entry-main { display: flex; flex-direction: column; min-width: 0; }
 .entry-item { color: var(--ink); font-size: 0.92rem; }
 .entry-where { font-size: 0.72rem; color: var(--ink-dim); }
@@ -447,76 +441,14 @@ th { color: var(--ink-dim); font-weight: normal; }
   text-transform: uppercase;
   color: var(--ink-dim);
 }
-.entry.selected .entry-amount,
-.entry.selected .entry-state { color: var(--lantern); }
-
-/* The defense bench: three steps, only one of them lit. */
-.defense-panel { border-color: #4a4130; }
-.step {
-  border-left: 2px solid var(--line);
-  padding: 2px 0 10px 12px;
-  margin-top: 14px;
-  opacity: 0.72;
-}
-.step.current { border-left-color: var(--lantern); opacity: 1; }
-.step.complete { border-left-color: var(--green); opacity: 0.9; }
-.step-head {
+.ledger-total {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: "Fraunces", Georgia, serif;
-  font-size: 1rem;
-  color: var(--moon);
-  margin-bottom: 6px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
 }
-.step-n {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5em;
-  height: 1.5em;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  font-size: 0.7rem;
-}
-.step.current .step-n { border-color: var(--lantern); color: var(--lantern); }
-.step.complete .step-n { border-color: var(--green); color: var(--green); }
-.step.complete .step-n::after { content: ""; }
-
-.proving-card {
-  border: 1px solid var(--lantern);
-  border-radius: 6px;
-  padding: 10px 12px;
-  background: rgba(213, 170, 99, 0.07);
-}
-.proving-what { font-size: 1rem; color: var(--parchment); margin: 2px 0 4px; }
-.proving-card p { margin: 0 0 6px; font-size: 0.78rem; }
-
-pre.tech {
-  background: rgba(8, 11, 20, 0.6);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 0.72rem;
-  overflow-x: auto;
-}
-
-.defense-failed {
-  border: 1px solid var(--blood);
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-top: 14px;
-}
-.defense-result {
-  border: 1px solid var(--lantern);
-  border-radius: 7px;
-  padding: 12px 14px;
-  margin-top: 16px;
-  background: rgba(213, 170, 99, 0.06);
-  box-shadow: 0 0 18px rgba(213, 170, 99, 0.1);
-}
-.defense-result textarea { margin-top: 8px; font-size: 0.7rem; }
 
 /* --------------------------------------------------------- Maude's parlor --
    A private consultation, not a form: her portrait and the seal state first,

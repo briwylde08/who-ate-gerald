@@ -401,9 +401,6 @@ export function PlayerApp() {
               gameId={gameId}
               active={tab === "ledger"}
               onGoShops={() => setTab("village")}
-              onPhase={onPhase}
-              setBusy={setBusy}
-              setError={setError}
             />
           </div>
         </>
