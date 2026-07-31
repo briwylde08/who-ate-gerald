@@ -61,6 +61,7 @@ export function Intro({
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [taken, setTaken] = useState<Set<string>>(new Set());
   const [seated, setSeated] = useState<{ name: string; character?: string | null } | null>(null);
+  const [gameDealt, setGameDealt] = useState(false);
 
   // One face per game: grey out characters claimed by OTHER players. Your own
   // seat stays open — locking it left returning players with nothing to pick
@@ -78,6 +79,7 @@ export function Intro({
           ),
         );
         setSeated(mine ? { name: mine.name, character: mine.character } : null);
+        setGameDealt(v.dealt === true);
         // Already seated in this game? Offer that identity back, pre-filled.
         if (mine) {
           setName((n) => n || mine.name);
@@ -237,10 +239,28 @@ export function Intro({
         been chosen.
       </p>
       {seated && (
-        <p className="dim">
-          You already hold a seat in this game as <b>{seated.name}</b> — that face is still
-          yours, and it's selected below.
-        </p>
+        <div className="answer-card">
+          <b>This wallet already holds a seat in this game as {seated.name}.</b>{" "}
+          {gameDealt
+            ? "The game is underway — your face is set, and it cannot be changed."
+            : "Continue as them, or pick a different face while the lobby is still open."}
+          <div className="row">
+            <button
+              className="primary"
+              onClick={() => {
+                const p = {
+                  name: seated.name,
+                  characterId: seated.character ?? characterId ?? "",
+                };
+                if (!p.characterId) return;
+                saveProfile(p);
+                onDone(p);
+              }}
+            >
+              Continue as {seated.name}
+            </button>
+          </div>
+        </div>
       )}
       <div className="characters picker">
         {CHARACTERS.map((c) => {
@@ -249,7 +269,7 @@ export function Intro({
             <button
               key={c.id}
               className={`character ${characterId === c.id ? "selected" : ""}`}
-              disabled={isTaken}
+              disabled={isTaken || (gameDealt && seated !== null && c.id !== seated.character)}
               onClick={() => setCharacterId(c.id)}
             >
               <img className="portrait" src={c.image} alt={c.title} loading="lazy" />

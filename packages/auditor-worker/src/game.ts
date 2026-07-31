@@ -327,6 +327,9 @@ export class GameRoom extends DurableObject<Env> {
 
   /** Claim a cosmetic character so the whole village can see who's who. */
   async claimCharacter(address: string, character: string): Promise<{ character: string }> {
+    // Faces lock when roles are dealt: a mid-game character swap would let a
+    // player shed the identity everyone's suspicions are attached to.
+    if (this.state.roles) throw new Error("the game is underway — your face is set");
     const player = this.playerByAddress(address);
     if (!player) throw new Error("that address holds no seat in this game");
     const c = String(character).trim().slice(0, 32);
