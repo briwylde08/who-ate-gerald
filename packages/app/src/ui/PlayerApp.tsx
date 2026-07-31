@@ -400,6 +400,7 @@ export function PlayerApp() {
               wallet={wallet}
               gameId={gameId}
               active={tab === "ledger"}
+              onGoShops={() => setTab("village")}
               onPhase={onPhase}
               setBusy={setBusy}
               setError={setError}

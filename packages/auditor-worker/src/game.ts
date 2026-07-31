@@ -116,6 +116,15 @@ const freshState = (): GameState => ({
 /** Minimum lobby size before ready-up can start the game (7 for the real thing). */
 const MIN_PLAYERS = 3;
 
+/**
+ * Name an item in running prose. Catalog labels carry their own articles
+ * ("A bottle", "The ledger book"), so a bare `the ${label}` produced "the a
+ * bottle" and "the the ledger book" — swap the label's article for ours.
+ */
+function itemPhrase(label: string): string {
+  return `the ${label.toLowerCase().replace(/^(the|a|an)\s+/, "")}`;
+}
+
 /** Uniform random index from real randomness (same source as the role deal). */
 function randomIndex(n: number): number {
   const buf = new Uint32Array(1);
@@ -808,7 +817,7 @@ export class GameRoom extends DurableObject<Env> {
         notes.push(
           latest
             ? `🕯 The ritual unseals a purchase of ${accused.name}, the most accused: ${
-                latest.itemGuess ? `the ${latest.itemGuess.toLowerCase()}` : `${latest.amountXlm} XLM of something`
+                latest.itemGuess ? itemPhrase(latest.itemGuess) : `${latest.amountXlm} XLM of something`
               } at the ${latest.toLabel}.`
             : `🕯 The ritual reaches for ${accused.name}'s ledger and finds it empty. They have bought nothing at all.`,
         );
@@ -1174,7 +1183,7 @@ export class GameRoom extends DurableObject<Env> {
     const latest = bearBuys[0];
     if (!latest) return "the werebear has not spent a single coin since Gerald died. Frugal, for a monster.";
     return `the werebear's most recent purchase was at the ${latest.toLabel}: ${
-      latest.itemGuess ? `the ${latest.itemGuess.toLowerCase()}` : `${latest.amountXlm} XLM of something`
+      latest.itemGuess ? itemPhrase(latest.itemGuess) : `${latest.amountXlm} XLM of something`
     }.`;
   }
 
