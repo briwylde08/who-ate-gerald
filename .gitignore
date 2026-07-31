@@ -13,4 +13,4 @@ config/local*
 .DS_Store
 .wrangler/
 worker-configuration.d.ts
-.DS_Store
+.playwright-mcp/

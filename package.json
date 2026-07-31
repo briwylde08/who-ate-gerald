@@ -2,6 +2,9 @@
   "name": "who-ate-gerald",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "description": "Trust is scarce. Gerald is dead. \u2014 a social-deduction game on Stellar confidential tokens",
   "workspaces": [
     "packages/*"

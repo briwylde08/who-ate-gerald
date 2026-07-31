@@ -74,8 +74,31 @@ npm run health           # end-to-end stack check against testnet
 The GM dashboard is at `/#gm` with the token from `config/local.gm.json`. It
 shows decrypted purchases for every player — **never screen-share it.**
 
+## Running it yourself
+
+```sh
+npm install          # Node 20+; workspaces pull in the vendored SDK
+npm run deploy:app   # or `npm run dev --workspace @gerald/app` for local
+```
+
+Everything here talks to a **Stellar testnet** deployment that already exists
+(`config/deployment.testnet.json`), so the app runs against it with nothing
+but Freighter. What a fresh clone does *not* have, because they are
+gitignored secrets:
+
+| File | Needed for |
+|---|---|
+| `config/local.gm.json` | the GM dashboard and any script that drives a game |
+| `config/local.auditor.json` | decrypting transfers (`test:auditor`, `health`) |
+| `config/local.deployer.json`, `config/local.shops.json` | deploying a new token or registering shops |
+
+Deploying your own stack instead: `npm run deploy:stack`, then
+`npm run setup:shops`, then set the worker's secrets (`AUDITOR_K`,
+`GM_TOKEN`, and the OpenAI/gateway keys Maude speaks through) with
+`npx wrangler secret put`.
+
 ## Sibling project
 
-[Axe & Ember](../axe-and-ember) — the single-player tutorial for the same
-confidential-token mechanics. The wallet layer, indexer, and disclosure
-machinery were ported from there; the ember-indexer worker mirrors both tokens.
+**Axe & Ember** — the single-player tutorial for the same confidential-token
+mechanics. The wallet layer, indexer, and disclosure machinery were ported
+from there; the ember-indexer worker mirrors both tokens.
