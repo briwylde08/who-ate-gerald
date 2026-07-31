@@ -111,8 +111,8 @@ export function Maude({ wallet, gameId, setError }: Props) {
           <h2>Maude McLedger</h2>
           <p className="maude-tagline">Fortune teller. Ledger reader. Terrible confidante.</p>
           <p className="dim">
-            She reads ledgers the way other women read palms. One question per villager per day;
-            her answer comes to you alone.
+            She reads ledgers the way other women read palms. One question per villager per day,
+            and no other villager sees her answer.
           </p>
           <div className={`seal seal-${seal}`}>{sealLabel}</div>
         </div>

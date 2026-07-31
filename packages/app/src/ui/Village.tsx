@@ -304,7 +304,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                     <div className="item-main">
                       <div className="item-name">
                         {item.label}
-                        {owned && <span className="badge">✓ Owned</span>}
+                        {/* "Bought", not "Owned": most v4 items are consumed
+                            (nail, charm) or only work the day they're bought,
+                            so possession would be a promise the rules break. */}
+                        {owned && <span className="badge">✓ Bought</span>}
                       </div>
                       {item.flavor && <p className="item-flavor">“{item.flavor}”</p>}
                       {/* Effects are public knowledge — no reason to hide them
