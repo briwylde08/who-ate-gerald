@@ -717,6 +717,13 @@ th { color: var(--ink-dim); font-weight: normal; }
   border-radius: 5px;
   background: rgba(18, 20, 28, 0.5);
 }
+/* An unclaimed seat is just an empty frame — no icon squatting in it. */
+.empty-frame {
+  aspect-ratio: 1;
+  border: 1px dashed var(--line);
+  border-radius: 5px;
+  background: rgba(18, 20, 28, 0.25);
+}
 .v-tomb {
   position: absolute;
   bottom: 4px;

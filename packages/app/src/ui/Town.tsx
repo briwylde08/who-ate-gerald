@@ -415,11 +415,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           {!view.dealt &&
             Array.from({ length: seatsNeeded }).map((_, i) => (
               <div key={`seat-${i}`} className="villager-card empty">
-                <div className="v-portrait">
-                  <span className="v-fallback" aria-hidden="true">
-                    🕳
-                  </span>
-                </div>
+                <div className="v-portrait empty-frame" aria-hidden="true" />
                 <div className="v-name">Empty seat</div>
                 <p className="v-blurb">
                   {seatsNeeded === 1
