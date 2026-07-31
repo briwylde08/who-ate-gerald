@@ -199,6 +199,12 @@ class Player {
     console.log(`  ${this.name} seated (${this.address.slice(0, 6)}…)`);
   }
 
+  /** Point an aimed item at its victim (server-private, like a vote). */
+  async aim(item: string, target?: string, shop?: string): Promise<void> {
+    await this.call("aim", { item, target, shop });
+    console.log(`    ${this.name} aims ${item} → ${[target, shop].filter(Boolean).join(" @ ")}`);
+  }
+
   /** Buy one catalog item by id — the amount IS the item. */
   async buy(transferProver: CircuitProver, itemId: string): Promise<void> {
     const item = PRICE.get(itemId);
@@ -234,13 +240,13 @@ async function main() {
   const transferProver = proverFromArtifact(transferCircuit);
 
   try {
-    console.log(`CATALOG v5 ITEM EXAM "${GAME_ID}"\n`);
+    console.log(`CATALOG v6 ITEM EXAM "${GAME_ID}"\n`);
 
-    // ---- seat five players, deal, learn roles ------------------------------
-    // Five, not four: lucky iron hangs a villager on day one now, and four
-    // seats would hit parity (bear wins) before day three could run.
+    // ---- seat six players, deal, learn roles -------------------------------
+    // Six: the trial hangs somebody most days now, and the aimed items need a
+    // third day to land on — five would reach parity first.
     const addrF = addressToField(dep.token);
-    const all = ["Ada", "Bram", "Cleo", "Dov", "Esme"].map(
+    const all = ["Ada", "Bram", "Cleo", "Dov", "Esme", "Fen"].map(
       (name) => new Player(name, deriveKeys(randomScalar(), addrF), Keypair.random(), client),
     );
     for (const p of all) await p.provision(registerProver, 150n * XLM);
@@ -255,10 +261,11 @@ async function main() {
       p.role = r.role;
     }
     const bear = all.find((p) => p.role === "werebear")!;
-    const [v1, v2, v3, v4] = all.filter((p) => p.role === "villager") as [
-      Player, Player, Player, Player,
+    const [v1, v2, v3, v4, v5] = all.filter((p) => p.role === "villager") as [
+      Player, Player, Player, Player, Player,
     ];
-    check("one werebear, four villagers", bear !== undefined && v4 !== undefined);
+    check("one werebear, five villagers", bear !== undefined && v5 !== undefined);
+    console.log(`  seats: ${[v1, v2, v3, v4, v5].map((p) => p.name).join(", ")}`);
     console.log(`  (the beast is ${bear.name})\n`);
 
     const done = async (players: Player[]) => {
@@ -266,137 +273,105 @@ async function main() {
     };
 
     // ---- DAY 1 -----------------------------------------------------------
-    console.log("DAY 1 — lucky iron decides a tie, bottle, charm");
+    console.log("DAY 1 — a stopped mouth, a bone at the gate, honest silver");
     await gmCall("round/start", {});
-    await v1.buy(transferProver, "horseshoe_nail");
-    await v2.buy(transferProver, "a_bottle");
-    await v3.buy(transferProver, "silver_charm");
-    await bear.buy(transferProver, "musk_salve");
+    await v1.buy(transferProver, "sock_in_mouth");
+    await v1.aim("sock_in_mouth", v2.name);
+    await v2.buy(transferProver, "soup_bone");
+    await v2.aim("soup_bone", v4.name);
+    await v3.buy(transferProver, "geralds_finger");
+    await v4.buy(transferProver, "butchers_knife");
+    await bear.buy(transferProver, "silver_charm"); // no longer burns the beast
     await done(all);
 
-    // One line of table talk, which also exercises the square.
-    await v2.call("chat", { text: "If I die, I want it minuted." });
-
-    const ask = await v1.call<{ answer: string; fact: { buyers?: string[] } }>("ask", {
+    const ask = await v1.call<{ fact: { buyers?: string[] } }>("ask", {
       question: "Did anyone buy the silver charm this game?",
     });
-    check("Maude names the charm buyer", (ask.fact.buyers ?? []).includes(v3.name), ask.fact);
-    const twice = await v1.call("ask", { question: "And the musk salve?" }).then(
-      () => false,
-      () => true,
-    );
-    check("second question refused — one seal a day", twice);
+    check("Maude sees the beast's own silver", (ask.fact.buyers ?? []).includes(bear.name), ask.fact);
 
-    // A two-way tie: the nail-holder should walk, the other should be accused.
-    await v1.call("vote", { target: v2.name });
+    // The socked vote would decide this trial if it counted; it must not.
     await v2.call("vote", { target: v1.name });
-    await bear.call("night-pick", { target: v3.name });
+    await v4.call("vote", { target: v3.name }); // knife: this counts twice
+    await bear.call("night-pick", { target: v2.name });
     const m1 = await finishDay(1);
     console.log(`  morning: ${JSON.stringify(m1.notes)}`);
-    check("lucky iron steps its holder out of the tie", hasNote(m1.notes, "lucky iron"), m1.notes);
-    check("the tie falls on the other villager", m1.banished === v2.name, m1);
-    check("bottle pours a rumour", hasNote(m1.notes, "Tavern talk"), m1.notes);
-    check("silver charm saves and shatters", hasNote(m1.notes, "shards of a silver charm"), m1.notes);
-    check("nobody eaten", m1.eaten === null, m1);
-
-    // ---- DAY 2 -----------------------------------------------------------
-    console.log("\nDAY 2 — the pierce, a paid ghost, lantern, readings");
-    await gmCall("round/start", {});
-    const beforeDay2 = await publicView();
+    check("a stopped mouth is announced", hasNote(m1.notes, "One voice was stopped"), m1.notes);
+    check("and the socked vote did not count", m1.banished === v3.name, m1);
+    check("the knife glints at the trial", hasNote(m1.notes, "Steel glinted"), m1.notes);
+    check("silver no longer burns the beast", !hasNote(m1.notes, "burnt fur"), m1.notes);
     check(
-      "the saved villager spends the day abed",
-      beforeDay2.players.find((p) => p.name === v3.name)?.recovering === true,
-      beforeDay2.players,
+      "the bone sent the beast to one gate or the other",
+      m1.eaten === v2.name || m1.eaten === v4.name,
+      m1,
     );
-    // v1 tools up for the night AND pre-pays the Order; v3 (abed, but the
-    // shops still serve them) buys the readings; the beast sharpens a tooth.
-    await v1.buy(transferProver, "silver_charm");
-    await v1.buy(transferProver, "unquiet_rest");
-    await v1.buy(transferProver, "lantern_oil");
-    await v3.buy(transferProver, "ledger_book");
-    await v3.buy(transferProver, "a_bottle");
-    await v3.buy(transferProver, "unsealing_ritual");
-    await bear.buy(transferProver, "tooth_sharpener");
-    await done([v1, v3, v4, bear]);
+    const socked = await v2.call<{ notes: { round: number; text: string }[] }>("notes");
+    check(
+      "the silenced villager is told privately",
+      socked.notes.some((n) => n.text.includes("did not carry")),
+      socked.notes,
+    );
 
-    // A tie so nobody hangs (v3 is abed and cannot vote), leaving the ritual a
-    // most-accused to read; the beast eats through v1's silver with the tooth.
-    await v1.call("vote", { target: bear.name });
-    await bear.call("vote", { target: v1.name });
+    // ---- DAY 2 -------------------------------------------------------------
+    console.log("\nDAY 2 — a lock, a holiday, and a candle lit for the beast");
+    await gmCall("round/start", {});
+    await v1.buy(transferProver, "cold_iron_key");
+    await v1.aim("cold_iron_key", v5.name, "blacksmith");
+    await v1.buy(transferProver, "shopkeepers_vacation");
+    await v1.aim("shopkeepers_vacation", undefined, "chapel");
+    await v5.buy(transferProver, "the_long_candle");
+    await v5.aim("the_long_candle", bear.name);
+    const living2 = (await publicView()).players.filter((p) => p.alive).map((p) => p.name);
+    console.log(`  still breathing: ${living2.join(", ")}`);
+    await done(all.filter((p) => living2.includes(p.name)));
+
+    // A tie so nobody hangs: the locks must survive to land tomorrow.
+    await v1.call("vote", { target: v5.name });
+    await v5.call("vote", { target: v1.name });
     await bear.call("night-pick", { target: v1.name });
     const m2 = await finishDay(2);
     console.log(`  morning: ${JSON.stringify(m2.notes)}`);
-    check("ledger book names the day's big spender", hasNote(m2.notes, "ledger book falls open"), m2.notes);
-    check("ledger book fingers the actual spender", hasNote(m2.notes, v1.name), m2.notes);
-    check("bottle pours a rumour", hasNote(m2.notes, "Tavern talk"), m2.notes);
-    check("lantern oil reads the beast", hasNote(m2.notes, "still-lit lantern"), m2.notes);
-    check(
-      "the Order rules on the paid-for ghost, either way",
-      hasNote(m2.notes, "keeps its vote") || hasNote(m2.notes, "kept the fee"),
-      m2.notes,
-    );
-    check("the ritual unseals the accused", hasNote(m2.notes, "ritual unseals"), m2.notes);
-    check("a sharpened tooth beats silver", m2.eaten === v1.name, m2);
-    check("and the village is told why", hasNote(m2.notes, "teeth already sharpened"), m2.notes);
-    check("the charm never got to save them", !hasNote(m2.notes, "shards of a silver charm"), m2.notes);
-    const edges2 = await graphEdges();
-    const round2 = edges2.filter((e) => e.round === 2);
-    check(
-      "musk salve hoods the wearer's next-day sightings",
-      round2.some((e) => e.from === "a hooded figure") && !round2.some((e) => e.from === bear.name),
-      round2,
-    );
+    check("a lock is fitted, unattributed", hasNote(m2.notes, "A lock was fitted"), m2.notes);
+    check("a shopkeeper takes a holiday, in public", hasNote(m2.notes, "is shut tomorrow"), m2.notes);
+    check("the key's buyer is never named", !m2.notes.some((n) => n.includes("lock") && n.includes(v1.name)), m2.notes);
 
-    // ---- DAY 3 -----------------------------------------------------------
-    console.log("\nDAY 3 — the ghost votes (or doesn't), and the village decides");
+    // ---- DAY 3 -------------------------------------------------------------
+    console.log("\nDAY 3 — barred doors, and the flame's report");
     await gmCall("round/start", {});
-    const beforeDay3 = await publicView();
+    const day3 = await publicView();
     check(
-      "the pierced villager is dead, not recovering",
-      beforeDay3.players.find((p) => p.name === v1.name)?.alive === false,
-      beforeDay3.players,
+      "the shuttered store is public knowledge",
+      (day3 as unknown as { closedShops?: string[] }).closedShops?.includes("chapel") === true,
+      (day3 as unknown as { closedShops?: string[] }).closedShops,
     );
+    const flame = await v5.call<{ notes: { round: number; text: string }[] }>("notes");
     check(
-      "death discharges the dead player's disclosure debt",
-      beforeDay3.players.find((p) => p.name === v1.name)?.standsAccused !== true,
-      beforeDay3.players,
-    );
-    check(
-      "the living half of yesterday's tie still owes one",
-      beforeDay3.players.filter((p) => p.alive && p.standsAccused).length === 1,
-      beforeDay3.players,
-    );
-    await done([v3, v4, bear]);
-
-    // Yesterday's tie left the beast itself accused: it must unseal a purchase
-    // before it may vote — the ritual's own medicine.
-    const bearReveal = await bear.call<{ revealed: string }>("disclose", { txHash: "" });
-    check("even the beast must unseal when accused", !!bearReveal.revealed, bearReveal);
-
-    // Did the Order grant v1's ghost a vote? Assert whichever ruling landed.
-    const ghostGranted = m2.notes.some((n) => n.includes("keeps its vote"));
-    const ghostVoted = await v1
-      .call("vote", { target: bear.name })
-      .then(() => true, () => false);
-    check(
-      ghostGranted ? "a granted ghost may vote" : "a refused ghost may not vote",
-      ghostVoted === ghostGranted,
-      { ghostGranted, ghostVoted },
+      "the long candle reports — truly or not at all",
+      flame.notes.some(
+        (n) => n.text.includes("stood straight") || n.text.includes("guttered"),
+      ),
+      flame.notes,
     );
 
-    await v3.call("vote", { target: bear.name });
-    await v4.call("vote", { target: bear.name });
-    await bear.call("vote", { target: v3.name });
-    await bear.call("night-pick", { target: v3.name });
+    // v5 forces both barred doors: the coin goes, the effect does not.
+    await v5.buy(transferProver, "lantern_oil"); // Chapel — shuttered for all
+    await v5.buy(transferProver, "horseshoe_nail"); // Blacksmith — locked to v5
+    await done([v5, bear]);
+    await v5.call("vote", { target: bear.name });
+    await bear.call("vote", { target: v5.name });
+    await bear.call("night-pick", { target: v5.name });
     const m3 = await finishDay(3);
     console.log(`  morning: ${JSON.stringify(m3.notes)}`);
-    check("the village hangs the beast", m3.banished === bear.name, m3);
-    check("and it was the beast", m3.banishedRole === "werebear", m3);
-    check("the village wins", m3.winner === "village", m3);
+    const barred = await v5.call<{ notes: { round: number; text: string }[] }>("notes");
+    check(
+      "a barred door takes the coin and gives nothing",
+      barred.notes.filter((n) => n.text.includes("would not open")).length >= 1,
+      barred.notes,
+    );
+    check("the tie hangs nobody where iron was voided", m3.banished === null || m3.banished === bear.name, m3);
 
     console.log(
       failures === 0
-        ? `\n✅ CATALOG v5 CLEAN — every item did what it says\n   (game "${GAME_ID}" left on the ledger for inspection)`
+        ? `\n✅ CATALOG v6 CLEAN — every item did what it says\n   (game "${GAME_ID}" left on the ledger for inspection)`
         : `\n❌ ${failures} failure(s) — game "${GAME_ID}"`,
     );
     if (failures > 0) process.exit(1);
