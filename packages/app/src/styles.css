@@ -283,6 +283,28 @@ button.link:hover { color: var(--gold); }
 }
 button:disabled { opacity: 0.75; cursor: not-allowed; } /* still readable */
 
+/* An aimed item is inert until pointed at somebody. */
+.aim-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.aim-row select { font-size: 0.78rem; padding: 4px 6px; }
+.aim-row button { font-size: 0.78rem; padding: 4px 10px; }
+
+/* A shuttered shop: visibly shut, still readable. */
+.shop-card.shut { opacity: 0.72; }
+.shop-card.shut .items { filter: grayscale(0.6); }
+.shut-note {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--lantern);
+}
+
 /* Keyboard users need to see where they are. */
 :where(button, a, input, select, textarea):focus-visible {
   outline: 2px solid var(--lantern);

@@ -84,7 +84,12 @@ interface GameState {
   offeringUsed: Record<string, number>;
   /** address → whether a paid-for ghost got its vote. Decided once, at death. */
   ghostVote: Record<string, "granted" | "refused">;
-  /** address → private dawn facts (the dogs) — readable only by that player. */
+  /** Aimed items: a purchase carries only an amount, so the target is stated
+   *  separately and privately (p/aim), like a vote or a night pick. */
+  aims: { round: number; by: string; item: string; target?: string; shop?: string }[];
+  /** Doors shut for a day: shop closures (everyone) and per-player locks. */
+  closures: { round: number; shop: string; player?: string }[];
+  /** address → private dawn facts — readable only by that player. */
   privateNotes: Record<string, { round: number; text: string }[]>;
   mornings: MorningReport[];
   phase: "lobby" | "day" | "ended";
@@ -112,6 +117,8 @@ const freshState = (): GameState => ({
   nailUsed: {},
   offeringUsed: {},
   ghostVote: {},
+  aims: [],
+  closures: [],
   privateNotes: {},
   mornings: [],
   phase: "lobby",
@@ -146,11 +153,19 @@ function randomIndex(n: number): number {
 /** The clock: if the werebear survives the dusk of this day, it wins. */
 const MAX_DAYS = 5;
 
-/** itemId → { shopId, price } for gear checks (prices are globally unique). */
-const ITEM_INDEX = new Map<string, { shopId: string; price: bigint }>();
+/** itemId → { shopId, price, aim, label } (prices are globally unique). */
+const ITEM_INDEX = new Map<
+  string,
+  { shopId: string; price: bigint; aim?: string; label: string }
+>();
 for (const shop of SHOP_BY_ID.values()) {
   for (const item of shop.items) {
-    ITEM_INDEX.set(item.id, { shopId: shop.id, price: stroopsFromXlm(item.priceXlm) });
+    ITEM_INDEX.set(item.id, {
+      shopId: shop.id,
+      price: stroopsFromXlm(item.priceXlm),
+      aim: item.aim,
+      label: item.label,
+    });
   }
 }
 
@@ -550,6 +565,54 @@ export class GameRoom extends DurableObject<Env> {
    * Maude does the revealing — the server decrypts that exact transaction,
    * so the reveal cannot lie. Clears the accusation and unlocks their vote.
    */
+  /**
+   * Point an aimed item at its victim. The purchase itself carries only an
+   * amount, so the target lives here — server-side and private, exactly like a
+   * vote or the bear's night pick. Verified against the decrypted ledger: you
+   * must actually own an unaimed copy of that item, bought today.
+   */
+  async aimItem(
+    address: string,
+    itemId: string,
+    target?: string,
+    shop?: string,
+  ): Promise<{ aimed: string; at: string }> {
+    this.requireDay();
+    this.requireUnresolved();
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("that address holds no seat in this game");
+    if (!player.alive) throw new Error("the dead aim at nothing");
+    const item = ITEM_INDEX.get(itemId);
+    if (!item?.aim) throw new Error("that item does not need aiming");
+
+    const round = this.state.round;
+    const purchases = await this.loadAll();
+    const owned = this.countBought(purchases, address, itemId, { round });
+    const alreadyAimed = this.state.aims.filter(
+      (a) => a.round === round && a.by === address && a.item === itemId,
+    ).length;
+    if (owned <= alreadyAimed) {
+      throw new Error(`buy ${item.label} today before you aim it`);
+    }
+
+    let targetName: string | undefined;
+    if (item.aim === "player" || item.aim === "player+shop") {
+      const t = target ? this.playerByName(target) : null;
+      if (!t || !t.alive) throw new Error(`no living villager named "${target ?? ""}"`);
+      if (t.address === address) throw new Error("aim it at somebody else");
+      targetName = t.name;
+    }
+    let shopId: string | undefined;
+    if (item.aim === "shop" || item.aim === "player+shop") {
+      if (!shop || !SHOP_BY_ID.has(shop)) throw new Error("name one of the village stores");
+      shopId = shop;
+    }
+
+    this.state.aims.push({ round, by: address, item: itemId, target: targetName, shop: shopId });
+    await this.persist();
+    return { aimed: item.label, at: [targetName, shopId].filter(Boolean).join(" @ ") };
+  }
+
   async discloseOne(address: string, txHash: string): Promise<{ revealed: string }> {
     this.requireDay();
     this.requireUnresolved();
@@ -653,17 +716,54 @@ export class GameRoom extends DurableObject<Env> {
     const notes: string[] = [];
     const violations: string[] = [];
 
-    const boughtThisRound = (address: string, itemId: string): boolean =>
-      this.bought(purchases, address, itemId, { round });
-    const boughtEver = (address: string, itemId: string): boolean =>
-      this.bought(purchases, address, itemId, {});
+    // A door barred yesterday voids what you buy behind it today: the chain
+    // cannot refuse a transfer, so the shopkeeper keeps the coin and the item
+    // does nothing. Audits still see the spend; only EFFECTS are voided.
+    const shutToday = this.state.closures.filter((c) => c.round === round);
+    const isVoided = (p: Purchase): boolean =>
+      p.round === round &&
+      p.shopId !== null &&
+      shutToday.some((c) => c.shop === p.shopId && (!c.player || c.player === p.player));
+    const effective = purchases.filter((p) => !isVoided(p));
+    for (const p of purchases.filter(isVoided)) {
+      ((this.state.privateNotes ??= {})[p.from] ??= []).push({
+        round,
+        text: `🔒 The ${p.toLabel} door would not open for you. Your coin bought nothing.`,
+      });
+    }
 
-    // --- TRIAL: knife-doubled plurality. -----------------------------------
+    const boughtThisRound = (address: string, itemId: string): boolean =>
+      this.bought(effective, address, itemId, { round });
+    const boughtEver = (address: string, itemId: string): boolean =>
+      this.bought(effective, address, itemId, {});
+    const aimsToday = this.state.aims.filter((a) => a.round === round);
+    /** Aims of one item this round, skipping any whose purchase was voided. */
+    const aimedToday = (itemId: string) =>
+      aimsToday.filter(
+        (a) => a.item === itemId && this.bought(effective, a.by, itemId, { round }),
+      );
+
+    // --- TRIAL: knife-doubled plurality, minus any stopped mouths. ---------
+    const socked = new Set(
+      aimsToday
+        .filter((a) => a.item === "sock_in_mouth" && this.bought(effective, a.by, "sock_in_mouth", { round }))
+        .map((a) => a.target)
+        .filter((n): n is string => !!n),
+    );
     const weights = new Map<string, number>();
     for (const [voterAddr, targetName] of Object.entries(this.state.votes)) {
       const voter = this.playerByAddress(voterAddr);
       // A granted ghost is counted with the living at the trial.
       if (!voter || (!voter.alive && this.state.ghostVote?.[voterAddr] !== "granted")) continue;
+      // A sock in the mouth: they spoke all day, but the tally cannot hear it.
+      if (socked.has(voter.name)) {
+        ((this.state.privateNotes ??= {})[voterAddr] ??= []).push({
+          round,
+          text: "🧦 Your vote did not carry today. Somebody had paid for your silence.",
+        });
+        notes.push("🧦 One voice was stopped at the trial. It was not stopped for free.");
+        continue;
+      }
       // The butcher's knife, once bought, stays sharp for the whole game.
       const weight = boughtEver(voterAddr, "butchers_knife") ? 2 : 1;
       weights.set(targetName, (weights.get(targetName) ?? 0) + weight);
@@ -685,7 +785,7 @@ export class GameRoom extends DurableObject<Env> {
         for (const name of top) {
           const p = this.playerByName(name);
           if (!p?.alive) continue;
-          const nailsOwned = this.countBought(purchases, p.address, "horseshoe_nail");
+          const nailsOwned = this.countBought(effective, p.address, "horseshoe_nail");
           const nailsSpent = (this.state.nailUsed ??= {})[p.address] ?? 0;
           if (nailsOwned > nailsSpent) {
             this.state.nailUsed[p.address] = nailsSpent + 1;
@@ -737,24 +837,32 @@ export class GameRoom extends DurableObject<Env> {
     let eaten: PlayerRef | null = null;
     const bearAddress = Object.entries(roles).find(([, r]) => r === "werebear")?.[0];
     const bear = bearAddress ? this.playerByAddress(bearAddress) : null;
-    // Silver burns: the werebear that buys the charm wounds itself — the
-    // charm rule stops being an honor system without leaking who the bear is.
     if (this.state.winner === null && bear?.alive && bearAddress) {
-      if (boughtThisRound(bearAddress, "silver_charm")) {
-        this.state.wounded = true;
-        notes.push(
-          "Someone in the village smells of burnt fur and shame. Honest metal does not forgive.",
-        );
+      let target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
+      // A bone at somebody else's gate: one chance in four the beast is
+      // distracted on its way. Never onto the beast itself, never onto a corpse.
+      if (target) {
+        const bone = aimedToday("soup_bone").find((a) => a.by === target!.address);
+        const elsewhere = bone?.target ? this.playerByName(bone.target) : null;
+        if (
+          bone &&
+          elsewhere?.alive &&
+          elsewhere.address !== bearAddress &&
+          randomIndex(4) === 0
+        ) {
+          ((this.state.privateNotes ??= {})[target.address] ??= []).push({
+            round: round + 1,
+            text: "🦴 Something turned aside at your gate last night. The bone is gone.",
+          });
+          target = elsewhere;
+        }
       }
-    }
-    if (this.state.winner === null && bear?.alive && bearAddress) {
-      const target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
       // A sharpened tooth in the beast's mouth: tonight nothing saves the prey.
       const sharpTonight = boughtThisRound(bearAddress, "tooth_sharpener");
       // The same purchase in villager hands is an offering left on the step.
       const hasOffering =
         target !== null &&
-        this.countBought(purchases, target.address, "tooth_sharpener") >
+        this.countBought(effective, target.address, "tooth_sharpener") >
           ((this.state.offeringUsed ??= {})[target.address] ?? 0);
       if (this.state.wounded) {
         this.state.wounded = false;
@@ -773,7 +881,7 @@ export class GameRoom extends DurableObject<Env> {
         });
       } else if (
         !sharpTonight &&
-        this.countBought(purchases, target.address, "silver_charm") >
+        this.countBought(effective, target.address, "silver_charm") >
           (this.state.charmUsed[target.address] ?? 0)
       ) {
         // Silver saves, but the charm SHATTERS (one save per charm bought) and
@@ -795,7 +903,7 @@ export class GameRoom extends DurableObject<Env> {
           );
         }
         if (boughtEver(target.address, "lantern_oil")) {
-          const fact = this.lanternFact(purchases, bearAddress);
+          const fact = this.lanternFact(effective, bearAddress);
           notes.push(`🏮 By ${target.name}'s still-lit lantern, Maude reads one true thing: ${fact}`);
         }
       }
@@ -875,6 +983,37 @@ export class GameRoom extends DurableObject<Env> {
       } else {
         notes.push("🕯 The ritual was paid for, but with no accusation to aim it at, the smoke just rose.");
       }
+    }
+
+    // Locks and holidays take effect TOMORROW; the village sees the door, never
+    // the hand. A key names no one; a holiday shuts the shop for everybody.
+    for (const a of aimedToday("cold_iron_key")) {
+      if (!a.shop || !a.target) continue;
+      this.state.closures.push({ round: round + 1, shop: a.shop, player: a.target });
+      notes.push(
+        `🔒 A lock was fitted at ${placePhrase(SHOP_BY_ID.get(a.shop)?.label ?? a.shop)} overnight. Somebody will find it tomorrow.`,
+      );
+    }
+    for (const a of aimedToday("shopkeepers_vacation")) {
+      if (!a.shop) continue;
+      this.state.closures.push({ round: round + 1, shop: a.shop });
+      notes.push(
+        `🧳 ${SHOP_BY_ID.get(a.shop)?.label ?? a.shop} is shut tomorrow — the shopkeeper has come into some money and a sudden love of the coast.`,
+      );
+    }
+
+    // The long candle: an even chance the flame reads true, privately.
+    for (const a of aimedToday("the_long_candle")) {
+      const read = a.target ? this.playerByName(a.target) : null;
+      if (!read) continue;
+      const shows = randomIndex(2) === 0;
+      const isBear = roles[read.address] === "werebear";
+      ((this.state.privateNotes ??= {})[a.by] ??= []).push({
+        round: round + 1,
+        text: shows
+          ? `🕯 The flame stood straight all night: ${read.name} is ${isBear ? "the werebear" : "no werebear"}.`
+          : `🕯 The flame guttered and told you nothing about ${read.name}. Forty XLM, gone.`,
+      });
     }
 
     // --- AUDITS: the Order notices. ----------------------------------------
@@ -1059,6 +1198,11 @@ export class GameRoom extends DurableObject<Env> {
       stillShopping: this.state.players
         .filter((p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round)
         .map((p) => p.name),
+      /** Shops shut for everyone today (a holiday). Per-player locks stay
+       *  secret: the barred villager finds out at the door. */
+      closedShops: this.state.closures
+        .filter((c) => c.round === this.state.round && !c.player)
+        .map((c) => c.shop),
       /** Today's town-square thread (yesterday's arguments died at dawn). */
       chat: this.state.chat.filter((m) => m.round === this.state.round),
       // Players get the story; the Order's audit findings (violations) are

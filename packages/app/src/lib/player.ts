@@ -107,9 +107,13 @@ export const playerApi = {
   nightPick: (w: VillagerWallet, game: string, target: string) =>
     playerCall<{ picked: string; dawn: boolean }>(w, game, "night-pick", { target }),
 
-  /** Private dawn facts (the dogs) — only ever your own. */
+  /** Private dawn facts — only ever your own. */
   notes: (w: VillagerWallet, game: string) =>
     playerCall<{ notes: { round: number; text: string }[] }>(w, game, "notes"),
+
+  /** Point an aimed item (key, sock, bone, candle) at its victim. */
+  aim: (w: VillagerWallet, game: string, item: string, target?: string, shop?: string) =>
+    playerCall<{ aimed: string; at: string }>(w, game, "aim", { item, target, shop }),
 };
 
 /** Public game view — no auth. */
@@ -153,6 +157,8 @@ export interface PublicView {
   minPlayers?: number;
   /** If the werebear survives the dusk of this day, it wins. */
   maxDays?: number;
+  /** Stores shut for everyone today (Shopkeeper's holiday). */
+  closedShops?: string[];
   /** True when every living villager has finished shopping — Maude opens. */
   marketClosed?: boolean;
   stillShopping?: string[];

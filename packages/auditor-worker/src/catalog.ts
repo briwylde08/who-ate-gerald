@@ -18,6 +18,8 @@ export interface CatalogItem {
   /** V/W/B (villager/werebear/both) × off/def, or "cover". Public knowledge. */
   class?: string;
   effect: string;
+  /** Items that must be pointed at something after purchase (see p/aim). */
+  aim?: "player" | "shop" | "player+shop";
 }
 
 export interface ShopInfo {

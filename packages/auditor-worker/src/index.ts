@@ -106,6 +106,15 @@ export default {
             return json(await room.vote(address, String(body.target ?? "")));
           case "p/night-pick":
             return json(await room.nightPick(address, String(body.target ?? "")));
+          case "p/aim":
+            return json(
+              await room.aimItem(
+                address,
+                String(body.item ?? ""),
+                body.target === undefined ? undefined : String(body.target),
+                body.shop === undefined ? undefined : String(body.shop),
+              ),
+            );
           case "p/notes":
             return json({ notes: await room.notesFor(address) });
           default:

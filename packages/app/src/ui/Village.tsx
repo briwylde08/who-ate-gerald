@@ -97,6 +97,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // localStorage-backed, so it is this player's own record, not the chain's.
   const [boughtItems, setBoughtItems] = useState<Set<string>>(new Set());
   const [justBought, setJustBought] = useState<string | null>(null);
+  // Aimed items need a second, private action after the purchase.
+  const [others, setOthers] = useState<string[]>([]);
+  const [closedShops, setClosedShops] = useState<string[]>([]);
+  const [aimTarget, setAimTarget] = useState<Record<string, string>>({});
+  const [aimShop, setAimShop] = useState<Record<string, string>>({});
+  const [aimed, setAimed] = useState<Record<string, string>>({});
   useEffect(() => {
     // Keyed by item label — every one of the twelve is distinct, and that is
     // what the stored records carry.
@@ -107,6 +113,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       .then((v) => {
         const me = v.players.find((p) => p.address === wallet.address);
         setDoneToday(me?.doneToday === true);
+        setOthers(
+          v.players.filter((p) => p.alive && p.address !== wallet.address).map((p) => p.name),
+        );
+        setClosedShops(v.closedShops ?? []);
         setDead(me ? !me.alive : false);
       })
       .catch(() => undefined);
@@ -117,6 +127,22 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     try {
       await playerApi.doneShopping(wallet, loadGameId());
       setDoneToday(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const aim = async (item: CatalogItem) => {
+    setError(null);
+    try {
+      const r = await playerApi.aim(
+        wallet,
+        loadGameId(),
+        item.id,
+        aimTarget[item.id] || undefined,
+        aimShop[item.id] || undefined,
+      );
+      setAimed((a) => ({ ...a, [item.id]: r.at }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -268,8 +294,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         className="shops"
         style={excess > 0n || dead ? { opacity: 0.4, pointerEvents: "none" } : undefined}
       >
-        {SHOPS.map((shop) => (
-          <div key={shop.id} className="panel shop-card">
+        {SHOPS.map((shop) => {
+          const shut = closedShops.includes(shop.id);
+          return (
+          <div key={shop.id} className={`panel shop-card${shut ? " shut" : ""}`}>
             <h3>
               {shop.icon && (
                 <span className="shop-icon" aria-hidden="true">
@@ -279,6 +307,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
               {shop.label}
             </h3>
             {shop.subtitle && <p className="shop-sub">“{shop.subtitle}”</p>}
+            {shut && (
+              <p className="shut-note">
+                🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
+              </p>
+            )}
             <div className="items">
               {shop.items.map((item) => {
                 const key = `${shop.id}:${item.id}`;
@@ -287,7 +320,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const owned = boughtItems.has(item.label);
                 const tooRich = price > balances.spendable;
                 const blocked = doneToday || tooRich;
-                const label = doneToday
+                const label = shut
+                  ? "Shuttered"
+                  : doneToday
                   ? "Market closed"
                   : tooRich
                     ? "Too rich for your blood"
@@ -318,7 +353,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                       <span className="price">{item.priceXlm} XLM</span>
                       <button
                         className={isArmed ? "armed" : ""}
-                        disabled={blocked}
+                        disabled={blocked || shut}
                         aria-label={`${label}: ${item.label}, ${item.priceXlm} XLM`}
                         onClick={() =>
                           isArmed ? void pay(shop, item, price) : setArmed(key)
@@ -333,12 +368,65 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                         </span>
                       )}
                     </div>
+                    {/* An aimed item is inert until it's pointed at somebody. */}
+                    {item.aim && owned && (
+                      <div className="aim-row">
+                        {aimed[item.id] ? (
+                          <span className="dim">Aimed at {aimed[item.id]} ✓</span>
+                        ) : (
+                          <>
+                            {(item.aim === "player" || item.aim === "player+shop") && (
+                              <select
+                                aria-label={`Aim ${item.label} at a villager`}
+                                value={aimTarget[item.id] ?? ""}
+                                onChange={(e) =>
+                                  setAimTarget((a) => ({ ...a, [item.id]: e.target.value }))
+                                }
+                              >
+                                <option value="">choose a villager…</option>
+                                {others.map((n) => (
+                                  <option key={n} value={n}>
+                                    {n}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {(item.aim === "shop" || item.aim === "player+shop") && (
+                              <select
+                                aria-label={`Aim ${item.label} at a store`}
+                                value={aimShop[item.id] ?? ""}
+                                onChange={(e) =>
+                                  setAimShop((a) => ({ ...a, [item.id]: e.target.value }))
+                                }
+                              >
+                                <option value="">choose a store…</option>
+                                {SHOPS.map((sh) => (
+                                  <option key={sh.id} value={sh.id}>
+                                    {sh.label}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            <button
+                              disabled={
+                                (item.aim !== "shop" && !aimTarget[item.id]) ||
+                                (item.aim !== "player" && !aimShop[item.id])
+                              }
+                              onClick={() => void aim(item)}
+                            >
+                              Aim it
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <p className="dim">
