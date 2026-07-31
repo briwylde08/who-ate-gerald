@@ -250,6 +250,15 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         <div className="phase-label">{phaseLabel}</div>
         <h2 className="phase-title">{phaseTitle}</h2>
 
+        {/* The one instruction that matters the moment the game starts:
+            shopping happens on another tab, and nothing proceeds until
+            everybody has finished. */}
+        {view.round >= 1 && !view.winner && me?.alive && !me.doneToday && (
+          <div className="answer-card">
+            <b>The game has begun.</b> Go to <b>The Shops</b> to make your purchases for the
+            day, then press <b>Done buying for today</b>.
+          </div>
+        )}
         {view.round >= 1 && view.maxDays && !view.winner && (
           <p className="dim">
             The clock runs for the village: if the werebear survives the dusk of day{" "}
