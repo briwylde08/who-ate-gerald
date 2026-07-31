@@ -1,6 +1,7 @@
 # Playtest-10 — post-game list
 
-Flagged mid-game by Bri; address after it ends.
+Flagged mid-game by Bri. **Both shipped 2026-07-31** — kept as the record of
+what was decided and why.
 
 1. **No "Buy another".** The Shops currently allow repeat purchases of the
    same item (button reads "Buy another" once bought). Rule: one of each
@@ -16,3 +17,12 @@ Flagged mid-game by Bri; address after it ends.
    chip in the banner is the only path, and it's not labelled). Add an
    explicit button — e.g. in the top bar next to Rules, or on the Town
    Square when in lobby: "Change villager".
+
+## Outcome
+
+1. **Done.** A bought ware now reads "Bought ✓" and is disabled for the rest
+   of the game. The chain cannot refuse a forced second transfer, so the
+   Order audits repeats (GM-only violation) and the nail's tie-escapes cap
+   at one regardless of copies.
+2. **Done.** "Change villager" sits in the banner beside Rules, and both it
+   and the identity chip open the intro straight at the picker.
