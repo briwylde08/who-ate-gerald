@@ -62,14 +62,14 @@ if (!gameId) {
 }
 
 const BOT_POOL = [
-  { name: "Old Tom", character: "gravedigger" },
-  { name: "Widow Marta", character: "midwife" },
-  { name: "Young Pete", character: "poacher" },
-  { name: "Goodwife Anna", character: "beekeeper" },
-  { name: "Sexton Grim", character: "ratcatcher" },
-  { name: "Miller Jack", character: "baker" },
-  { name: "Tapper Ned", character: "drunk" },
-  { name: "Old Wick", character: "lamplighter" },
+  { name: "Digger Moss", character: "gravedigger" },
+  { name: "Nan Petal", character: "midwife" },
+  { name: "Quiet Rob", character: "poacher" },
+  { name: "Bea Winters", character: "beekeeper" },
+  { name: "Whiskers Kate", character: "ratcatcher" },
+  { name: "Crusty Pim", character: "baker" },
+  { name: "Sozzled Finn", character: "drunk" },
+  { name: "Wick Tallow", character: "lamplighter" },
 ];
 
 const ALL_CHARACTERS = [
@@ -103,13 +103,22 @@ const ACCUSE_LINES: ((n: string) => string)[] = [
   (n) => `If it isn't ${n}, I'll eat my hat.`,
 ];
 
-/** Shop list with priced items, from the catalog (chapel included — cover). */
-const STORES: { id: string; address: string; prices: bigint[] }[] = Object.entries(
-  catalog.shops as Record<string, { items?: { priceXlm: number }[] }>,
+/** Shop list with full items from the catalog — ids, prices, aim needs. */
+interface BotWare {
+  id: string;
+  price: bigint;
+  aim?: string;
+}
+const STORES: { id: string; address: string; items: BotWare[] }[] = Object.entries(
+  catalog.shops as Record<string, { items?: { id: string; priceXlm: number; aim?: string }[] }>,
 ).map(([id, s]) => ({
   id,
   address: shopsAddr[id],
-  prices: (s.items ?? []).map((it) => BigInt(it.priceXlm) * XLM),
+  items: (s.items ?? []).map((it) => ({
+    id: it.id,
+    price: BigInt(it.priceXlm) * XLM,
+    aim: it.aim,
+  })),
 }));
 
 interface BotSecrets {
@@ -198,24 +207,46 @@ class BotVillager {
     console.log(`  ${this.name}: collected income (day ${round})`);
   }
 
-  /** 1–2 purchases in ≤2 stores, within spendable. Bears sometimes tool up. */
-  async shop(transferProver: CircuitProver, round: number): Promise<void> {
+  /** 1–2 purchases in ≤2 stores, within spendable — never the shelf's
+   *  cheapest when there's a real choice, and aimed items get aimed. */
+  async shop(transferProver: CircuitProver, round: number, others: string[]): Promise<void> {
     const state = await this.engine.sync();
     let budget = state.spendable.v;
     const storeCount = 1 + Math.floor(Math.random() * 2);
     const chosen = [...STORES].sort(() => Math.random() - 0.5).slice(0, storeCount);
     for (const s of chosen) {
-      const affordable = s.prices.filter((p) => p <= budget);
+      let affordable = s.items.filter((it) => it.price <= budget);
       if (affordable.length === 0) continue;
-      // Bears lean cheap (cover); so do bots generally — they're simple folk.
-      const price = rand(affordable.filter((p) => p <= 15n * XLM).concat(affordable.slice(0, 1)));
+      if (affordable.length > 1) {
+        const cheapest = affordable.reduce((a, b) => (a.price < b.price ? a : b));
+        affordable = affordable.filter((it) => it !== cheapest);
+      }
+      const pick = rand(affordable);
       try {
-        await this.pay(transferProver, s.address, price);
-        budget -= price;
+        await this.pay(transferProver, s.address, pick.price);
+        budget -= pick.price;
         console.log(`  ${this.name}: bought something at the ${s.id} (day ${round})`);
+        if (pick.aim) await this.aimBought(pick, others);
       } catch (e) {
         console.log(`  ${this.name}: shopping failed (${e instanceof Error ? e.message : e})`);
       }
+    }
+  }
+
+  /** Point a fresh purchase at somebody (or somewhere) — random but legal. */
+  private async aimBought(item: BotWare, others: string[]): Promise<void> {
+    const wantsPlayer = item.aim === "player" || item.aim === "player+shop";
+    const wantsShop = item.aim === "shop" || item.aim === "player+shop";
+    if (wantsPlayer && others.length === 0) return;
+    const target = wantsPlayer ? rand(others) : undefined;
+    const shop = wantsShop ? rand(STORES).id : undefined;
+    try {
+      await this.call("aim", { item: item.id, target, shop });
+      console.log(
+        `  ${this.name}: aimed ${item.id}${target ? ` at ${target}` : ""}${shop ? ` @ ${shop}` : ""}`,
+      );
+    } catch (e) {
+      console.log(`  ${this.name}: aim failed (${e instanceof Error ? e.message : e})`);
     }
   }
 
@@ -467,7 +498,10 @@ async function main() {
           // Income, shopping, done — once per day.
           if ((shoppedRound.get(bot.address) ?? 0) < view.round && !me.doneToday) {
             await bot.collectIncome(view.round).catch(() => undefined);
-            await bot.shop(transferProver, view.round);
+            const others = view.players
+              .filter((p) => p.alive && p.address !== bot.address)
+              .map((p) => p.name);
+            await bot.shop(transferProver, view.round, others);
             await bot.call("done").catch(() => undefined);
             shoppedRound.set(bot.address, view.round);
             console.log(`  ${bot.name}: done shopping (day ${view.round})`);
