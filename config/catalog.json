@@ -14,7 +14,7 @@
           "flavor": "Luck you can hold. Barely.",
           "priceXlm": 20,
           "class": "B-off",
-          "effect": "Lucky iron: if the vote ties on you, the tie falls on the other. One nail, one escape."
+          "effect": "If today's vote ties on you, the other tied player is banished instead. Single use."
         },
         {
           "id": "cold_iron_key",
@@ -22,7 +22,7 @@
           "flavor": "Fits more doors than it should.",
           "priceXlm": 22,
           "class": "B-off",
-          "effect": "Aim it: one villager finds one store locked to them tomorrow. The village learns which store was locked, never who turned the key.",
+          "effect": "Pick a villager and a store. Tomorrow that store will not sell to them. Everyone is told which store was locked. Nobody is told who bought the key or who was locked out.",
           "aim": "player+shop"
         },
         {
@@ -46,7 +46,7 @@
           "flavor": "Everyone deserves a rest. Tomorrow, ideally.",
           "priceXlm": 23,
           "class": "B-off",
-          "effect": "Aim it: that shopkeeper closes tomorrow and sells to nobody. The whole village sees the shutters.",
+          "effect": "Pick a store. Tomorrow it is closed to everyone. Announced publicly.",
           "aim": "shop"
         },
         {
@@ -55,7 +55,7 @@
           "flavor": "Clean, mostly. That is not the point.",
           "priceXlm": 32,
           "class": "B-off",
-          "effect": "Aim it: that villager may still talk and defend themselves, but their vote does not count at today's trial.",
+          "effect": "Pick a villager. They can still talk, but their vote does not count today. The morning report names them.",
           "aim": "player"
         },
         {
@@ -64,7 +64,7 @@
           "flavor": "Finish it and the night finishes you.",
           "priceXlm": 45,
           "class": "V-def",
-          "effect": "Drink it and pass out: you cast no vote today, and NOTHING takes you in the night — not the beast, not even a sharpened tooth. The one sure escape in the village. The werebear is too big for beer to touch.",
+          "effect": "You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear.",
           "aim": "self"
         }
       ]
@@ -80,7 +80,7 @@
           "flavor": "Somebody else's dog will love you for it.",
           "priceXlm": 8,
           "class": "V-def",
-          "effect": "Aim it: leave the bone at another villager's gate. If the beast comes for you tonight, one chance in four it goes there instead.",
+          "effect": "Pick another villager. If the werebear targets you tonight, there is a 1 in 4 chance it targets them instead.",
           "aim": "player"
         },
         {
@@ -89,7 +89,7 @@
           "flavor": "For the meat. Obviously.",
           "priceXlm": 28,
           "class": "B-off",
-          "effect": "Conviction, sharpened: your vote counts twice at today's trial. Everyone hears a knife being ground; nobody knows whose."
+          "effect": "Your vote counts twice at today's trial. Everyone is told a double vote was cast; nobody is told whose."
         },
         {
           "id": "tooth_sharpener",
@@ -97,7 +97,7 @@
           "flavor": "Ask no questions about the previous owner.",
           "priceXlm": 33,
           "class": "B-off",
-          "effect": "Werebear: tonight your prey is caught wherever it hides — offerings fail, bones at gates fail; only a villager dead drunk in the road is beyond you. Villager: leave it out as an offering — an even chance the beast takes it and spares you."
+          "effect": "Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone."
         }
       ]
     },
@@ -112,7 +112,7 @@
           "flavor": "The Order swears it is his. The Order swears a lot.",
           "priceXlm": 1,
           "class": "cover",
-          "effect": "Does nothing. Absolutely nothing."
+          "effect": "Does nothing."
         },
         {
           "id": "unquiet_rest",
@@ -120,7 +120,7 @@
           "flavor": "The Order accepts coin for almost anything.",
           "priceXlm": 25,
           "class": "B-def",
-          "effect": "Pay the Order early: when you die, an even chance your ghost returns with a vote. Either way, the village is told."
+          "effect": "When you die, a 50/50 chance your ghost can still vote. The result is announced either way."
         },
         {
           "id": "the_long_candle",
@@ -128,7 +128,7 @@
           "flavor": "Burns all night. Sees about half of it.",
           "priceXlm": 42,
           "class": "V-info",
-          "effect": "Aim it: an even chance the flame shows you truly whether that villager is the werebear. Otherwise it gutters and tells you nothing.",
+          "effect": "Pick a villager. A 50/50 chance you privately learn whether they are the werebear; otherwise you learn nothing. It never lies.",
           "aim": "player"
         }
       ]
