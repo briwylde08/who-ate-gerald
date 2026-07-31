@@ -298,7 +298,16 @@ export function PlayerApp() {
         </div>
       )}
 
-      {!profile && <Intro onDone={setProfile} address={wallet?.address} startAt={introAt} />}
+      {!profile && (
+        <Intro
+          onDone={(p) => {
+            setProfile(p);
+            setGameId(loadGameId()); // the intro may have chosen a different game
+          }}
+          address={wallet?.address}
+          startAt={introAt}
+        />
+      )}
 
       {profile && !wallet && (
         <div className="panel">

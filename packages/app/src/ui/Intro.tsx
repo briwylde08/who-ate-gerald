@@ -2,14 +2,22 @@ import { useEffect, useRef, useState } from "react";
 
 import { CHARACTERS, saveProfile, type Profile } from "../lib/profile";
 import { CharEmoji } from "./CharIcon";
-import { fetchPublicView, loadGameId } from "../lib/player";
+import { fetchLobbies, fetchPublicView, loadGameId, saveGameId, type OpenLobby } from "../lib/player";
 import { GeraldStory } from "./Story";
 
 /**
- * The intro: first the story of Gerald (page 1), then name + villager
- * (page 2). Characters are cosmetic — flavor for the table, not roles. The
- * werebear is dealt in secret and could be wearing any of these faces.
+ * The intro, three pages: the story of Gerald, then choose a game (join one
+ * off the notice-board, start a new one, or type a private id), then name +
+ * villager. Characters are cosmetic — flavor for the table, not roles.
  */
+
+/** A fresh game gets a village name, not a UUID. */
+const MOODS = ["grim", "mossy", "foggy", "bleak", "quiet", "dour", "salted", "hollow"];
+const PLACES = ["fen", "glen", "moor", "ford", "dell", "cross", "gate", "hollow"];
+function newGameId(): string {
+  const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)]!;
+  return `${pick(MOODS)}-${pick(PLACES)}-${Math.floor(10 + Math.random() * 90)}`;
+}
 export function Intro({
   onDone,
   address,
@@ -20,9 +28,24 @@ export function Intro({
       mistaken for someone else's claim. */
   address?: string;
   /** "identity" jumps straight to the villager picker (Change villager). */
-  startAt?: "story" | "identity";
+  startAt?: "story" | "game" | "identity";
 }) {
-  const [page, setPage] = useState<"story" | "identity">(startAt ?? "story");
+  const [page, setPage] = useState<"story" | "game" | "identity">(startAt ?? "story");
+  const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
+  const [manualId, setManualId] = useState("");
+  const [chosenGame, setChosenGame] = useState<string | null>(null);
+  useEffect(() => {
+    if (page !== "game") return;
+    const pull = () => void fetchLobbies().then(setLobbies).catch(() => undefined);
+    pull();
+    const t = setInterval(pull, 10_000);
+    return () => clearInterval(t);
+  }, [page]);
+  const chooseGame = (id: string) => {
+    saveGameId(id);
+    setChosenGame(id);
+    setPage("identity");
+  };
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [taken, setTaken] = useState<Set<string>>(new Set());
@@ -73,7 +96,7 @@ export function Intro({
       <div className="panel story">
         <GeraldStory />
         <div className="row">
-          <button className="primary" onClick={() => setPage("identity")} autoFocus>
+          <button className="primary" onClick={() => setPage("game")} autoFocus>
             Play Who Ate Gerald?
           </button>
         </div>
@@ -81,13 +104,85 @@ export function Intro({
     );
   }
 
+  if (page === "game") {
+    return (
+      <div>
+        <div className="row">
+          <button className="back" onClick={() => setPage("story")}>
+            ← Back to the story
+          </button>
+        </div>
+
+        <h2>Join an existing game</h2>
+        {lobbies.length === 0 ? (
+          <div className="panel">
+            <p className="dim">No games are seating players right now. Start one below.</p>
+          </div>
+        ) : (
+          <div className="panel">
+            <div className="lobby-board">
+              {lobbies.map((l) => (
+                <div key={l.id} className="lobby-row">
+                  <span className="lobby-id">{l.id}</span>
+                  <span className="dim">
+                    {l.seated} seated · needs {l.minPlayers}
+                  </span>
+                  <button className="primary" onClick={() => chooseGame(l.id)}>
+                    Join
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <h2>Start a new game</h2>
+        <div className="panel">
+          <p className="dim">
+            A new village appears on the board the moment you take a seat, so others can find
+            it here without being told the name.
+          </p>
+          <button className="primary" onClick={() => chooseGame(newGameId())}>
+            Start a new game
+          </button>
+        </div>
+
+        <details>
+          <summary>Enter a game id instead</summary>
+          <div className="row" style={{ marginTop: "8px" }}>
+            <input
+              type="text"
+              placeholder="the game's id"
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+            />
+            <button
+              disabled={manualId.trim() === ""}
+              onClick={() => chooseGame(manualId.trim())}
+            >
+              Use this game
+            </button>
+          </div>
+          <p className="dim">
+            Ids starting with “private” never appear on the board — share them yourself.
+          </p>
+        </details>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="row">
-        <button className="back" onClick={() => setPage("story")}>
-          ← Back to the story
+        <button className="back" onClick={() => setPage("game")}>
+          ← Back to choose a game
         </button>
       </div>
+      {chosenGame && (
+        <p className="dim">
+          Game: <b className="mono">{chosenGame}</b>
+        </p>
+      )}
 
       <div className="panel">
         <p>
