@@ -120,7 +120,7 @@ export function Intro({
       <div>
         <div className="row">
           <button className="back" onClick={() => setPage("story")}>
-            ← Back to the story
+            ← Back
           </button>
         </div>
 
@@ -204,7 +204,7 @@ export function Intro({
     <div>
       <div className="row">
         <button className="back" onClick={() => setPage("game")}>
-          ← Back to choose a game
+          ← Back
         </button>
       </div>
       {chosenGame && (
