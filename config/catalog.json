@@ -28,10 +28,10 @@
         {
           "id": "curfew_bell",
           "label": "Curfew bell",
-          "flavor": "Loud enough to wake the dead. Loud enough to bore a bear.",
+          "flavor": "DING DONG. MURDER HAS BEEN RESCHEDULED.",
           "priceXlm": 35,
           "class": "V-def",
-          "effect": "Ring it: tonight the beast hunts no one at all — the whole village hears the toll. Even sharpened teeth stay home."
+          "effect": "Ring it, and the werebear stays home tonight. No hunting. No one dies tonight."
         }
       ]
     },

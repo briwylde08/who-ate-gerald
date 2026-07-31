@@ -37,7 +37,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 28 | The butcher's knife | Butcher's | Your vote counts twice at today's trial. "Steel glinted" is announced; the hand is not. |
 | 32 | Sock in mouth *(aim: player)* | General Store | Their vote does not count today. The dawn NAMES whose voice was stopped. |
 | 33 | Tooth sharpener | Butcher's | **Bear:** tonight's kill defeats everything except the barrel. **Villager:** an offering — even chance the beast takes it and spares you. |
-| 35 | Curfew bell | Blacksmith | Tonight the beast hunts no one at all — the whole village hears the toll. Beats even sharpened teeth. |
+| 35 | Curfew bell | Blacksmith | “DING DONG. MURDER HAS BEEN RESCHEDULED.” Ring it and the werebear stays home tonight — beats even sharpened teeth; the toll is public. |
 | 42 | The long candle *(aim: player)* | Chapel | Even chance the flame truly reveals whether they are the werebear — otherwise it gutters and says nothing. Private; it never lies. |
 | 45 | Barrel of beer *(aim: self)* | General Store | THE saving item. Drink: no vote today, and nothing takes you tonight — sharpener included. Does nothing for the bear (too big for beer). |
 
