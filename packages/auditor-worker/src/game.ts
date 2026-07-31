@@ -151,7 +151,7 @@ function randomIndex(n: number): number {
 }
 
 /** The clock: if the werebear survives the dusk of this day, it wins. */
-const MAX_DAYS = 5;
+const MAX_DAYS = 6;
 
 /** itemId → { shopId, price, aim, label } (prices are globally unique). */
 const ITEM_INDEX = new Map<
@@ -803,7 +803,7 @@ export class GameRoom extends DurableObject<Env> {
         for (const name of top) {
           const p = this.playerByName(name);
           if (!p?.alive) continue;
-          const nailsOwned = this.countBought(effective, p.address, "horseshoe_nail");
+          const nailsOwned = Math.min(1, this.countBought(effective, p.address, "horseshoe_nail"));
           const nailsSpent = (this.state.nailUsed ??= {})[p.address] ?? 0;
           if (nailsOwned > nailsSpent) {
             this.state.nailUsed[p.address] = nailsSpent + 1;
@@ -855,7 +855,15 @@ export class GameRoom extends DurableObject<Env> {
     let eaten: PlayerRef | null = null;
     const bearAddress = Object.entries(roles).find(([, r]) => r === "werebear")?.[0];
     const bear = bearAddress ? this.playerByAddress(bearAddress) : null;
-    if (this.state.winner === null && bear?.alive && bearAddress) {
+    // The curfew bell: rung by anyone today (alive or hanged since — it pays
+    // on purchase), the whole village hears it and the beast stays home.
+    const bellTonight = this.state.players.some((p) =>
+      this.bought(effective, p.address, "curfew_bell", { round }),
+    );
+    if (this.state.winner === null && bear?.alive && bearAddress && bellTonight) {
+      notes.push("🔔 The curfew bell tolled all night. Nothing hunted; nothing dared.");
+    }
+    if (this.state.winner === null && bear?.alive && bearAddress && !bellTonight) {
       let target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
       // A sharpened tooth in the beast's mouth: only the barrel is beyond it.
       const sharpTonight = boughtThisRound(bearAddress, "tooth_sharpener");
@@ -1015,6 +1023,17 @@ export class GameRoom extends DurableObject<Env> {
         if (preBalance > allowedAtBuy) {
           violations.push(
             `${p.name} came to market carrying ${xlmString(preBalance)} XLM — the law allows ${xlmString(allowedAtBuy)}. Old coin must be surrendered to the Order before shopping.`,
+          );
+        }
+      }
+      const byWare = new Map<string, number>();
+      for (const x of purchases.filter((q) => q.from === p.address && q.round >= 1 && !q.isSurrender)) {
+        if (x.itemGuess) byWare.set(x.itemGuess, (byWare.get(x.itemGuess) ?? 0) + 1);
+      }
+      for (const [ware, n] of byWare) {
+        if (n > 1) {
+          violations.push(
+            `${p.name} has bought the ${ware.toLowerCase()} ${n} times — one of each is the custom. The Order notices.`,
           );
         }
       }

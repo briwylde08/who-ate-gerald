@@ -61,7 +61,7 @@ export function GeraldStory() {
         <p className="dim">
           <b>The village wins</b> by banishing the werebear. <b>The werebear wins</b> if it is
           the last one standing beside a single villager, or if it is still unfound at the end
-          of <b>day five</b>. Banished and eaten players keep chatting as ghosts, but cast no
+          of <b>day six</b>. Banished and eaten players keep chatting as ghosts, but cast no
           votes.
         </p>
       </details>

@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v8 (2026-07-31, per Bri's balance pass) — 11 items, all prices globally unique so any revealed amount identifies the item. One saving item: the barrel of beer (45) beats everything including the sharpened tooth, at the cost of your vote. The silver charm is retired. Aimed items (aim field) take a second, server-private action (p/aim); aim \"self\" means the buyer declares they used it. The werebear may buy anything. Economy: 50 XLM buy-in, +15 XLM/day.",
+  "$comment": "Catalog v9 (2026-07-31, per Bri) — 12 items, prices globally unique. ONE OF EACH ITEM PER PLAYER PER GAME (UI-enforced; repeats are audited and their stacking capped). The barrel (45) is the personal save; the curfew bell (35) is the village's night off — it beats everything, sharpened teeth included. Six-day deadline. Aimed items via p/aim; aim \"self\" = declared drink. The werebear may buy anything. Economy: 50 XLM buy-in, +15/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -24,6 +24,14 @@
           "class": "B-off",
           "effect": "Aim it: one villager finds one store locked to them tomorrow. The village learns which store was locked, never who turned the key.",
           "aim": "player+shop"
+        },
+        {
+          "id": "curfew_bell",
+          "label": "Curfew bell",
+          "flavor": "Loud enough to wake the dead. Loud enough to bore a bear.",
+          "priceXlm": 35,
+          "class": "V-def",
+          "effect": "Ring it: tonight the beast hunts no one at all — the whole village hears the toll. Even sharpened teeth stay home."
         }
       ]
     },

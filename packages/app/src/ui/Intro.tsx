@@ -13,13 +13,16 @@ import { GeraldStory } from "./Story";
 export function Intro({
   onDone,
   address,
+  startAt,
 }: {
   onDone: (p: Profile) => void;
   /** The connected wallet, when there is one — so your own seat isn't
       mistaken for someone else's claim. */
   address?: string;
+  /** "identity" jumps straight to the villager picker (Change villager). */
+  startAt?: "story" | "identity";
 }) {
-  const [page, setPage] = useState<"story" | "identity">("story");
+  const [page, setPage] = useState<"story" | "identity">(startAt ?? "story");
   const [name, setName] = useState("");
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [taken, setTaken] = useState<Set<string>>(new Set());

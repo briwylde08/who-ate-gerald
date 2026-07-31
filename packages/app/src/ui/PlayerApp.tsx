@@ -32,6 +32,8 @@ export function PlayerApp() {
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
   const [round, setRound] = useState(0);
   const [storyOpen, setStoryOpen] = useState(false);
+  /** Where the intro opens when we send someone back to it. */
+  const [introAt, setIntroAt] = useState<"story" | "identity">("story");
   const refreshing = useRef(false);
 
   const refresh = useCallback(
@@ -201,7 +203,14 @@ export function PlayerApp() {
     <div>
       <div className="topbar">
         {profile && (
-          <button className="addr" title="Change name / villager" onClick={() => setProfile(null)}>
+          <button
+            className="addr"
+            title="Change name / villager"
+            onClick={() => {
+              setIntroAt("identity");
+              setProfile(null);
+            }}
+          >
             <CharEmoji c={characterOf(profile)} /> {profile.name} {characterOf(profile)?.title}
           </button>
         )}
@@ -247,6 +256,17 @@ export function PlayerApp() {
         <div className="topbar-actions">
           {profile && (
             <button
+              title="Pick a different villager or name"
+              onClick={() => {
+                setIntroAt("identity");
+                setProfile(null);
+              }}
+            >
+              Change villager
+            </button>
+          )}
+          {profile && (
+            <button
               title="The story, the rules, and how it works"
               onClick={() => setStoryOpen((s) => !s)}
             >
@@ -278,7 +298,7 @@ export function PlayerApp() {
         </div>
       )}
 
-      {!profile && <Intro onDone={setProfile} address={wallet?.address} />}
+      {!profile && <Intro onDone={setProfile} address={wallet?.address} startAt={introAt} />}
 
       {profile && !wallet && (
         <div className="panel">

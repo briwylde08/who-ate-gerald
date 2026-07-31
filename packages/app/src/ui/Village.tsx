@@ -320,18 +320,18 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const price = stroopsFromXlm(item.priceXlm);
                 const owned = boughtItems.has(item.label);
                 const tooRich = price > balances.spendable;
-                const blocked = doneToday || tooRich;
-                const label = shut
-                  ? "Shuttered"
-                  : doneToday
-                  ? "Market closed"
-                  : tooRich
-                    ? "Too rich for your blood"
-                    : isArmed
-                      ? "Confirm?"
-                      : owned
-                        ? "Buy another"
-                        : "Buy";
+                const blocked = doneToday || tooRich || owned;
+                const label = owned
+                  ? "Bought ✓"
+                  : shut
+                    ? "Shuttered"
+                    : doneToday
+                      ? "Market closed"
+                      : tooRich
+                        ? "Too rich for your blood"
+                        : isArmed
+                          ? "Confirm?"
+                          : "Buy";
                 return (
                   <div
                     key={item.id}
