@@ -248,6 +248,14 @@ export function Maude({ wallet, gameId, setError }: Props) {
               </div>
               <p className="asked-what">You asked: “{a.question}”</p>
               <div className="answer-card">“{a.answer}”</div>
+              {/* Only after the newest answer: what to do with it. */}
+              {i === 0 && (
+                <p className="whats-next">
+                  Now that you've gotten your insight, navigate back to the{" "}
+                  <b>Town Square</b> to discuss your findings with your fellow villagers, then
+                  pick someone to accuse.
+                </p>
+              )}
             </div>
           ))
         )}

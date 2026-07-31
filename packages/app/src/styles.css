@@ -609,6 +609,12 @@ th { color: var(--ink-dim); font-weight: normal; }
   font-style: italic;
   color: var(--ink-dim);
 }
+.whats-next {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--moon);
+}
 .maude-answer + .maude-answer { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
 .asked-what { margin: 4px 0 8px; font-size: 0.82rem; color: var(--ink-dim); }
 
