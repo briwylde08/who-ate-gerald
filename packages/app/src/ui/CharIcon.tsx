@@ -5,3 +5,8 @@ export function CharEmoji({ c }: { c: Character | null | undefined }) {
   if (c?.icon) return <img className="char-icon" src={c.icon} alt={c.emoji} />;
   return <>{c?.emoji ?? "🧑‍🌾"}</>;
 }
+
+/** The village tote — replaces the 🛍 emoji wherever shopping is meant. */
+export function ToteIcon() {
+  return <img className="char-icon" src="/characters/tote-icon.png" alt="" />;
+}

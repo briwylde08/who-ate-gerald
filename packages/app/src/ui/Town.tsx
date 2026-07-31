@@ -10,7 +10,7 @@ import {
   type GraphView,
 } from "../lib/player";
 import { CHARACTERS, loadProfile } from "../lib/profile";
-import { CharEmoji } from "./CharIcon";
+import { CharEmoji, ToteIcon } from "./CharIcon";
 import { loadHistory } from "../lib/history";
 import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
 
@@ -395,21 +395,37 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           {view.players.map((p) => {
             const c = p.character ? CHAR_BY_ID.get(p.character) : null;
             const isYou = p.address === wallet.address;
-            const status = !p.alive
-              ? p.ghostVoter
-                ? "👻 Dead — still votes"
-                : "Eaten or banished"
-              : !view.dealt
-                ? p.ready
-                  ? "Ready ✓"
-                  : "Waiting…"
-                : [
-                    p.doneToday ? "🛍 Done" : null,
-                    p.askedToday ? "🔮 Asked" : null,
-                    p.recovering ? "🤕 Abed" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ") || "In the square";
+            const dayParts: React.ReactNode[] = [
+              p.doneToday ? (
+                <span key="done">
+                  <ToteIcon /> Done
+                </span>
+              ) : null,
+              p.askedToday ? "🔮 Asked" : null,
+              p.recovering ? "🤕 Abed" : null,
+            ].filter(Boolean);
+            const status: React.ReactNode = !p.alive ? (
+              p.ghostVoter ? (
+                "👻 Dead — still votes"
+              ) : (
+                "Eaten or banished"
+              )
+            ) : !view.dealt ? (
+              p.ready ? (
+                "Ready ✓"
+              ) : (
+                "Waiting…"
+              )
+            ) : dayParts.length === 0 ? (
+              "In the square"
+            ) : (
+              dayParts.map((part, i) => (
+                <span key={i}>
+                  {i > 0 && " · "}
+                  {part}
+                </span>
+              ))
+            );
             return (
               <div
                 key={p.seat}
@@ -661,7 +677,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           <h2>The trial</h2>
           {!view.marketClosed && (
             <p className="dim">
-              🛍 The trial begins when the market closes.{" "}
+              <ToteIcon /> The trial begins when the market closes.{" "}
               {(view.stillShopping ?? []).length > 0 &&
                 `Maude waits for: ${(view.stillShopping ?? []).join(", ")}.`}
             </p>

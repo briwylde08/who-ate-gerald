@@ -14,6 +14,7 @@ import {
 } from "../lib/catalog";
 import { loadHistory, recordPurchase } from "../lib/history";
 import { fetchPublicView, loadGameId, playerApi } from "../lib/player";
+import { ToteIcon } from "./CharIcon";
 import { useEffect } from "react";
 
 interface Props {
@@ -274,7 +275,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       {!dead && doneToday && (
         <div className="panel">
-          <h3>🛍✓ Done for today</h3>
+          <h3><ToteIcon />✓ Done for today</h3>
           <p className="dim">
             The shopkeepers wave you off. Maude opens her office once the <b>whole village</b>{" "}
             is done shopping.
