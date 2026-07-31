@@ -326,9 +326,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
 
         {!me && !view.dealt && (
           <div className="answer-card">
-            <b>Take a seat in “{gameId}”.</b> Freighter will ask you to sign one message — it's
-            free, it's not a transaction, and you'll only do it once. Signing proves this wallet
-            is yours so nobody else can play as you.
+            <b>Take a seat in “{gameId}”.</b> Freighter will ask you to sign one message. It's
+            free, and it proves this wallet is yours.
             <div className="row">
               <button
                 className="primary"
