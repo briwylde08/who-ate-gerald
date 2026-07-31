@@ -19,7 +19,6 @@ const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 /** One quiet line of village life. Picked per (game, day) — never rotating. */
 const LOBBY_FLAVOR = [
   "A lantern flickers in the butcher's window.",
-  "Someone insists Gerald always looked edible.",
   "The Drunk claims this is not their first lobby.",
   "Nobody has asked where the bones went.",
   "The chapel bell is rung twice, by nobody.",
