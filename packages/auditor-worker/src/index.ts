@@ -198,6 +198,11 @@ export default {
         case "POST resolve-day":
         case "POST resolve-night": // v1 alias
           return json(await room.resolveDay());
+        case "POST end": {
+          const out = await room.endGame();
+          await env.LOBBIES.getByName("board").remove(gameId!);
+          return json(out);
+        }
         case "GET god-view":
           return json(await room.godView());
         case "GET state":

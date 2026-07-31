@@ -1146,6 +1146,15 @@ export class GameRoom extends DurableObject<Env> {
     }
   }
 
+  /** GM: close a game outright — lobby abandoned, playtest done, etc.
+   *  No winner is declared; the room just stops being a game. */
+  async endGame(): Promise<{ ended: true }> {
+    this.state.phase = "ended";
+    await this.ctx.storage.deleteAlarm();
+    await this.persist();
+    return { ended: true };
+  }
+
   // -------------------------------------------------------------- public --
 
   /** Public game view — safe for every player and spectator. */
