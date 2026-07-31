@@ -18,6 +18,16 @@ function newGameId(): string {
   const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)]!;
   return `${pick(MOODS)}-${pick(PLACES)}-${Math.floor(10 + Math.random() * 90)}`;
 }
+
+/** Game ids travel in URLs: letters, numbers, dashes, underscores, ≤64. */
+function tameGameName(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 64);
+}
 export function Intro({
   onDone,
   address,
@@ -33,6 +43,7 @@ export function Intro({
   const [page, setPage] = useState<"story" | "game" | "identity">(startAt ?? "story");
   const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
   const [manualId, setManualId] = useState("");
+  const [newName, setNewName] = useState("");
   const [chosenGame, setChosenGame] = useState<string | null>(null);
   useEffect(() => {
     if (page !== "game") return;
@@ -139,12 +150,30 @@ export function Intro({
         <h2>Start a new game</h2>
         <div className="panel">
           <p className="dim">
-            A new village appears on the board the moment you take a seat, so others can find
-            it here without being told the name.
+            Name your village, or leave it blank for a random one. It appears on the board the
+            moment you take a seat, so others can find it without being told the name.
           </p>
-          <button className="primary" onClick={() => chooseGame(newGameId())}>
-            Start a new game
-          </button>
+          <div className="row">
+            <input
+              type="text"
+              maxLength={64}
+              placeholder="name the game (optional)"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <button
+              className="primary"
+              onClick={() => chooseGame(tameGameName(newName) || newGameId())}
+            >
+              Start a new game
+            </button>
+          </div>
+          {tameGameName(newName) !== "" && tameGameName(newName) !== newName.trim() && (
+            <p className="dim">Will be called: <b className="mono">{tameGameName(newName)}</b></p>
+          )}
+          <p className="dim">
+            Start the name with “private” to keep it off the board.
+          </p>
         </div>
 
         <details>
