@@ -30,8 +30,7 @@ export function GeraldStory() {
         <ol className="dim rules">
           <li>
             <b>Shop.</b> Visit at most <b>two of the four stores</b> and buy whatever you can
-            afford there. Every item's effect is public knowledge; which one you bought is not.
-            Press <b>Done</b> when you've finished.
+            afford there. Press <b>Done</b> when you've finished.
           </li>
           <li>
             <b>The market closes</b> once every living player has declared Done.
