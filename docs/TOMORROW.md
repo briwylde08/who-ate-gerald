@@ -1,41 +1,46 @@
-# Where we left off — 2026-07-30 evening
+# Where we left off — 2026-07-31 (end of day)
 
-## Done today
-- **Catalog v4 shipped** (`config/catalog.json`, `docs/CATALOG-V4.md`): twelve
-  items, one clause each, no counter-chains, mixed-purpose stores.
-- **Three pages redesigned**: Shops (night market), Town Square (lobby as a
-  gathering place), Maude (private consultation). Character portraits, icons
-  for all eight villagers, werebear background, Fraunces masthead, favicon.
-- **Bug fixes worth remembering**: cross-game leakage in sightings/facts/audits
-  (a new game showed 82 phantom sightings from other games' wallets); tabs
-  rendering behind the intro; the picker locking a returning player's own seat;
-  Log out missing before connect; ghosts able to shop.
-- **`npm run mini-game:v4`** — new item exam. First run: 21/21 item checks
-  green (nail, bottle, charm+shatter, dogs, ledger book, ritual, ham masking,
-  musk hooding, forced disclosure). Day 3's checks (bear trap, votive candle,
-  lantern oil) went unverified because the game resolved dawn itself; fixed
-  with `finishDay()` and re-running.
+## The shelf is now CATALOG v8 — 11 items, live and deployed
+Blacksmith: nail 20 (tie falls on the other) · cold iron key 22 (lock a
+player out of a store tomorrow; store public, victim secret)
+General Store: holiday 23 (store shut tomorrow, public) · sock 32 (target's
+vote doesn't count; victim NAMED at dawn) · barrel 45 (THE saving item —
+no vote today, nothing takes you tonight, sharpener included; does nothing
+for the bear)
+Butcher's: soup bone 8 (1/4 redirect of the beast to another gate) ·
+knife 28 (vote counts twice today) · tooth sharpener 33 (bear: kill beats
+everything except the barrel; villager: offering, 1/2 spare)
+Chapel: Gerald's finger 1 (nothing, proudly) · unquiet rest 25 (1/2 ghost
+vote at death, announced) · long candle 42 (1/2 true role read, private,
+else gutters)
 
-## Pick up here
-1. **Read the re-run result** of `npm run mini-game:v4` (in the transcript, or
-   just run it again — a few minutes). Confirms trap / candle / lantern.
-2. **My Ledger redesign** — plan agreed, not built. Two columns (private
-   ledger 40% / defense builder 60%), three-step defense flow, technical JSON
-   into a collapsed disclosure, Copy proof only.
-   Three findings the plan is built on:
-   - The paste-a-request proof flow is the *moderated* v1 mechanism. Real
-     accusations resolve in the Town Square (server unseals with the auditor
-     key). Frame this page as the manual ritual, not the live defense.
-   - "Reveals one amount to the GM and nothing else" is true of the *proof*,
-     but the GM's god view already decrypts everything. Keep the claim narrow.
-   - No submit endpoint for bundles: Copy proof only. No Submitted / Verified /
-     Rejected states. Results don't survive a refresh.
-3. **`MIN_PLAYERS` 3 → 7** in `packages/auditor-worker/src/game.ts` when ready
-   for the real table.
-4. **Balance watch**: at 7 players parity arrives about day 3 (7→5→3→1), so the
-   village gets ~3 trials to find 1 bear among 6 — the five-day clock never
-   comes into play. Bench items (curfew bell ~40, town clock ~30) are in
-   `docs/CATALOG-V4.md` if the village keeps losing.
-5. Also open: the butcher's knife permanent double-vote is the one v4 item the
-   exam doesn't cover (tie arithmetic hides it); `docs/DESIGN-V2.md` is stale;
-   the GM dashboard still shows retired venison/bearsbane rows.
+Retired today: a bottle, ledger book, musk salve, lantern oil, unsealing
+ritual (v7 cut), silver charm (v8 — barrel took its 45 and its job).
+Aim system shipped: p/aim, server-private, for key/sock/bone/candle;
+barrel is aim "self" (declared drink). Voided purchases at barred doors
+keep the coin and do nothing (private note explains).
+
+## ⚠ Unverified — do these before the next human game
+1. **Rewrite `npm run item-test` for v8** — it still stages charms and
+   lantern oil, so it fails on its first purchase. NONE of the aimed
+   items (key, sock, bone, candle, barrel, holiday) has completed a
+   verified run; the aim-sync fix is deployed but only exercised once.
+2. **Bots don't buy the new shelf** — their cheap-lean filter (≤15 XLM)
+   now matches only the finger and the bone. Raise it or they'll sit out
+   the entire economy in the next bot game.
+
+## Open decisions
+- Long candle: currently truth-or-gutter (never lies). Bri may want lies.
+- Barred doors: currently coin lost, blind. My suggestion: a private
+  "door feels stiff" warning at day start. Undecided.
+- Village info is thin post-v7: Maude + sightings + tie disclosures +
+  candle. Deliberate for now; revisit after a human game.
+- `MIN_PLAYERS` still 3 (game.ts) — flip to 7 for the real table.
+
+## Docs drift
+CATALOG-V5.md describes a dead shelf (V4 doc too); no v8 doc exists.
+GM dashboard still shows retired venison/bane rows. DESIGN-V2.md stale.
+
+## Balance findings from today's analysis (unaddressed remainder)
+Nail 20 is quietly excellent for the bear in tie-heavy metas — watch it
+with humans. Sock+knife combo swings a tally by 3 for 60 XLM.

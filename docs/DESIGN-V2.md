@@ -1,8 +1,15 @@
 # Who Ate Gerald? — Design v2 (the automated game)
 
-*Workshopped by Bri + Patrick, 2026-07-28. Supersedes DESIGN.md where they
-conflict. v1 (the moderated-hybrid build) remains deployed and playable
-throughout the v2 build.*
+*Workshopped by Bri + Patrick, 2026-07-28.*
+
+> **Drift warning (2026-07-31):** the game FLOW described here is still
+> accurate (join → ready → deal → shop/Maude/square/trial/night → morning),
+> but specifics have moved on: items and prices are governed by
+> [CATALOG.md](CATALOG.md) + `config/catalog.json`, days open themselves on
+> a 60s alarm (no GM lever), ties force disclosure, aimed items exist
+> (`p/aim`), and the v1 moderated build this doc references was retired —
+> including the Ledger's manual proof flow. Trust the code and CATALOG.md
+> over any item- or number-level claim below.*
 
 **Status: BUILT & LIVE (2026-07-29)** — deployed with the proposed defaults;
 items marked ⏳ remain tweakable (edit `config/catalog.json` / this doc and
