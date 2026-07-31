@@ -1026,6 +1026,14 @@ export class GameRoom extends DurableObject<Env> {
           );
         }
       }
+      const beforeOpening = purchases.filter(
+        (x) => x.from === p.address && x.round === 0 && !x.isSurrender,
+      ).length;
+      if (beforeOpening > 0) {
+        violations.push(
+          `${p.name} spent coin at ${beforeOpening} shop${beforeOpening === 1 ? "" : "s"} before the game began — the stores were shut, and the money bought nothing.`,
+        );
+      }
       const byWare = new Map<string, number>();
       for (const x of purchases.filter((q) => q.from === p.address && q.round >= 1 && !q.isSurrender)) {
         if (x.itemGuess) byWare.set(x.itemGuess, (byWare.get(x.itemGuess) ?? 0) + 1);

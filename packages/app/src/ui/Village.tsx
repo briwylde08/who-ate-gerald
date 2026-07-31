@@ -123,6 +123,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       .catch(() => undefined);
   }, [wallet.address, round]);
 
+  // Round 0 is the lobby: a purchase now can never fire (effects only read
+  // rounds >= 1), so the coin would simply be burned. Bar the doors.
+  const marketOpen = round >= 1;
+
   const declareDone = async () => {
     setError(null);
     try {
@@ -197,6 +201,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   return (
     <div className="shop-page">
       <div className="panel shop-howto">
+        {!marketOpen && (
+          <p className="shut-note">
+            🔒 The stores are shut until the game begins. Anything bought now would do nothing.
+          </p>
+        )}
         <p>
           You may buy items from two shops every day. The amount of items you purchase is up to
           you, as long as you can afford them. You will be given an additional{" "}
@@ -301,7 +310,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       <div
         className="shops"
-        style={excess > 0n || dead ? { opacity: 0.4, pointerEvents: "none" } : undefined}
+        style={
+          excess > 0n || dead || !marketOpen
+            ? { opacity: 0.4, pointerEvents: "none" }
+            : undefined
+        }
       >
         {SHOPS.map((shop) => {
           const shut = closedShops.includes(shop.id);
@@ -328,8 +341,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const price = stroopsFromXlm(item.priceXlm);
                 const owned = boughtItems.has(item.label);
                 const tooRich = price > balances.spendable;
-                const blocked = doneToday || tooRich || owned;
-                const label = owned
+                const blocked = !marketOpen || doneToday || tooRich || owned;
+                const label = !marketOpen
+                  ? "Not open yet"
+                  : owned
                   ? "Bought ✓"
                   : shut
                     ? "Shuttered"
