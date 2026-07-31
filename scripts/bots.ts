@@ -242,9 +242,9 @@ class BotVillager {
     const shop = wantsShop ? rand(STORES).id : undefined;
     try {
       await this.call("aim", { item: item.id, target, shop });
-      console.log(
-        `  ${this.name}: aimed ${item.id}${target ? ` at ${target}` : ""}${shop ? ` @ ${shop}` : ""}`,
-      );
+      // Say nothing specific: aims are secrets, and a human player may be
+      // watching this very terminal. (Same etiquette as the werebear deal.)
+      console.log(`  ${this.name}: aimed something, somewhere`);
     } catch (e) {
       console.log(`  ${this.name}: aim failed (${e instanceof Error ? e.message : e})`);
     }
