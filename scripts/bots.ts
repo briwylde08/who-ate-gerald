@@ -326,7 +326,7 @@ function scoreSuspicion(
   for (const m of view.chat ?? []) {
     if (m.name !== "the Order") continue;
     for (const c of candidates) {
-      if (m.text.includes(c.name) && /smoked ham|musk salve/i.test(m.text)) {
+      if (m.text.includes(c.name) && /tooth sharpener|musk salve/i.test(m.text)) {
         scores.set(c.name, (scores.get(c.name) ?? 0) + 3);
       }
     }

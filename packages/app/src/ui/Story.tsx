@@ -45,9 +45,9 @@ export function GeraldStory() {
           </li>
           <li>
             <b>The trial.</b> Everyone still alive votes for the player they believe is the
-            werebear. Most votes is banished. A tie banishes nobody — instead the tied players
-            must each unseal one purchase before they may vote again, unless they carry lucky
-            iron.
+            werebear. Most votes is banished. A tie normally banishes nobody — the tied
+            players must each unseal one purchase before they may vote again — but lucky iron
+            steps its owner out of a tie, and the rope looks for whoever is left.
           </li>
           <li>
             <b>Night.</b> The werebear chooses someone to eat. Dawn breaks as soon as the last

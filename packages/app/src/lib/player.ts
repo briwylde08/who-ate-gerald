@@ -146,6 +146,8 @@ export interface PublicView {
     askedToday?: boolean;
     standsAccused?: boolean;
     recovering?: boolean;
+    /** A ghost the Order granted a vote (Unquiet rest). */
+    ghostVoter?: boolean;
   }[];
   readyCount?: number;
   minPlayers?: number;

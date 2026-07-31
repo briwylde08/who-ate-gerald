@@ -141,14 +141,14 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view?.dealt, me?.address]);
 
-  // The dogs: private dawn facts (soup bone). Fetched silently when the
+  // Private dawn facts (currently the tooth-sharpener offering). Fetched when the
   // auth signature is cached — only ever this player's own notes.
-  const [dogNotes, setDogNotes] = useState<{ round: number; text: string }[]>([]);
+  const [privateNotes, setPrivateNotes] = useState<{ round: number; text: string }[]>([]);
   useEffect(() => {
     if (me && round && round >= 2 && hasCachedAuth(wallet, gameId)) {
       playerApi
         .notes(wallet, gameId)
-        .then((r) => setDogNotes(r.notes))
+        .then((r) => setPrivateNotes(r.notes))
         .catch(() => undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -368,7 +368,9 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             const c = p.character ? CHAR_BY_ID.get(p.character) : null;
             const isYou = p.address === wallet.address;
             const status = !p.alive
-              ? "Eaten or banished"
+              ? p.ghostVoter
+                ? "👻 Dead — still votes"
+                : "Eaten or banished"
               : !view.dealt
                 ? p.ready
                   ? "Ready ✓"
@@ -560,10 +562,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             )}
           </div>
 
-          {dogNotes.some((n) => n.round === view.round) && (
+          {privateNotes.some((n) => n.round === view.round) && (
             <div className="answer-card">
-              <b>🐕 Only you hear the dogs.</b>
-              {dogNotes
+              <b>🔒 Only you know this.</b>
+              {privateNotes
                 .filter((n) => n.round === view.round)
                 .map((n, i) => (
                   <p key={i}>
@@ -571,7 +573,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
                   </p>
                 ))}
               <span className="dim">
-                A soup bone's worth of truth — private to you. Share it or sit on it.
+                Private to you, and provably true. Share it or sit on it.
               </span>
             </div>
           )}
@@ -627,7 +629,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         </div>
       )}
 
-      {me?.alive && view.phase === "day" && !view.winner && (
+      {(me?.alive || me?.ghostVoter) && view.phase === "day" && !view.winner && (
         <div className="panel">
           <h2>The trial</h2>
           {!view.marketClosed && (

@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v4 (2026-07-30, per Bri + playtest-7) — 4 stores x 3 items, all 12 prices globally unique so any revealed amount identifies the item. Design law: every effect is ONE clause and references only core rules (vote, night attack, sightings, morning report) — never another item. No pure covers: cheap items carry small real purposes; deniability comes from hidden amounts, not dead items. class: V/W/B (villager/werebear/both) x off/def/info. Economy: 50 XLM buy-in, +15 XLM/day.",
+  "$comment": "Catalog v5 (2026-07-31, per Bri after playtest-9) — 10 items, all prices globally unique so any revealed amount identifies the item. Design law: every effect is ONE clause referencing only core rules (vote, night attack, sightings, morning report), and an item must act the day it is bought or on an event that happens most rounds — v4's ham, candle, trap and soup bone all waited on rare conditions and were cut. Dual-use items (tooth sharpener) make an unsealed purchase ambiguous. Economy: 50 XLM buy-in, +15 XLM/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -12,17 +12,9 @@
           "id": "horseshoe_nail",
           "label": "Horseshoe nail",
           "flavor": "Luck you can hold. Barely.",
-          "priceXlm": 2,
-          "class": "B-def",
-          "effect": "Lucky iron: if the vote ties on you, luck excuses you — you reveal nothing. One nail, one escape."
-        },
-        {
-          "id": "bear_trap",
-          "label": "Bear trap",
-          "flavor": "For bears. Allegedly.",
-          "priceXlm": 21,
-          "class": "V-off",
-          "effect": "If you are eaten, the beast bleeds: it cannot kill the next night."
+          "priceXlm": 20,
+          "class": "B-off",
+          "effect": "Lucky iron: if the vote ties on you, the tie falls on the other. One nail, one escape."
         },
         {
           "id": "silver_charm",
@@ -45,7 +37,7 @@
           "flavor": "Loosens tongues. Yours included.",
           "priceXlm": 7,
           "class": "B-info",
-          "effect": "Loose lips: tomorrow's morning report carries one true rumor about the day's shopping. You don't choose which."
+          "effect": "Loose lips: at dawn the morning report carries one true rumour about the day's shopping. You don't choose which."
         },
         {
           "id": "ledger_book",
@@ -71,28 +63,20 @@
       "subtitle": "No questions about the meat.",
       "items": [
         {
-          "id": "soup_bone",
-          "label": "Soup bone",
-          "flavor": "The dogs will love you for it.",
-          "priceXlm": 8,
-          "class": "V-info",
-          "effect": "The dogs remember: at dawn, you privately learn whether the beast came to YOUR door last night — even on a quiet night."
-        },
-        {
-          "id": "smoked_ham",
-          "label": "Smoked ham",
-          "flavor": "Feeds a family. Or something larger.",
-          "priceXlm": 13,
-          "class": "W-def",
-          "effect": "A well-fed bear leaves quietly: if the night attack fails, the morning says nothing at all."
-        },
-        {
           "id": "butchers_knife",
           "label": "The butcher's knife",
           "flavor": "For the meat. Obviously.",
           "priceXlm": 35,
           "class": "B-off",
           "effect": "Conviction, sharpened: once bought, your vote counts twice for the rest of the game. Everyone hears a knife being ground; nobody knows whose."
+        },
+        {
+          "id": "tooth_sharpener",
+          "label": "Tooth sharpener",
+          "flavor": "Ask no questions about the previous owner.",
+          "priceXlm": 30,
+          "class": "B-off",
+          "effect": "Werebear: tonight nothing saves your prey. Villager: leave it out as an offering — an even chance the beast takes it and spares you."
         }
       ]
     },
@@ -101,14 +85,6 @@
       "icon": "🕯",
       "subtitle": "Candles, absolution, and limited guarantees.",
       "items": [
-        {
-          "id": "votive_candle",
-          "label": "Votive candle",
-          "flavor": "Cheap light for a dark week.",
-          "priceXlm": 5,
-          "class": "B-info",
-          "effect": "If you die, your candle gutters last: Maude posts your final words to the square."
-        },
         {
           "id": "lantern_oil",
           "label": "Lantern oil",
@@ -124,6 +100,14 @@
           "priceXlm": 25,
           "class": "V-info",
           "effect": "At dawn, Maude unseals ONE purchase of the day's most-accused villager and names the item. The vote picks the target; the ritual pays for the reading."
+        },
+        {
+          "id": "unquiet_rest",
+          "label": "Unquiet rest",
+          "flavor": "The Order accepts coin for almost anything.",
+          "priceXlm": 40,
+          "class": "B-def",
+          "effect": "Pay the Order early: when you die, an even chance your ghost returns with a vote. Either way, the village is told."
         }
       ]
     }
