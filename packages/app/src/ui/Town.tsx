@@ -20,8 +20,7 @@ const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 const LOBBY_FLAVOR = [
   "A lantern flickers in the butcher's window.",
   "Someone insists Gerald always looked edible.",
-  "Maude is taking notes.",
-  "The Drunk claims this is not his first lobby.",
+  "The Drunk claims this is not their first lobby.",
   "Nobody has asked where the bones went.",
   "The chapel bell is rung twice, by nobody.",
 ];
