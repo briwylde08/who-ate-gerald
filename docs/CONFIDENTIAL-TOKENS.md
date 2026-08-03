@@ -49,6 +49,20 @@ built on: *identities are not hidden.* That is why the sightings graph shows
 who visited which store, why prices are globally unique (the amount IS the
 item), and why hiding the amount is exactly equivalent to hiding the purchase.
 
+## Where the game teaches this, in play
+
+The requirement is that a player learns the mechanics *while playing*, not
+from a reading assignment. Four surfaces carry it, and all four narrate
+something the code is genuinely doing at that moment — if the protocol
+changes, these are the strings that go stale:
+
+| Surface | Teaches | Where |
+|---|---|---|
+| Narrated purchase (the wait is a real proof) | read sealed balance → build witness → prove in-browser → verify without learning the amount | `PHASE_LABEL` in `ui/PlayerApp.tsx`, fired from `wallet.transfer()` |
+| "What the chain saw" split rows + explorer links | public visit vs sealed amount, per purchase; go check the tx yourself | `ui/Ledger.tsx` |
+| 📦 Uncollected note | why pending and spendable are separate balances | `ui/Village.tsx` purse |
+| "Read with the Auditor's key" under each answer | the auditor channel is a token feature, not a story device | `ui/Maude.tsx` |
+
 The app's own in-game explainer (📜 Rules → "What's actually happening under
 the hood") is written to agree with this doc. If the doc changes, check that
 section in `packages/app/src/ui/Story.tsx`.

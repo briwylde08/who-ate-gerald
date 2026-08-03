@@ -13,9 +13,19 @@ import { Maude } from "./Maude";
 import { Town } from "./Town";
 import { Ledger } from "./Ledger";
 
+/**
+ * A purchase takes real seconds because it really is proving a statement in
+ * zero knowledge. Rather than hide that behind one vague spinner, narrate the
+ * true steps — this is the moment a player is watching most closely, and every
+ * line below describes something the code is actually doing right then.
+ */
 const PHASE_LABEL: Record<TxPhase, string> = {
-  proving: "Sealing with a zero-knowledge proof… real cryptography is running in your browser.",
-  submitting: "Submitting to the ledger…",
+  reading: "Reading your sealed balance — the encrypted copy only you can open…",
+  witness:
+    "Building the witness: your new balance, the shop's, and the Auditor's copy — all sealed…",
+  proving:
+    "Proving it in your browser — real zero-knowledge cryptography, which is why this takes a moment…",
+  submitting: "Submitting: the network verifies the proof without ever learning the amount…",
 };
 
 type Step = { id: string; label: string; status: "todo" | "doing" | "done" };

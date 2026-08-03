@@ -54,7 +54,9 @@ const CIRCUITS: Record<CircuitName, { bytecode: string } & Record<string, unknow
   disclose_sender: discloseSenderCircuit as never,
 };
 
-export type TxPhase = "proving" | "submitting";
+/** The real stages of a confidential transfer, narrated to the player: the
+ *  wait is genuine cryptography, so it may as well teach while it runs. */
+export type TxPhase = "reading" | "witness" | "proving" | "submitting";
 export type OnPhase = (phase: TxPhase) => void;
 
 export interface VillagerBalances {
@@ -205,6 +207,7 @@ export class VillagerWallet {
 
   /** Hidden-amount transfer to a registered recipient (shop or chapel). */
   async transfer(to: string, amount: bigint, onPhase?: OnPhase): Promise<string> {
+    onPhase?.("reading");
     const recipient = await this.client.confidentialBalance(to);
     if (!recipient) throw new Error("recipient is not registered");
     const [kAudR, kAudS] = await Promise.all([
@@ -217,6 +220,7 @@ export class VillagerWallet {
       throw new Error(`insufficient spendable budget (${s.spendable.v} stroops)`);
     }
 
+    onPhase?.("witness");
     const w = buildTransferWitness({
       keys: this.keys,
       v: s.spendable.v,

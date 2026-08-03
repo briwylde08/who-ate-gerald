@@ -248,6 +248,11 @@ export function Maude({ wallet, gameId, setError }: Props) {
               </div>
               <p className="asked-what">You asked: “{a.question}”</p>
               <div className="answer-card">“{a.answer}”</div>
+              {/* Why she could answer at all: the auditor key is a real feature
+                  of the token, not a story device. */}
+              <p className="answer-source">
+                Read with the Auditor's key — the one key that can open every sealed amount.
+              </p>
               {/* Only after the newest answer: what to do with it. */}
               {i === 0 && (
                 <p className="whats-next">

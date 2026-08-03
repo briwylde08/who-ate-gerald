@@ -263,6 +263,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
             >
               Collect into purse
             </button>
+            {/* The pending/spendable split is the one piece of protocol design
+                players meet without being told why it exists. */}
+            <div className="purse-note">
+              Payments land here first, so nobody can spoil a proof you're building
+            </div>
           </div>
         )}
         <div className="purse-block">

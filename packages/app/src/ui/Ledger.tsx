@@ -58,25 +58,50 @@ export function Ledger({ wallet, gameId, active, onGoShops }: Props) {
           </div>
         ) : (
           <>
-            <div className="entries">
+            <div className="chain-log-head">
+              <div className="role-label">What the chain saw</div>
+              <p className="dim">
+                One row per purchase, split down the middle: everything the village can see, and
+                everything it can't. The left column is public forever. The right column exists
+                only here and inside the Auditor's key.
+              </p>
+            </div>
+            <div className="entries chain-log">
               {history.map((h) => (
-                <div key={h.txHash} className="entry">
-                  <span className="entry-main">
-                    <span className="entry-item">{h.item}</span>
+                <div key={h.txHash} className="chain-row">
+                  <div className="chain-head">
                     <span className="entry-where">
                       {h.shopLabel}
                       {h.round ? ` · Day ${h.round}` : ""}
                     </span>
-                  </span>
-                  <span className="entry-side">
-                    <span className="entry-amount">
-                      {xlmDisplay(BigInt(h.amountStroops))} XLM
-                    </span>
-                    <span className="entry-state">Hidden</span>
-                  </span>
+                    <a
+                      className="tx-link"
+                      href={`https://stellar.expert/explorer/testnet/tx/${h.txHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      view on chain ↗
+                    </a>
+                  </div>
+                  <div className="chain-cols">
+                    <div className="chain-col chain-public">
+                      <div className="role-label">Public</div>
+                      <p className="chain-fact">You paid {h.shopLabel}</p>
+                      <p className="chain-sealed">amount ●●●●●● sealed</p>
+                    </div>
+                    <div className="chain-col chain-private">
+                      <div className="role-label">🔒 Only you</div>
+                      <p className="chain-fact">{h.item}</p>
+                      <p className="entry-amount">{xlmDisplay(BigInt(h.amountStroops))} XLM</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
+            <p className="chain-dare dim">
+              Don't take our word for it: open any transaction above. You'll find the shop, the
+              time, and your signature — and no amount anywhere in it.
+            </p>
             <p className="ledger-total">
               <span className="role-label">Spent this game</span>
               <span className="entry-amount">{xlmDisplay(total)} XLM</span>
