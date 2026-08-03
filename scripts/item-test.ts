@@ -311,8 +311,7 @@ async function main() {
     console.log("\nDAY 2 — the bell, the barrel, a lock and a holiday");
     await gmCall("round/start", {});
     await v1.buy(transferProver, "curfew_bell");
-    await v2.buy(transferProver, "barrel_of_beer");
-    await v2.aim("barrel_of_beer"); // declaring the drink IS the action
+    await v2.buy(transferProver, "barrel_of_beer"); // no declaration: buying IS drinking
     await v3.buy(transferProver, "shopkeepers_vacation");
     await v3.aim("shopkeepers_vacation", undefined, "butcher");
     await v3.buy(transferProver, "cold_iron_key");
@@ -323,7 +322,11 @@ async function main() {
       () => "accepted",
       (e) => String(e),
     );
-    check("a drunk villager is refused their vote", String(drunkVote).includes("dead drunk"), drunkVote);
+    check(
+      "the barrel needs no declaration — buying it is drinking it",
+      String(drunkVote).includes("dead drunk"),
+      drunkVote,
+    );
 
     const waiting = await publicView();
     check(

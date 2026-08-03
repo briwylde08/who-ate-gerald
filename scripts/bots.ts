@@ -406,7 +406,15 @@ async function main() {
     // Which characters are free? Don't collide with the humans.
     const view0 = await publicView();
     const takenNames = new Set(view0.players.map((p) => p.name.toLowerCase()));
-    const pool = BOT_POOL.filter((b) => !takenNames.has(b.name.toLowerCase())).slice(0, BOT_COUNT);
+    // ...and don't collide with a human's FACE either. The server enforces one
+    // character per game, so a bot reaching for a claimed villager (a human on
+    // the drunk, say) would take the whole run down with it.
+    const takenFaces = new Set(
+      view0.players.map((p) => p.character).filter((c): c is string => Boolean(c)),
+    );
+    const pool = BOT_POOL.filter(
+      (b) => !takenNames.has(b.name.toLowerCase()) && !takenFaces.has(b.character),
+    ).slice(0, BOT_COUNT);
     const existing = view0.players.filter((p) => store[p.name]).map((p) => p.name);
     for (const name of existing) {
       if (!pool.some((b) => b.name === name)) {

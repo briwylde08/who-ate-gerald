@@ -63,6 +63,10 @@ interface GameState {
   chat: { round: number; name: string; text: string; at: string; ghost?: boolean }[];
   /** Tied-vote consequence: address → round in which they must disclose. */
   mustDisclose: Record<string, number>;
+  /** address -> round they were found drinking, snapshotted at market close. */
+  drunkards: Record<string, number>;
+  /** Round whose drunkard snapshot has been taken (0 = none yet). */
+  drunkSnapshotRound: number;
   askLog: AskRecord[];
   /** This round's votes: voter address → target player name. */
   votes: Record<string, string>;
@@ -106,6 +110,8 @@ const freshState = (): GameState => ({
   doneShopping: {},
   chat: [],
   mustDisclose: {},
+  drunkards: {},
+  drunkSnapshotRound: 0,
   askLog: [],
   votes: {},
   nightPick: null,
@@ -380,6 +386,8 @@ export class GameRoom extends DurableObject<Env> {
     const p = this.playerByName(playerName);
     if (!p) throw new Error(`no player named "${playerName}"`);
     p.alive = false;
+    // A death can be what shuts the market — don't let the barrel slip through.
+    await this.closeMarketIfDone();
     await this.persist();
     return { player: p.name, alive: p.alive };
   }
@@ -397,6 +405,9 @@ export class GameRoom extends DurableObject<Env> {
     await syncIndexer(this.env);
     const ledger = await indexerLatestLedger(this.env);
     this.state.doneShopping[address] = { round: this.state.round, ledger };
+    // If that was the last villager, the barrel takes effect now — no second
+    // click, same as every other item that fires straight from its purchase.
+    await this.closeMarketIfDone();
     await this.persist();
     return { round: this.state.round };
   }
@@ -604,10 +615,6 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     let targetName: string | undefined;
-    if (item.aim === "self") {
-      // Nothing to point at — declaring it IS the action. Verified against the
-      // ledger above, so the trial can trust it without a second thought.
-    }
     if (item.aim === "player" || item.aim === "player+shop") {
       const t = target ? this.playerByName(target) : null;
       if (!t || !t.alive) throw new Error(`no living villager named "${target ?? ""}"`);
@@ -729,11 +736,7 @@ export class GameRoom extends DurableObject<Env> {
     // A door barred yesterday voids what you buy behind it today: the chain
     // cannot refuse a transfer, so the shopkeeper keeps the coin and the item
     // does nothing. Audits still see the spend; only EFFECTS are voided.
-    const shutToday = this.state.closures.filter((c) => c.round === round);
-    const isVoided = (p: Purchase): boolean =>
-      p.round === round &&
-      p.shopId !== null &&
-      shutToday.some((c) => c.shop === p.shopId && (!c.player || c.player === p.player));
+    const isVoided = (p: Purchase): boolean => this.isVoided(p, round);
     const effective = purchases.filter((p) => !isVoided(p));
     for (const p of purchases.filter(isVoided)) {
       ((this.state.privateNotes ??= {})[p.from] ??= []).push({
@@ -757,15 +760,13 @@ export class GameRoom extends DurableObject<Env> {
     // Dead drunk: villagers who declared a barrel today. The beast is too big
     // for beer, so its own declaration does nothing at all.
     const drunk = new Set(
-      aimsToday
+      this.state.players
         .filter(
-          (a) =>
-            a.item === "barrel_of_beer" &&
-            roles[a.by] !== "werebear" &&
-            this.bought(effective, a.by, "barrel_of_beer", { round }),
+          (p) =>
+            roles[p.address] !== "werebear" &&
+            this.bought(effective, p.address, "barrel_of_beer", { round }),
         )
-        .map((a) => this.playerByAddress(a.by)?.name)
-        .filter((n): n is string => !!n),
+        .map((p) => p.name),
     );
     const socked = new Set(
       aimsToday
@@ -1261,9 +1262,47 @@ export class GameRoom extends DurableObject<Env> {
   /** Did this villager declare a barrel today? (The beast is unaffected.) */
   private drunkToday(address: string): boolean {
     if (this.state.roles?.[address] === "werebear") return false;
-    return this.state.aims.some(
-      (a) => a.round === this.state.round && a.by === address && a.item === "barrel_of_beer",
+    return (this.state.drunkards ?? {})[address] === this.state.round;
+  }
+
+  /**
+   * A door barred yesterday voids what you buy behind it today: the chain
+   * cannot refuse a transfer, so the shopkeeper keeps the coin and the item
+   * does nothing. Audits still see the spend; only EFFECTS are voided.
+   */
+  private isVoided(p: Purchase, round: number): boolean {
+    return (
+      p.round === round &&
+      p.shopId !== null &&
+      this.state.closures.some(
+        (c) => c.round === round && c.shop === p.shopId && (!c.player || c.player === p.player),
+      )
     );
+  }
+
+  /**
+   * The market has just shut: read the day's ledger ONCE and remember who is
+   * drinking. The vote gate has to answer "are you drunk?" the instant a hand
+   * goes up, and decrypting the chain mid-vote is far too slow — so the barrel
+   * needs no declaration, only a purchase.
+   */
+  /** Idempotent per round, and reachable from any path that shuts the market. */
+  private async closeMarketIfDone(): Promise<void> {
+    if (this.state.drunkSnapshotRound === this.state.round) return;
+    if (!this.marketClosed()) return;
+    await this.snapshotDrunkards();
+    this.state.drunkSnapshotRound = this.state.round;
+  }
+
+  private async snapshotDrunkards(): Promise<void> {
+    const round = this.state.round;
+    const effective = (await this.loadAll()).filter((p) => !this.isVoided(p, round));
+    for (const p of this.state.players) {
+      if (!p.alive || this.state.roles?.[p.address] === "werebear") continue;
+      if (this.bought(effective, p.address, "barrel_of_beer", { round })) {
+        (this.state.drunkards ??= {})[p.address] = round;
+      }
+    }
   }
 
   /** Private dawn facts (the dogs) for ONE player — identity pre-verified. */

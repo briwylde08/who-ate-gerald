@@ -17,10 +17,12 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
    revealed purchase proves nothing.
 5. **Prices are globally unique.** The amount IS the item, so any revealed
    amount must identify exactly one ware.
-6. **Aimed items take a second action.** A confidential transfer's only
-   payload is its amount — targets go through `p/aim`, server-private, in
-   the same trust class as votes and night picks. Aim `self` = a declared
-   drink.
+6. **Only items that need a TARGET take a second action.** A confidential
+   transfer's only payload is its amount — targets go through `p/aim`,
+   server-private, in the same trust class as votes and night picks.
+   Everything else fires from the purchase alone. There is no "declare it"
+   step: an item that points at nobody must never ask the player to confirm
+   they meant it (the barrel did, and was unusable for it).
 7. *(Deliberate exception to law 2)* **Gerald's finger does nothing**, at
    1 XLM — cheap noise is a feature, not a bug.
 
@@ -39,7 +41,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 33 | Tooth sharpener | The Butcher's | Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone. |
 | 35 | Curfew bell | Blacksmith | Ring it, and the werebear stays home tonight. No hunting. No one dies tonight. |
 | 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn whether they are the werebear; otherwise you learn nothing. It never lies. |
-| 45 | Barrel of beer *(aim: self)* | General Store | You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear. |
+| 45 | Barrel of beer | General Store | You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear. |
 
 Economy: 50 XLM buy-in, +15 each morning, two stores a day, ONE of each
 item per player per game (UI-enforced; repeats are audited and the nail's

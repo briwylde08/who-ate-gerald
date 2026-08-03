@@ -64,8 +64,7 @@
           "flavor": "Finish it and the night finishes you.",
           "priceXlm": 45,
           "class": "V-def",
-          "effect": "You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear.",
-          "aim": "self"
+          "effect": "You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear."
         }
       ]
     },
