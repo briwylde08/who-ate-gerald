@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 
-import type { VillagerWallet } from "../lib/wallet";
+import type { VillagerBalances, VillagerWallet } from "../lib/wallet";
 import { loadHistory, type PurchaseRecord } from "../lib/history";
 import { xlmDisplay } from "../lib/catalog";
+import { SixSteps } from "./SixSteps";
 
 interface Props {
   wallet: VillagerWallet;
   gameId: string;
+  /** Live balances — the six-step tracker reads real state, never a mock. */
+  balances: VillagerBalances;
   /** Tabs stay mounted for draft-survival; reload the list when shown. */
   active: boolean;
   /** Jump to the Shops tab — the empty ledger's way out. */
@@ -24,7 +27,7 @@ interface Props {
  * design and only confused players. The capability still exists in the wallet
  * (discloseSent) and the GM dashboard's verifier if a demo ever wants it.
  */
-export function Ledger({ wallet, gameId, active, onGoShops }: Props) {
+export function Ledger({ wallet, gameId, balances, active, onGoShops }: Props) {
   const [history, setHistory] = useState<PurchaseRecord[]>([]);
   useEffect(() => {
     if (active) setHistory(loadHistory(wallet.address, gameId).slice().reverse());
@@ -108,6 +111,8 @@ export function Ledger({ wallet, gameId, active, onGoShops }: Props) {
             </p>
           </>
         )}
+
+        <SixSteps balances={balances} purchases={history.length} />
 
         <details className="privacy-more">
           <summary>How disclosure works</summary>

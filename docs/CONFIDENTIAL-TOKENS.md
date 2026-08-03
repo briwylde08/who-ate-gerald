@@ -58,6 +58,7 @@ changes, these are the strings that go stale:
 
 | Surface | Teaches | Where |
 |---|---|---|
+| Six-step tracker, ticked from real state | register → deposit → merge → transfer → merge → withdraw, and which two are not the player's | `ui/SixSteps.tsx`, in the Ledger tab |
 | Narrated purchase (the wait is a real proof) | read sealed balance → build witness → prove in-browser → verify without learning the amount | `PHASE_LABEL` in `ui/PlayerApp.tsx`, fired from `wallet.transfer()` |
 | "What the chain saw" split rows + explorer links | public visit vs sealed amount, per purchase; go check the tx yourself | `ui/Ledger.tsx` |
 | 📦 Uncollected note | why pending and spendable are separate balances | `ui/Village.tsx` purse |

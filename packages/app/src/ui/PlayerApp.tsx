@@ -455,6 +455,7 @@ export function PlayerApp() {
             <Ledger
               wallet={wallet}
               gameId={gameId}
+              balances={balances}
               active={tab === "ledger"}
               onGoShops={() => setTab("village")}
             />

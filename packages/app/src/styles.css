@@ -517,6 +517,49 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .chain-private .entry-amount { display: block; margin-top: 2px; color: var(--parchment); }
 .chain-dare { margin: 12px 0 0; font-size: 0.74rem; line-height: 1.45; }
+
+/* The six steps: a checklist of the player's own transactions, not a diagram.
+   Done steps read confident; the two that aren't theirs stay deliberately
+   faded so nobody hunts for a button that doesn't exist. */
+.six-steps {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.six-intro { margin: 4px 0 10px; font-size: 0.76rem; line-height: 1.45; }
+.step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.step {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+.step-mark {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.8rem;
+  width: 1em;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--ink-dim);
+}
+.step-done { border-left: 2px solid var(--green); }
+.step-done .step-mark { color: var(--green); }
+.step-waiting { border-left: 2px solid #5b6284; }
+.step-elsewhere, .step-unused { opacity: 0.6; }
+.step-body { display: flex; flex-direction: column; min-width: 0; }
+.step-name { font-size: 0.86rem; color: var(--ink); }
+.step-what { font-size: 0.74rem; color: var(--ink-dim); line-height: 1.4; margin-top: 1px; }
+.step-note {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.63rem;
+  color: var(--moon);
+  opacity: 0.8;
+  margin-top: 3px;
+}
+.six-foot { margin: 10px 0 0; font-size: 0.74rem; line-height: 1.45; }
 .answer-source {
   margin: 5px 0 0;
   font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
