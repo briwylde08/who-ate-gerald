@@ -98,6 +98,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // localStorage-backed, so it is this player's own record, not the chain's.
   const [boughtItems, setBoughtItems] = useState<Set<string>>(new Set());
   const [justBought, setJustBought] = useState<string | null>(null);
+  /** The teaching moment: what the village just learned, and what it didn't. */
+  const [receipt, setReceipt] = useState<{
+    shopLabel: string;
+    item: string;
+    amountStroops: bigint;
+  } | null>(null);
   // Aimed items need a second, private action after the purchase.
   const [others, setOthers] = useState<string[]>([]);
   const [closedShops, setClosedShops] = useState<string[]>([]);
@@ -210,6 +216,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         txHash: hash,
       });
       setBoughtItems((s) => new Set(s).add(item.label));
+      setReceipt({ shopLabel: shop.label, item: item.label, amountStroops });
       setJustBought(`${shop.id}:${item.id}`);
       window.setTimeout(() => setJustBought(null), 3000);
       await refresh();
@@ -323,6 +330,28 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           <p className="dim">
             The shopkeepers wave you off. Maude opens her office once the <b>whole village</b>{" "}
             is done shopping.
+          </p>
+        </div>
+      )}
+      {receipt && (
+        <div className="panel receipt">
+          <div className="receipt-head">
+            <div className="role-label">Paid — here is what that told the village</div>
+            <button className="link" onClick={() => setReceipt(null)}>
+              dismiss
+            </button>
+          </div>
+          <p className="receipt-line">
+            <span className="receipt-tag">They now know</span>
+            you visited <b>{receipt.shopLabel}</b> today.
+          </p>
+          <p className="receipt-line">
+            <span className="receipt-tag sealed">They cannot know</span>
+            <b>{xlmDisplay(receipt.amountStroops)} XLM</b>, or <b>{receipt.item}</b>.
+          </p>
+          <p className="receipt-why">
+            Every price in the village is unique, so that number would have named the item
+            exactly. Sealing the amount is what hides the purchase.
           </p>
         </div>
       )}
