@@ -69,6 +69,9 @@ const catalog = JSON.parse(readFileSync(join(repoRoot, "config/catalog.json"), "
   shops: Record<string, { items: { id: string; priceXlm: number }[] }>;
 };
 
+/** Bumped with the shelf — the banner must never claim a version it did not test. */
+const CATALOG_VERSION = "v9";
+
 const AUDITOR_URL = "https://gerald-auditor.briana-761.workers.dev";
 const GAME_ID = `items-${Date.now().toString(36)}`;
 const XLM = 10_000_000n;
@@ -242,7 +245,7 @@ async function main() {
   const transferProver = proverFromArtifact(transferCircuit);
 
   try {
-    console.log(`ITEM EXAM (catalog v9) "${GAME_ID}"\n`);
+    console.log(`ITEM EXAM (catalog ${CATALOG_VERSION}) "${GAME_ID}"\n`);
 
     // ---- seat six players, deal, learn roles -------------------------------
     // Six: the trial hangs somebody most days now, and the aimed items need a
@@ -402,7 +405,7 @@ async function main() {
 
     console.log(
       failures === 0
-        ? `\n✅ CATALOG v6 CLEAN — every item did what it says\n   (game "${GAME_ID}" left on the ledger for inspection)`
+        ? `\n✅ CATALOG ${CATALOG_VERSION} CLEAN — every item did what it says\n   (game "${GAME_ID}" left on the ledger for inspection)`
         : `\n❌ ${failures} failure(s) — game "${GAME_ID}"`,
     );
     if (failures > 0) process.exit(1);
