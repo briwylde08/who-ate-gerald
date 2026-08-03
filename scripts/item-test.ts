@@ -339,6 +339,10 @@ async function main() {
     check("and nobody dies in the night", m2.eaten === null, m2);
     check("a lock is fitted, unattributed", hasNote(m2.notes, "A lock was fitted"), m2.notes);
     check("a shopkeeper takes a holiday", hasNote(m2.notes, "is shut tomorrow"), m2.notes);
+    // An unbroken tie hangs nobody and puts BOTH tied villagers under suspicion:
+    // they owe the village a purchase before they may vote again.
+    check("nobody hangs on a tie", m2.banished === null, m2);
+    check("both tied villagers stand accused", hasNote(m2.notes, `${v1.name} stands accused`) && hasNote(m2.notes, `${v3.name} stands accused`), m2.notes);
 
     // ---- DAY 3 -------------------------------------------------------------
     console.log("\nDAY 3 — barred doors, the candle, and the reckoning");
@@ -356,6 +360,17 @@ async function main() {
     await v2.buy(transferProver, "the_long_candle");
     await v2.aim("the_long_candle", bear.name);
     await done([v1, v2, v3, bear]);
+
+    // Yesterday's tie left v1 and v3 accused. A locked mouth until they open a
+    // ledger — and the reveal is unsealed from the chain, so it cannot be a lie.
+    const gagged = await v1.call("vote", { target: bear.name }).then(
+      () => "accepted",
+      (e) => String(e),
+    );
+    check("the accused cannot vote until they disclose", String(gagged).includes("stand accused"), gagged);
+    const shown = await v1.call<{ revealed: string }>("disclose", { txHash: "" });
+    check("disclosing unseals a real purchase", /XLM/.test(shown.revealed), shown.revealed);
+    await v3.call("disclose", { txHash: "" });
 
     await v1.call("vote", { target: bear.name });
     await v2.call("vote", { target: bear.name });
