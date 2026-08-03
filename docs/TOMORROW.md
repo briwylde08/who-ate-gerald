@@ -57,8 +57,12 @@ the missing votes. A soft timeout is a pacing decision — Bri's call.
   demos and small tables; flip to 7 only when you want to force a full one.
 
 ## Docs drift
-CATALOG-V5.md describes a dead shelf (V4 doc too); no v8 doc exists.
-GM dashboard still shows retired venison/bane rows. DESIGN-V2.md stale.
+The dead V4/V5 catalog docs are gone — CATALOG.md is the living shelf and
+its table is generated from catalog.json. DESIGN-V2.md still carries its
+drift banner. Remaining: the GM dashboard prints two readouts for items
+that no longer exist ("venison pierces spent", "bearsbane spent",
+GmDashboard.tsx:439 and :478) — GM-only and cosmetic, but they read as
+live state to anyone glancing at that tab.
 
 ## Balance findings from today's analysis (unaddressed remainder)
 Nail 20 is quietly excellent for the bear in tie-heavy metas — watch it
