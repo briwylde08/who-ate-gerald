@@ -786,8 +786,8 @@ export class GameRoom extends DurableObject<Env> {
         );
         continue;
       }
-      // The butcher's knife, once bought, stays sharp for the whole game.
-      const weight = boughtEver(voterAddr, "butchers_knife") ? 2 : 1;
+      // The knife is sharp for ONE trial — the day it was bought.
+      const weight = boughtThisRound(voterAddr, "butchers_knife") ? 2 : 1;
       weights.set(targetName, (weights.get(targetName) ?? 0) + weight);
     }
     let banished: PlayerRef | null = null;
