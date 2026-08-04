@@ -377,11 +377,19 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               p.askedToday ? "🔮 Asked" : null,
               p.drunkToday ? "🍺 Asleep" : null,
             ].filter(Boolean);
+            // The mornings remember HOW everyone died — say so, with the day.
+            const fate = (() => {
+              const b = view.mornings.find((m) => m.banished === p.name);
+              if (b) return `⚖ Banished on day ${b.round}`;
+              const e = view.mornings.find((m) => m.eaten === p.name);
+              if (e) return `🍽 Eaten on day ${e.round}`;
+              return "Dead";
+            })();
             const status: React.ReactNode = !p.alive ? (
               p.ghostVoter ? (
-                "👻 Dead — still votes"
+                `👻 ${fate} — still votes`
               ) : (
-                "Eaten or banished"
+                fate
               )
             ) : !view.dealt ? (
               p.ready ? (

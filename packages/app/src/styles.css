@@ -301,8 +301,21 @@ button:disabled { opacity: 0.75; cursor: not-allowed; } /* still readable */
 .aim-row button { font-size: 0.78rem; padding: 4px 10px; }
 
 /* A shuttered shop: visibly shut, still readable. */
-.shop-card.shut { opacity: 0.72; }
+.shop-card.shut { opacity: 0.72; position: relative; }
 .shop-card.shut .items { filter: grayscale(0.6); }
+/* The barred door you can see from across the square. */
+.shop-card.shut::after {
+  content: "✕";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(7rem, 22vw, 13rem);
+  line-height: 1;
+  color: rgba(179, 66, 63, 0.22);
+  pointer-events: none;
+}
 .shut-note {
   margin: 6px 0 0;
   font-size: 0.78rem;
@@ -1128,7 +1141,15 @@ div.character { border: 1px solid var(--line); border-radius: 6px; background: v
 .tabs button.active:hover { color: #12141c; border-color: #e2c184; }
 
 .steps { list-style: none; padding: 0; margin: 12px 0; }
-.steps li { padding: 6px 0; }
+.steps li { padding: 7px 0; }
+/* The teaching line under each provisioning step. */
+.steps .step-sub {
+  display: block;
+  margin: 2px 0 0 1.15em;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
 .steps .done::before { content: "✓ "; color: var(--green); }
 .steps .doing::before { content: "… "; color: var(--gold); }
 .steps .todo::before { content: "· "; color: var(--ink-dim); }

@@ -29,7 +29,28 @@ const PHASE_LABEL: Record<TxPhase, string> = {
   submitting: "Submitting: the network verifies the proof without ever learning the amount…",
 };
 
-type Step = { id: string; label: string; status: "todo" | "doing" | "done" };
+type Step = { id: string; label: string; sub?: string; status: "todo" | "doing" | "done" };
+
+/** The four steps of taking a seat, worded to teach — shown as a preview
+ *  before the button is pressed and ticked live while they run. */
+const STEP_COPY = {
+  fund: {
+    label: "Fund your public account",
+    sub: "Ordinary testnet XLM from the faucet. This part everyone can see — that's normal Stellar.",
+  },
+  register: {
+    label: "Register with the confidential token contract",
+    sub: "One transaction, one zero-knowledge proof, once ever: it binds your encryption keys so only you (and the Auditor) can ever read your balance.",
+  },
+  deposit: {
+    label: "Buy in: 50 XLM into the shared pool",
+    sub: "The amount is public on purpose — the whole village can verify everyone starts with the same 50. Inside the pool it becomes a sealed claim only you can spend.",
+  },
+  merge: {
+    label: "Collect your budget into your purse",
+    sub: "Incoming money lands in a pending inbox first, so nobody can spoil a proof you're building by paying you mid-proof. Collecting moves it to the balance only you control.",
+  },
+} as const;
 
 export function PlayerApp() {
   const [profile, setProfile] = useState<Profile | null>(loadProfile);
@@ -117,26 +138,12 @@ export function PlayerApp() {
     if (!wallet || !balances) return;
     setError(null);
     const plan: Step[] = [
-      { id: "fund", label: "Fund your public account (testnet faucet)", status: "todo" },
-      ...(balances.registered
-        ? []
-        : [
-            {
-              id: "register",
-              label: "Register your keys with the confidential token contract (ZK proof)",
-              status: "todo" as const,
-            },
-          ]),
+      { id: "fund", ...STEP_COPY.fund, status: "todo" },
+      ...(balances.registered ? [] : [{ id: "register", ...STEP_COPY.register, status: "todo" as const }]),
       ...(balances.spendable + balances.receiving > 0n
         ? []
-        : [
-            {
-              id: "deposit",
-              label: `Buy in: ${STARTING_BUDGET_XLM} XLM → hidden budget`,
-              status: "todo" as const,
-            },
-          ]),
-      { id: "merge", label: "Collect your budget into spendable", status: "todo" },
+        : [{ id: "deposit", ...STEP_COPY.deposit, status: "todo" as const }]),
+      { id: "merge", ...STEP_COPY.merge, status: "todo" },
     ];
     setSteps(plan);
     const mark = (id: string, status: Step["status"]) =>
@@ -385,22 +392,29 @@ export function PlayerApp() {
 
       {profile && wallet && !provisioned && (
         <div className="panel">
-          <h2>Take your seat</h2>
+          <h2>🌕 Welcome to the village!</h2>
           <p className="dim mono">{wallet.address}</p>
           <p>
-            Before the moon rises: fund your account, register your keys with the confidential
-            token contract, and buy in your budget of {STARTING_BUDGET_XLM} XLM. From then on,
-            every purchase you make is visible only as <i>who paid whom</i> — never how much.
+            Money here is a <b>confidential token</b>: real XLM sits in a shared pool, and what
+            you hold is a sealed claim on it. Everyone can see <i>who</i> pays <i>whom</i> —
+            nobody can see <i>how much</i>. Since every price in the village is unique, hiding
+            the amount hides what you bought. That one trick is the whole game.
           </p>
-          {steps && (
-            <ul className="steps">
-              {steps.map((s) => (
-                <li key={s.id} className={s.status}>
-                  {s.label}
-                </li>
-              ))}
-            </ul>
-          )}
+          <p>
+            Taking your seat is four real transactions, proved in this browser — about a
+            minute. Each step below says what it's doing while it does it:
+          </p>
+          <ul className="steps">
+            {(
+              steps ??
+              Object.entries(STEP_COPY).map(([id, c]) => ({ id, ...c, status: "todo" as const }))
+            ).map((s) => (
+              <li key={s.id} className={s.status}>
+                {s.label}
+                {s.sub && <span className="step-sub">{s.sub}</span>}
+              </li>
+            ))}
+          </ul>
           <button className="primary" onClick={provision} disabled={steps !== null || balances === null}>
             {balances === null ? "Reading the ledger…" : "Provision my villager"}
           </button>

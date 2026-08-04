@@ -132,6 +132,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [aimShop, setAimShop] = useState<Record<string, string>>({});
   const [aimed, setAimed] = useState<Record<string, string>>({});
   const aimsKey = `gerald:aims:${loadGameId()}:${round}`;
+  // Yesterday's receipt is yesterday's news — a new day clears it.
+  useEffect(() => {
+    setReceipt(null);
+  }, [round]);
   useEffect(() => {
     try {
       setAimed(JSON.parse(localStorage.getItem(aimsKey) ?? "{}") as Record<string, string>);
