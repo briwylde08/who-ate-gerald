@@ -40,7 +40,18 @@ export function Intro({
   /** "identity" jumps straight to the villager picker (Change villager). */
   startAt?: "story" | "game" | "identity";
 }) {
-  const [page, setPage] = useState<"story" | "game" | "identity">(startAt ?? "story");
+  // Survive a refresh: a mid-signup player dumped back to the story lost
+  // their place for no reason. Session-scoped, so a NEW tab still gets the
+  // story; an explicit startAt (change game / change villager) still wins.
+  const [page, setPageRaw] = useState<"story" | "game" | "identity">(() => {
+    if (startAt && startAt !== "story") return startAt;
+    const stored = sessionStorage.getItem("gerald:intro-page");
+    return stored === "game" || stored === "identity" ? stored : (startAt ?? "story");
+  });
+  const setPage = (p: "story" | "game" | "identity") => {
+    sessionStorage.setItem("gerald:intro-page", p);
+    setPageRaw(p);
+  };
   const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
   const [manualId, setManualId] = useState("");
   const [newName, setNewName] = useState("");

@@ -58,7 +58,18 @@ export function PlayerApp() {
   const [balances, setBalances] = useState<VillagerBalances | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"village" | "maude" | "chatvote" | "town" | "ledger">("town");
+  type Tab = "village" | "maude" | "chatvote" | "town" | "ledger";
+  // A refresh keeps you where you were — losing your tab to F5 was pure loss.
+  const [tab, setTabRaw] = useState<Tab>(() => {
+    const stored = sessionStorage.getItem("gerald:tab");
+    return stored === "village" || stored === "maude" || stored === "chatvote" || stored === "ledger"
+      ? stored
+      : "town";
+  });
+  const setTab = (v: Tab) => {
+    sessionStorage.setItem("gerald:tab", v);
+    setTabRaw(v);
+  };
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
@@ -234,6 +245,8 @@ export function PlayerApp() {
     await wallet?.destroy();
     localStorage.removeItem("gerald:connected"); // stop auto-reconnecting
     clearProfile(); // back to the intro — name and villager are chosen fresh
+    sessionStorage.removeItem("gerald:intro-page");
+    sessionStorage.removeItem("gerald:tab");
     setProfile(null);
     setWallet(null);
     setBalances(null);
