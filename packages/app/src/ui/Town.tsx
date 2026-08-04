@@ -538,7 +538,18 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               </p>
             </div>
           )}
-          {view.round < 1 && <p className="notice">The shops open when the game begins.</p>}
+          {view.round < 1 && <p className="notice">This opens when the game begins.</p>}
+          {/* The headline facts of every day, newest first — who was eaten,
+              who was banished. The Town Crier below keeps the full story. */}
+          {[...view.mornings].reverse().map((m) => (
+            <p key={m.round} className="notice">
+              <b>Day {m.round}:</b>{" "}
+              {m.banished
+                ? `${m.banished} was banished${m.banishedRole === "werebear" ? " — the werebear!" : ""}. `
+                : "Nobody was banished. "}
+              {m.eaten ? `${m.eaten} was eaten in the night.` : "Nobody was eaten."}
+            </p>
+          ))}
           {me?.alive && view.round >= 2 && view.phase === "day" && !view.winner && (
             <p className="notice">
               The day's allowance of {DAILY_INCOME_XLM} XLM waits at the Town Treasury, in{" "}
