@@ -216,7 +216,9 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
             <div className="answer-card">
               <b>⚖ You stand accused.</b> The vote split on you yesterday — pick one purchase
               and Maude will unseal it for the whole square (she reads the chain, so it cannot
-              be a lie). Your vote unlocks after.
+              be a lie). It reveals only that one purchase, nothing else you bought. Your vote
+              unlocks after. Refusing is allowed — but until you disclose, your vote stays in
+              your pocket, and the village will notice.
               <div className="row">
                 <select value={discloseTx} onChange={(e) => setDiscloseTx(e.target.value)}>
                   <option value="">reveal which purchase?</option>

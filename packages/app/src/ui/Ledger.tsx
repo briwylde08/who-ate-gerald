@@ -117,20 +117,6 @@ export function Ledger({ wallet, gameId, balances, active, onGoShops }: Props) {
           <SixSteps balances={balances} purchases={history.length} />
         </div>
 
-        <details className="privacy-more">
-          <summary>How disclosure works</summary>
-          <p className="dim">
-            If a trial ties and you stand accused, the village expects an answer in the{" "}
-            <b>Town Square</b>: you choose one purchase from this list, and Maude unseals that
-            single payment for everyone to read. Because she decrypts it from the chain rather
-            than taking your word, the reveal cannot be a lie — and it says nothing about
-            anything else you bought.
-          </p>
-          <p className="dim">
-            Refusing is allowed. Until you disclose, your vote stays in your pocket, which the
-            village will notice. A horseshoe nail excuses you from the whole business once.
-          </p>
-        </details>
       </div>
     </div>
   );
