@@ -508,27 +508,13 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               </ul>
             </div>
           </div>
-          <details className="privacy-more">
-            <summary>How privacy works</summary>
-            <p className="dim">
-              Every purchase is a confidential transfer. The ledger shows <b>which store you
-              paid and when</b>, never the amount — and because each price in the game is
-              unique, hiding the amount is what hides the item. Your income arrives as a{" "}
-              <b>public deposit</b>, amount included, which is how the village verifies nobody
-              smuggled in extra budget.
-            </p>
-            <p className="dim">
-              One person can read the amounts: <b>Maude McLedger</b>, who holds the token's
-              auditor key. That is how her answers are true — and they go only to the villager
-              who asked. Votes stay sealed too: the morning report announces the verdict, and
-              the tied names when a trial deadlocks, but never who voted for whom.
-            </p>
-            <p className="dim">
-              Two things can pull a purchase into the open, and both need you: standing accused
-              after a tie (you nominate one purchase and the server unseals it) and items whose
-              effect is to reveal — a long candle burning all night in the Chapel.
-            </p>
-          </details>
+          {/* The deep version of this lives in Rules ("What's actually
+              happening under the hood") — saying it twice taught nothing
+              extra and doubled the drift surface. The grid is the cheat
+              sheet; Rules is the story. */}
+          <p className="dim">
+            The full story of how this works is under <b>Rules</b>.
+          </p>
         </div>
 
         <div className="panel notices">
