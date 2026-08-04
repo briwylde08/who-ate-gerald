@@ -25,6 +25,12 @@ export function loadGameId(): string {
   return localStorage.getItem(GAME_KEY) ?? "playtest-1";
 }
 
+/** The game this browser actually chose — null on a fresh browser, so the
+ *  intro can tell a returning player from a brand-new one. */
+export function storedGameId(): string | null {
+  return localStorage.getItem(GAME_KEY);
+}
+
 export function saveGameId(id: string): void {
   localStorage.setItem(GAME_KEY, id.trim());
 }
