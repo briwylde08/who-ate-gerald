@@ -83,10 +83,10 @@ export function Maude({ wallet, gameId, setError }: Props) {
       : "locked";
   const sealLabel =
     seal === "available"
-      ? "Today's seal: available"
+      ? "Today's question: available"
       : seal === "spent"
-        ? "Today's seal: spent"
-        : "Today's seal: unavailable";
+        ? "Today's question: asked"
+        : "Today's question: unavailable";
 
   const needsPlayer = (q: string) => q.includes("[player]");
   const fill = (q: string) => (target ? q.replace("[player]", target) : q);
@@ -147,7 +147,7 @@ export function Maude({ wallet, gameId, setError }: Props) {
           {seal === "available" ? (
             "You have one question remaining today."
           ) : seal === "spent" ? (
-            "Your seal returns when the next day begins."
+            "You get a new question when the next day begins."
           ) : round < 1 ? (
             "Her office opens once the first day begins."
           ) : me?.alive === false ? (
@@ -263,7 +263,7 @@ export function Maude({ wallet, gameId, setError }: Props) {
               busy || question.trim() === "" || question.includes("[player]") || seal !== "available"
             }
           >
-            {busy ? "Maude is consulting the register…" : "Spend seal & ask"}
+            {busy ? "Maude is consulting the register…" : "Ask Maude"}
           </button>
           {question.includes("[player]") && (
             <span className="dim">Pick a villager above, or type a name yourself.</span>
