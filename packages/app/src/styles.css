@@ -718,7 +718,6 @@ th { color: var(--ink-dim); font-weight: normal; }
   .seal-available { animation: none; }
 }
 
-.state-card { padding: 14px 16px; }
 .maude-quote {
   margin: 0 0 10px;
   font-style: italic;
