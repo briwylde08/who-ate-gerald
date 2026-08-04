@@ -65,6 +65,33 @@ export function Intro({
   }, [page]);
   /** Whatever game this browser last pointed at — may have no seats yet. */
   const current = loadGameId();
+  /** What that game actually IS right now: an ended game must never be
+   *  offered as a way back in ("game1 is still in the lobby" — Bri, after
+   *  we ended game1 and this row kept advertising it). */
+  const [currentState, setCurrentState] = useState<{
+    phase: string;
+    seated: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (page !== "game" || !current) return;
+    let stale = false;
+    const pull = () =>
+      void fetchPublicView(current)
+        .then((v) => {
+          if (stale) return;
+          setCurrentState({
+            phase: v.phase,
+            seated: !!address && v.players.some((pl) => pl.address === address),
+          });
+        })
+        .catch(() => !stale && setCurrentState({ phase: "lobby", seated: false }));
+    pull();
+    const t = setInterval(pull, 10_000);
+    return () => {
+      stale = true;
+      clearInterval(t);
+    };
+  }, [page, current, address]);
   const chooseGame = (id: string) => {
     saveGameId(id);
     setChosenGame(id);
@@ -144,20 +171,28 @@ export function Intro({
             player who made a game but never took a seat had NO way forward:
             the board only lists games somebody has already joined, so their
             own empty lobby was invisible and the screen was a dead end. */}
-        {current && !lobbies.some((l) => l.id === current) && (
-          <>
-            <h2>Carry on where you were</h2>
-            <div className="panel">
-              <div className="lobby-row">
-                <span className="lobby-id">{current}</span>
-                <span className="dim">the game you were last in</span>
-                <button className="primary" onClick={() => chooseGame(current)}>
-                  Continue
-                </button>
+        {current &&
+          !lobbies.some((l) => l.id === current) &&
+          currentState !== null &&
+          currentState.phase !== "ended" &&
+          (currentState.phase === "lobby" || currentState.seated) && (
+            <>
+              <h2>Carry on where you were</h2>
+              <div className="panel">
+                <div className="lobby-row">
+                  <span className="lobby-id">{current}</span>
+                  <span className="dim">
+                    {currentState.phase === "lobby"
+                      ? "the game you were last in"
+                      : "in progress — your seat is waiting"}
+                  </span>
+                  <button className="primary" onClick={() => chooseGame(current)}>
+                    Continue
+                  </button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
         <h2>Join an existing game</h2>
         {lobbies.length === 0 ? (
