@@ -36,7 +36,7 @@ export function SixSteps({ balances, purchases }: Props) {
     {
       n: 1,
       name: "Register",
-      what: "Bind your keys to the wrapper contract. Once, ever.",
+      what: "Bind your keys to the confidential token contract. Once ever per contract.",
       state: registered ? "done" : "waiting",
       note: registered ? "you did this when you joined" : "not yet",
     },
