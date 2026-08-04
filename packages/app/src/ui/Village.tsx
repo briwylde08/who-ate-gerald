@@ -289,9 +289,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
             {xlmString(remainingAllowance)} by day {Math.max(1, round)}. Collecting transfers{" "}
             {xlmString(deficit)} XLM from your own wallet into the confidential token
             contract's pool, where it is represented as your confidential claims. Amounts
-            inside the pool are hidden, but money ENTERING it is always visible — so your
-            deposits can be checked against the schedule, and Maude's dawn audit calls out
-            anyone who takes more than the rules allow.
+            inside the pool are hidden, but money entering it is always visible.
           </p>
           <button className="primary" onClick={() => void topUp()}>
             Collect {xlmString(deficit)} XLM
