@@ -467,6 +467,10 @@ async function main() {
     for (;;) {
       const v = await publicView().catch(() => null);
       if (v?.players.some((p) => !botNames.has(p.name.toLowerCase()))) break;
+      // The hold protects an un-started lobby from a bots-only auto-start.
+      // If the game is already DEALT (a GM force-dealt a bots-only table),
+      // there is nothing left to protect — play.
+      if (v?.dealt) break;
       await new Promise((r) => setTimeout(r, 5000));
     }
     for (const bot of bots) {
