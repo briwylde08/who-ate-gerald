@@ -345,7 +345,7 @@ export function PlayerApp() {
         <div className="panel story">
           <GeraldStory />
           <div className="row">
-            <button onClick={() => setStoryOpen(false)}>Close the case file</button>
+            <button onClick={() => setStoryOpen(false)}>Close</button>
           </div>
         </div>
       )}
