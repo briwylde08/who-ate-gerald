@@ -48,6 +48,17 @@ Escape hatch today: the GM's **resolve day**, which force-resolves without
 the missing votes. A soft timeout is a pacing decision — Bri's call.
 
 ## Open decisions
+- **Butts in seats** (2026-08-04): when real people play short-handed, how
+  do bots fill the gap without a terminal? Analysis done, direction chosen:
+  a "Fill the rest of the village with bots" button on the lobby screen,
+  proving IN THE PLAYER'S BROWSER (the tab already has the prover; cache
+  bot keys in localStorage so only the first game pays registration).
+  NOT in the Worker — 128MB / CPU ceiling cannot carry seven UltraHonk
+  provers. Cost to accept: bots pause when the tab closes; work to plan
+  for: porting the bots' brain (shopping, herd voting, aims, chat) out of
+  scripts/bots.ts into the app without losing the headless version the
+  item exam drives. Until then: `npm run bots <game> [n]` in a terminal,
+  which resumes seats from disk and is safe to re-run after a crash.
 - Long candle: currently truth-or-gutter (never lies). Bri may want lies.
 - Barred doors: currently coin lost, blind. My suggestion: a private
   "door feels stiff" warning at day start. Undecided.
