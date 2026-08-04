@@ -29,7 +29,9 @@ const CORS = {
 const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body, null, 2), {
     status,
-    headers: { "content-type": "application/json", ...CORS },
+    // no-store: every response here is live game state — a heuristically
+    // cached lobby board once showed a game that had been ended for minutes.
+    headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS },
   });
 
 function gmAuthorized(req: Request, env: Env): boolean {
