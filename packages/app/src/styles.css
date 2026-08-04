@@ -686,7 +686,6 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .maude-tagline {
   margin: 0 0 8px;
-  font-style: italic;
   color: var(--moon);
   opacity: 0.85;
 }
