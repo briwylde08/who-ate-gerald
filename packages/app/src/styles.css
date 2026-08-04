@@ -1050,6 +1050,11 @@ th { color: var(--ink-dim); font-weight: normal; }
 .maude-pointer p { margin: 0; }
 /* The join prompt: plain on purpose — no gold bar, no italics. */
 .join-card { margin: 10px 0; }
+
+/* Today's kit on the Chat & Vote page — what you hold while you decide. */
+.kit-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.kit-list li { padding: 4px 0; font-size: 0.9rem; }
+.kit-note { margin: 8px 0 0; font-size: 0.72rem; }
 .notices .sightings { margin-bottom: 10px; }
 
 /* "What the village sees": the privacy boundary as two facing columns. */

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
 import { loadHistory } from "../lib/history";
+import { xlmDisplay } from "../lib/catalog";
 import {
   fetchPublicView,
   hasCachedAuth,
@@ -64,6 +65,10 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
 
   const me = view?.players.find((p) => p.address === wallet.address);
   const round = view?.round;
+  /** What this browser bought TODAY — the kit in hand while deciding. */
+  const todaysItems = round
+    ? loadHistory(wallet.address, gameId).filter((r) => r.round === round)
+    : [];
   const living = (view?.players ?? []).filter((p) => p.alive && p.address !== wallet.address);
 
   // A new day voids yesterday's ballot and pick.
@@ -262,6 +267,28 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {me?.alive && view.phase === "day" && !view.winner && (
+        <div className="panel">
+          <h2>🧺 Your items today</h2>
+          {todaysItems.length === 0 ? (
+            <p className="dim">You bought nothing today.</p>
+          ) : (
+            <ul className="kit-list">
+              {todaysItems.map((r) => (
+                <li key={r.txHash}>
+                  <b>{r.item}</b>
+                  <span className="dim">
+                    {" "}
+                    — {xlmDisplay(BigInt(r.amountStroops))} XLM, {r.shopLabel}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="dim kit-note">Only you can see this list.</p>
         </div>
       )}
 

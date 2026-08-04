@@ -12,7 +12,6 @@ import { Village } from "./Village";
 import { Maude } from "./Maude";
 import { Town } from "./Town";
 import { ChatVote } from "./ChatVote";
-import { Ledger } from "./Ledger";
 import { SixSteps } from "./SixSteps";
 import { loadHistory } from "../lib/history";
 
@@ -60,11 +59,12 @@ export function PlayerApp() {
   const [balances, setBalances] = useState<VillagerBalances | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  type Tab = "village" | "maude" | "chatvote" | "town" | "ledger";
+  type Tab = "village" | "maude" | "chatvote" | "town";
   // A refresh keeps you where you were — losing your tab to F5 was pure loss.
+  // (A stored "ledger" from before that tab retired falls back to town.)
   const [tab, setTabRaw] = useState<Tab>(() => {
     const stored = sessionStorage.getItem("gerald:tab");
-    return stored === "village" || stored === "maude" || stored === "chatvote" || stored === "ledger"
+    return stored === "village" || stored === "maude" || stored === "chatvote"
       ? stored
       : "town";
   });
@@ -474,13 +474,6 @@ export function PlayerApp() {
             >
               Chat &amp; Vote
             </button>
-            <button
-              className={tab === "ledger" ? "active" : ""}
-              aria-current={tab === "ledger" ? "page" : undefined}
-              onClick={() => setTab("ledger")}
-            >
-              My Ledger
-            </button>
           </div>
           {/* All tabs stay mounted (hidden with CSS) so half-typed chat
               lines, questions, and pasted bundles survive tab switches. */}
@@ -513,15 +506,6 @@ export function PlayerApp() {
           </div>
           <div style={{ display: tab === "chatvote" ? "block" : "none" }}>
             <ChatVote wallet={wallet} gameId={gameId} setError={setError} />
-          </div>
-          <div style={{ display: tab === "ledger" ? "block" : "none" }}>
-            <Ledger
-              wallet={wallet}
-              gameId={gameId}
-              balances={balances}
-              active={tab === "ledger"}
-              onGoShops={() => setTab("village")}
-            />
           </div>
         </div>
         {/* Bri's favorite teaching surface, promoted: the six steps ride

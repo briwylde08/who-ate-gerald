@@ -16,6 +16,7 @@ import { loadHistory, recordPurchase } from "../lib/history";
 import { explorerTx, recordActivity } from "../lib/activity";
 import { fetchGraph, fetchPublicView, loadGameId, playerApi, type GraphView } from "../lib/player";
 import { ToteIcon } from "./CharIcon";
+import { SixSteps } from "./SixSteps";
 import { useEffect } from "react";
 
 interface Props {
@@ -641,6 +642,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           </div>
         </div>
       )}
+      {/* Narrow screens have no sidebar; the tracker lives here instead
+          (it lived in My Ledger until that tab retired). */}
+      <div className="six-inline">
+        <div className="panel">
+          <SixSteps
+            balances={balances}
+            purchases={loadHistory(wallet.address, loadGameId()).length}
+          />
+        </div>
+      </div>
     </div>
   );
 }
