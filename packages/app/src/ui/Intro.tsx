@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CHARACTERS, saveProfile, type Profile } from "../lib/profile";
 import { CharEmoji } from "./CharIcon";
-import { fetchLobbies, fetchPublicView, loadGameId, saveGameId, storedGameId, type OpenLobby } from "../lib/player";
+import { fetchLobbies, fetchPublicView, loadGameId, saveGameId, type OpenLobby } from "../lib/player";
 import { GeraldStory } from "./Story";
 
 /**
@@ -107,28 +107,16 @@ export function Intro({
         : "Name yourself and pick a villager";
 
   if (page === "story") {
-    // A returning player's way back in, ABOVE the story: eleven paragraphs
-    // with one button below the fold read as a page with no buttons at all.
-    const remembered = storedGameId();
+    // The front page is the STORY, nothing else — no game state here (Bri's
+    // call). But eleven paragraphs with one button below the fold read as a
+    // page with no buttons at all, so Play appears above the story too.
     return (
       <div className="panel story">
-        {remembered ? (
-          <div className="story-continue">
-            <span>
-              Your game: <b className="mono">{remembered}</b>
-            </span>
-            <button className="primary" onClick={() => chooseGame(remembered)}>
-              Continue
-            </button>
-            <button onClick={() => setPage("game")}>Switch game</button>
-          </div>
-        ) : (
-          <div className="story-continue">
-            <button className="primary" onClick={() => setPage("game")} autoFocus>
-              Play Who Ate Gerald?
-            </button>
-          </div>
-        )}
+        <div className="story-continue">
+          <button className="primary" onClick={() => setPage("game")} autoFocus>
+            Play Who Ate Gerald?
+          </button>
+        </div>
         <GeraldStory />
         <div className="row">
           <button className="primary" onClick={() => setPage("game")}>
