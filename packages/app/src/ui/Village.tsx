@@ -615,9 +615,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           sealed) and deposits (amount visible — that's the boundary rule,
           demonstrated). Your own rows get your private detail, because this
           is your browser and it remembers what you bought. */}
-      {/* Always present, even empty — a box that hides when it has nothing
-          to say is a box nobody can find ("where is the tx box?" — Bri). */}
-      {marketOpen && (
+      {/* ALWAYS present — no feed gate, no market gate. A box that hides
+          when it has nothing to say is a box nobody can find, and the lobby
+          is when buy-ins land, which is worth watching. */}
+      {(
         <div className="panel activity-log">
           <h3>Onchain activity</h3>
           {feed.length === 0 && (
