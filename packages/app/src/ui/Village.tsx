@@ -280,8 +280,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </p>
         <p className="dim">
           Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,
-          never the amount. What each item does is public knowledge — which one you bought is
-          not. The werebear is shopping too.
+          never the amount.
+        </p>
+        <p className="dim">
+          What each item does is public knowledge — which one you bought is not. The werebear
+          is shopping too.
         </p>
       </div>
       {!dead && deficit > 0n && excess === 0n && (
