@@ -11,6 +11,7 @@ import { GeraldStory } from "./Story";
 import { Village } from "./Village";
 import { Maude } from "./Maude";
 import { Town } from "./Town";
+import { ChatVote } from "./ChatVote";
 import { Ledger } from "./Ledger";
 
 /**
@@ -36,7 +37,7 @@ export function PlayerApp() {
   const [balances, setBalances] = useState<VillagerBalances | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"village" | "maude" | "town" | "ledger">("town");
+  const [tab, setTab] = useState<"village" | "maude" | "chatvote" | "town" | "ledger">("town");
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
@@ -433,6 +434,13 @@ export function PlayerApp() {
               Maude
             </button>
             <button
+              className={tab === "chatvote" ? "active" : ""}
+              aria-current={tab === "chatvote" ? "page" : undefined}
+              onClick={() => setTab("chatvote")}
+            >
+              Chat &amp; Vote
+            </button>
+            <button
               className={tab === "ledger" ? "active" : ""}
               aria-current={tab === "ledger" ? "page" : undefined}
               onClick={() => setTab("ledger")}
@@ -466,7 +474,11 @@ export function PlayerApp() {
               setError={setError}
               refresh={() => refresh(wallet)}
               onGoShops={() => setTab("village")}
+              onGoMaude={() => setTab("maude")}
             />
+          </div>
+          <div style={{ display: tab === "chatvote" ? "block" : "none" }}>
+            <ChatVote wallet={wallet} gameId={gameId} setError={setError} />
           </div>
           <div style={{ display: tab === "ledger" ? "block" : "none" }}>
             <Ledger

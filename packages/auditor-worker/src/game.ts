@@ -786,7 +786,7 @@ export class GameRoom extends DurableObject<Env> {
       // A sock in the mouth: they spoke all day, but the tally cannot hear it.
       if (socked.has(voter.name)) {
         notes.push(
-          `🧦 ${voter.name}'s voice was stopped at the trial — their vote did not carry. It was not stopped for free.`,
+          `🧦 Someone bought a sock in mouth for ${voter.name}: their vote did not count today.`,
         );
         continue;
       }
@@ -801,7 +801,7 @@ export class GameRoom extends DurableObject<Env> {
       if (top.length === 1) banished = this.playerByName(top[0]!) ?? null;
       else {
         notes.push(
-          `The vote split between ${top.join(" and ")} — the village could not choose.`,
+          `The vote tied between ${top.join(" and ")}.`,
         );
         // Lucky iron decides a deadlock: a nail steps its holder OUT of the
         // tie, so the rope looks for whoever is left. If exactly one villager
@@ -811,12 +811,14 @@ export class GameRoom extends DurableObject<Env> {
         for (const name of top) {
           const p = this.playerByName(name);
           if (!p?.alive) continue;
-          const nailsOwned = Math.min(1, this.countBought(effective, p.address, "horseshoe_nail"));
+          // Every nail bought (any day) grants one excuse; re-buying on a
+          // later day restocks. Same-day repeats are audit violations anyway.
+          const nailsOwned = this.countBought(effective, p.address, "horseshoe_nail");
           const nailsSpent = (this.state.nailUsed ??= {})[p.address] ?? 0;
           if (nailsOwned > nailsSpent) {
             this.state.nailUsed[p.address] = nailsSpent + 1;
             notes.push(
-              `🍀 ${p.name}'s pockets jingled — lucky iron. The tie falls away from them.`,
+              `🍀 ${p.name} had a horseshoe nail: the tie skips them. The nail is spent.`,
             );
           } else {
             stillTied.push(p);
@@ -824,7 +826,7 @@ export class GameRoom extends DurableObject<Env> {
         }
         if (stillTied.length === 1) {
           banished = stillTied[0]!;
-          notes.push(`The tie came to rest on ${banished.name}.`);
+          notes.push(`The tie fell on ${banished.name}.`);
         } else {
           for (const p of stillTied) {
             this.state.mustDisclose[p.address] = round + 1;
@@ -833,12 +835,12 @@ export class GameRoom extends DurableObject<Env> {
             );
           }
           if (stillTied.length === 0) {
-            notes.push("Every tied villager was carrying iron. Nobody hangs today.");
+            notes.push("Everyone in the tie had a horseshoe nail: nobody is banished today.");
           }
         }
       }
     } else {
-      notes.push("Nobody voted. Gerald would be disappointed, if he still had opinions.");
+      notes.push("Nobody voted. Nobody is banished today.");
     }
     let banishedRole: Role | null = null;
     if (banished) {
@@ -850,7 +852,7 @@ export class GameRoom extends DurableObject<Env> {
       const voterCount = Object.keys(this.state.votes).length;
       if (totalWeight > voterCount) {
         notes.push(
-          "🔪 Steel glinted at the trial: the tally counts more voices than hands. Somebody's knife is sharp — ask the Butcher's door who visited.",
+          "🔪 Someone's butcher's knife counted their vote twice at today's trial.",
         );
       }
       if (banishedRole === "werebear") {
@@ -869,7 +871,7 @@ export class GameRoom extends DurableObject<Env> {
       this.bought(effective, p.address, "curfew_bell", { round }),
     );
     if (this.state.winner === null && bear?.alive && bearAddress && bellTonight) {
-      notes.push("🔔 The curfew bell tolled all night. Nothing hunted; nothing dared.");
+      notes.push("🔔 Someone rang the curfew bell: the werebear had to stay home. Nobody died tonight.");
     }
     if (this.state.winner === null && bear?.alive && bearAddress && !bellTonight) {
       let target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
@@ -889,7 +891,7 @@ export class GameRoom extends DurableObject<Env> {
         ) {
           ((this.state.privateNotes ??= {})[target.address] ??= []).push({
             round: round + 1,
-            text: "🦴 Something turned aside at your gate last night. The bone is gone.",
+            text: "🦴 Your soup bone worked: the werebear came for you and was turned aside.",
           });
           target = elsewhere;
         }
@@ -903,23 +905,28 @@ export class GameRoom extends DurableObject<Env> {
         this.state.wounded = false;
         notes.push("A quiet night. Something large limped past the mill and took nothing.");
       } else if (!target || !target.alive) {
-        notes.push("A quiet night.");
+        notes.push("A quiet night: the werebear's chosen prey was already dead.");
       } else if (drunk.has(target.name)) {
-        // Nothing wakes a drunk villager, the beast included.
-        notes.push("A quiet night.");
+        // Nothing wakes a drunk villager, the beast included. The save is
+        // announced but never NAMED — who was protected, and how, stays theirs.
+        notes.push(
+          "A quiet night: the werebear attacked, but its prey survived. Only they know why.",
+        );
         ((this.state.privateNotes ??= {})[target.address] ??= []).push({
           round: round + 1,
-          text: "🍺 You woke in the road at noon, unbitten. Something had sniffed you and thought better of it.",
+          text: "🍺 Your barrel of beer saved you: the werebear came for you and left you sleeping.",
         });
       } else if (!sharpTonight && hasOffering && randomIndex(2) === 0) {
         // The beast took the gift and went. Publicly this is just a quiet
         // night; the villager who paid learns why, and only them.
         this.state.offeringUsed[target.address] =
           (this.state.offeringUsed[target.address] ?? 0) + 1;
-        notes.push("A quiet night.");
+        notes.push(
+          "A quiet night: the werebear attacked, but its prey survived. Only they know why.",
+        );
         ((this.state.privateNotes ??= {})[target.address] ??= []).push({
           round: round + 1,
-          text: "🦷 Your offering is gone from the step, and so are the tracks. The beast came, and took it instead of you.",
+          text: "🦷 Your tooth sharpener saved you: the werebear took it instead of you.",
         });
       } else {
         eaten = target;
@@ -928,7 +935,7 @@ export class GameRoom extends DurableObject<Env> {
         delete this.state.recovering[target.address];
         if (sharpTonight) {
           notes.push(
-            `🦷 Whatever ${target.name} was carrying did not matter. Something came with its teeth already sharpened.`,
+            `🦷 The werebear used a tooth sharpener: nothing ${target.name} carried could save them.`,
           );
         }
         if (boughtEver(target.address, "lantern_oil")) {
@@ -947,8 +954,8 @@ export class GameRoom extends DurableObject<Env> {
       this.state.ghostVote[dead.address] = granted ? "granted" : "refused";
       notes.push(
         granted
-          ? `👻 ${dead.name} paid the Mayor in advance, and the Mayor delivered: their ghost keeps its vote.`
-          : `👻 ${dead.name} paid the Mayor in advance. The Mayor kept the fee and nothing else. No vote, no rest.`,
+          ? `👻 ${dead.name} bought unquiet rest and won the coin flip: their ghost keeps its vote.`
+          : `👻 ${dead.name} bought unquiet rest and lost the coin flip: no ghost vote.`,
       );
     }
 
@@ -966,14 +973,14 @@ export class GameRoom extends DurableObject<Env> {
       if (!a.shop || !a.target) continue;
       this.state.closures.push({ round: round + 1, shop: a.shop, player: a.target });
       notes.push(
-        `🔒 A lock was fitted at ${placePhrase(SHOP_BY_ID.get(a.shop)?.label ?? a.shop)} overnight. Somebody will find it tomorrow.`,
+        `🔒 Someone bought a cold iron key: one villager is locked out of ${placePhrase(SHOP_BY_ID.get(a.shop)?.label ?? a.shop)} tomorrow.`,
       );
     }
     for (const a of aimedToday("shopkeepers_vacation")) {
       if (!a.shop) continue;
       this.state.closures.push({ round: round + 1, shop: a.shop });
       notes.push(
-        `🧳 ${SHOP_BY_ID.get(a.shop)?.label ?? a.shop} is shut tomorrow — the shopkeeper has come into some money and a sudden love of the coast.`,
+        `🧳 Someone bought the shopkeeper a holiday: ${SHOP_BY_ID.get(a.shop)?.label ?? a.shop} is closed to everyone tomorrow.`,
       );
     }
 
@@ -986,8 +993,8 @@ export class GameRoom extends DurableObject<Env> {
       ((this.state.privateNotes ??= {})[a.by] ??= []).push({
         round: round + 1,
         text: shows
-          ? `🕯 The flame stood straight all night: ${read.name} is ${isBear ? "the werebear" : "no werebear"}.`
-          : `🕯 The flame guttered and told you nothing about ${read.name}. Forty XLM, gone.`,
+          ? `🕯 The candle worked: ${read.name} is ${isBear ? "THE WEREBEAR" : "not the werebear"}.`
+          : `🕯 The candle failed: it told you nothing about ${read.name}.`,
       });
     }
 
@@ -1004,7 +1011,7 @@ export class GameRoom extends DurableObject<Env> {
         .reduce((a, d) => a + d.amountStroops, 0n);
       if (depTotal > allowedTotal) {
         violations.push(
-          `${p.name} has deposited ${xlmString(depTotal)} XLM in total — the schedule allows ${xlmString(allowedTotal)} by day ${round}. The Order notices.`,
+          `${p.name} has deposited ${xlmString(depTotal)} XLM in total — the schedule allows ${xlmString(allowedTotal)} by day ${round}. The Treasury notices.`,
         );
       }
       // THE fairness audit: in-game spending vs the allowance schedule.
@@ -1014,7 +1021,7 @@ export class GameRoom extends DurableObject<Env> {
         .reduce((a, x) => a + x.amountStroops, 0n);
       if (spent > allowedTotal) {
         violations.push(
-          `${p.name} has spent ${xlmString(spent)} XLM this game — the allowance is ${xlmString(allowedTotal)} by day ${round}. Old money, new suspicion. The Order notices.`,
+          `${p.name} has spent ${xlmString(spent)} XLM this game — the allowance is ${xlmString(allowedTotal)} by day ${round}. Old money, new suspicion. The Treasury notices.`,
         );
       }
       // Budget normalization check: your FIRST purchase reveals (to Maude)
@@ -1030,7 +1037,7 @@ export class GameRoom extends DurableObject<Env> {
         );
         if (preBalance > allowedAtBuy) {
           violations.push(
-            `${p.name} came to market carrying ${xlmString(preBalance)} XLM — the law allows ${xlmString(allowedAtBuy)}. Old coin must be surrendered to the Order before shopping.`,
+            `${p.name} came to market carrying ${xlmString(preBalance)} XLM — the law allows ${xlmString(allowedAtBuy)}. Old coin must be surrendered to the Town Treasury before shopping.`,
           );
         }
       }
@@ -1042,14 +1049,20 @@ export class GameRoom extends DurableObject<Env> {
           `${p.name} spent coin at ${beforeOpening} shop${beforeOpening === 1 ? "" : "s"} before the game began — the stores were shut, and the money bought nothing.`,
         );
       }
-      const byWare = new Map<string, number>();
+      // Once per DAY, not once per game (Bri's ruling, 2026-08-04): the
+      // shelf resets each morning, so only a same-day repeat is a violation.
+      const byWareDay = new Map<string, number>();
       for (const x of purchases.filter((q) => q.from === p.address && q.round >= 1 && !q.isSurrender)) {
-        if (x.itemGuess) byWare.set(x.itemGuess, (byWare.get(x.itemGuess) ?? 0) + 1);
+        if (x.itemGuess) {
+          const k = `${x.round}:${x.itemGuess}`;
+          byWareDay.set(k, (byWareDay.get(k) ?? 0) + 1);
+        }
       }
-      for (const [ware, n] of byWare) {
+      for (const [k, n] of byWareDay) {
         if (n > 1) {
+          const ware = k.slice(k.indexOf(":") + 1);
           violations.push(
-            `${p.name} has bought the ${ware.toLowerCase()} ${n} times — one of each is the custom. The Order notices.`,
+            `${p.name} bought the ${ware.toLowerCase()} ${n} times in one day — once a day is the custom. The Treasury notices.`,
           );
         }
       }
@@ -1072,7 +1085,7 @@ export class GameRoom extends DurableObject<Env> {
         ).length;
         if (lateBuys > 0) {
           violations.push(
-            `${p.name} declared their shopping done, then bought ${lateBuys} more thing${lateBuys === 1 ? "" : "s"}. The Order notices little lies especially.`,
+            `${p.name} declared their shopping done, then bought ${lateBuys} more thing${lateBuys === 1 ? "" : "s"}. The Mayor notices little lies especially.`,
           );
         }
       }

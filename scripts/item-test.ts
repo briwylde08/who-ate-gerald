@@ -301,10 +301,10 @@ async function main() {
     await bear.call("night-pick", { target: v4.name });
     const m1 = await finishDay(1);
     console.log(`  morning: ${JSON.stringify(m1.notes)}`);
-    check("a stopped mouth is announced by name", hasNote(m1.notes, `${v3.name}'s voice was stopped`), m1.notes);
-    check("lucky iron steps its holder out of the tie", hasNote(m1.notes, "lucky iron"), m1.notes);
+    check("a stopped mouth is announced by name", hasNote(m1.notes, `sock in mouth for ${v3.name}`), m1.notes);
+    check("lucky iron steps its holder out of the tie", hasNote(m1.notes, "had a horseshoe nail"), m1.notes);
     check("so the rope finds the other tied villager", m1.banished === v5.name, m1);
-    check("the sharpened tooth is announced over the body", hasNote(m1.notes, "teeth already sharpened"), m1.notes);
+    check("the sharpened tooth is announced over the body", hasNote(m1.notes, "used a tooth sharpener"), m1.notes);
     check("and it ate the villager it aimed at", m1.eaten === v4.name, m1);
 
     // ---- DAY 2 -------------------------------------------------------------
@@ -341,10 +341,10 @@ async function main() {
     await bear.call("night-pick", { target: v3.name }); // the bell must stop this
     const m2 = await finishDay(2);
     console.log(`  morning: ${JSON.stringify(m2.notes)}`);
-    check("the curfew bell tolls", hasNote(m2.notes, "curfew bell tolled"), m2.notes);
+    check("the curfew bell tolls", hasNote(m2.notes, "rang the curfew bell"), m2.notes);
     check("and nobody dies in the night", m2.eaten === null, m2);
-    check("a lock is fitted, unattributed", hasNote(m2.notes, "A lock was fitted"), m2.notes);
-    check("a shopkeeper takes a holiday", hasNote(m2.notes, "is shut tomorrow"), m2.notes);
+    check("a lock is fitted, unattributed", hasNote(m2.notes, "cold iron key"), m2.notes);
+    check("a shopkeeper takes a holiday", hasNote(m2.notes, "closed to everyone tomorrow"), m2.notes);
     // An unbroken tie hangs nobody and puts BOTH tied villagers under suspicion:
     // they owe the village a purchase before they may vote again.
     check("nobody hangs on a tie", m2.banished === null, m2);
@@ -399,7 +399,7 @@ async function main() {
     const flame = await v2.call<{ notes: { text: string }[] }>("notes");
     check(
       "the long candle reports — truly or not at all",
-      flame.notes.some((n) => n.text.includes("stood straight") || n.text.includes("guttered")),
+      flame.notes.some((n) => n.text.includes("candle worked") || n.text.includes("candle failed")),
       flame.notes,
     );
     check("the village hangs the beast", m3.banished === bear.name, m3);

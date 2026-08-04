@@ -43,9 +43,10 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn whether they are the werebear; otherwise you learn nothing. It never lies. |
 | 45 | Barrel of beer | General Store | You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear. |
 
-Economy: 50 XLM buy-in, +15 each morning, two stores a day, ONE of each
-item per player per game (UI-enforced; repeats are audited and the nail's
-stacking is capped). Deadline: day SIX. The werebear may buy anything.
+Economy: 50 XLM buy-in, +15 each morning, two stores a day, each item
+once per DAY per player (Bri's ruling 2026-08-04 — rebuying on a later day
+is allowed and restocks single-use items like the nail; same-day repeats
+are audited). Deadline: day SIX. The werebear may buy anything.
 
 ## Standing rulings
 

@@ -140,9 +140,15 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     }
   }, [aimsKey]);
   useEffect(() => {
-    // Keyed by item label — every one of the twelve is distinct, and that is
-    // what the stored records carry.
-    setBoughtItems(new Set(loadHistory(wallet.address, loadGameId()).map((r) => r.item)));
+    // TODAY's purchases only (Bri's ruling 2026-08-04): the shelf resets
+    // each morning, so an item bought yesterday can be bought again.
+    setBoughtItems(
+      new Set(
+        loadHistory(wallet.address, loadGameId())
+          .filter((r) => r.round === round)
+          .map((r) => r.item),
+      ),
+    );
   }, [wallet.address, round]);
   useEffect(() => {
     fetchPublicView(loadGameId())
@@ -285,9 +291,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       <div className="panel purse">
         <div className="purse-block">
-          <div className="purse-label">🔒 Private purse</div>
+          <div className="purse-label">🔒 Confidential claims</div>
           <div className="purse-amount">{xlmDisplay(balances.spendable)} XLM</div>
-          <div className="purse-note">Hidden from the village</div>
+          <div className="purse-note">Your sealed spending balance — the village can't read it</div>
         </div>
         {balances.receiving > 0n && (
           <div className="purse-block">
@@ -445,7 +451,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const label = !marketOpen
                   ? "Not open yet"
                   : owned
-                  ? "Bought ✓"
+                  ? "Bought today ✓"
                   : shut
                     ? "Shuttered"
                     : doneToday

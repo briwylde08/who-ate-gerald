@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
-import { fetchPublicView, playerApi, type PublicView } from "../lib/player";
+import { fetchGraph, fetchPublicView, playerApi, type GraphView, type PublicView } from "../lib/player";
 
 /**
  * Maude McLedger's parlor. One private question per villager per day; her
@@ -49,6 +49,7 @@ export function Maude({ wallet, gameId, setError }: Props) {
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<{ round: number; question: string; answer: string }[]>([]);
   const [view, setView] = useState<PublicView | null>(null);
+  const [graph, setGraph] = useState<GraphView | null>(null);
   const [target, setTarget] = useState("");
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
@@ -59,7 +60,15 @@ export function Maude({ wallet, gameId, setError }: Props) {
         .catch(() => setView(null));
     void check();
     const t = setInterval(check, 5_000);
-    return () => clearInterval(t);
+    // The sightings live here so a player knows what to ask about without
+    // clicking around. The graph reads the chain, so it polls slower.
+    const pullGraph = () => void fetchGraph(gameId).then(setGraph).catch(() => undefined);
+    pullGraph();
+    const g = setInterval(pullGraph, 30_000);
+    return () => {
+      clearInterval(t);
+      clearInterval(g);
+    };
   }, [gameId]);
 
   const me = view?.players.find((p) => p.address === wallet.address);
@@ -157,6 +166,31 @@ export function Maude({ wallet, gameId, setError }: Props) {
           )}
         </p>
       </div>
+
+      {round >= 1 && (
+        <div className="panel">
+          <h3 className="composer-head">Seen at the stores today</h3>
+          {graph && graph.edges.filter((e) => e.round === round).length > 0 ? (
+            <>
+              <div className="sightings">
+                {graph.edges
+                  .filter((e) => e.round === round)
+                  .map((e, i) => (
+                    <span key={i} className="sighting">
+                      {e.from} <span className="dim">→</span> {e.to}
+                    </span>
+                  ))}
+              </div>
+              <p className="dim">
+                Who went where is public. What they bought is not — that part is what Maude
+                is for.
+              </p>
+            </>
+          ) : (
+            <p className="dim">Nobody has been seen at a store yet today.</p>
+          )}
+        </div>
+      )}
 
       <div className="panel">
         <div className="ask-about">

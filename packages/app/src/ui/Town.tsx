@@ -10,7 +10,6 @@ import {
   saveGameId,
   type OpenLobby,
   type PublicView,
-  type GraphView,
 } from "../lib/player";
 import { CHARACTERS, loadProfile } from "../lib/profile";
 import { CharEmoji, ToteIcon } from "./CharIcon";
@@ -41,25 +40,20 @@ interface Props {
   refresh: () => Promise<void>;
   /** Jump to the shop floor — the start note points there. */
   onGoShops: () => void;
+  /** Jump to Maude — the market-closed notice points there. */
+  onGoMaude: () => void;
 }
 
 type Role = "villager" | "werebear";
 
 
-export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGoShops }: Props) {
+export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGoShops, onGoMaude }: Props) {
   void setBusy;
   void refresh;
   void onPhase;
   const [view, setView] = useState<PublicView | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [roleShown, setRoleShown] = useState(false);
-  const [voteTarget, setVoteTarget] = useState("");
-  const [voted, setVoted] = useState<string | null>(null);
-  const [pickTarget, setPickTarget] = useState("");
-  const [picked, setPicked] = useState<string | null>(null);
-  const [chatText, setChatText] = useState("");
-  const [chatBusy, setChatBusy] = useState(false);
-  const [discloseTx, setDiscloseTx] = useState("");
   const [copiedId, setCopiedId] = useState(false);
   /** The night's film: {src, caption} while showing, null otherwise. */
   const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
@@ -76,22 +70,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
     window.location.reload(); // gameId threads through everything — cleanest reset
   };
 
-  const sendChat = async () => {
-    setChatBusy(true);
-    setError(null);
-    try {
-      await playerApi.chat(wallet, gameId, chatText.trim());
-      setChatText("");
-      await loadView();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setChatBusy(false);
-    }
-  };
-
-  const [graph, setGraph] = useState<GraphView | null>(null);
-
   const loadView = useCallback(async () => {
     try {
       setView(await fetchPublicView(gameId));
@@ -99,46 +77,24 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
       setView(null); // game may not exist yet — quiet
     }
   }, [gameId]);
-
-  const loadGraph = useCallback(async () => {
-    try {
-      setGraph(await fetchGraph(gameId));
-    } catch {
-      // graph is decoration; keep the last one
-    }
-  }, [gameId]);
-
-  const load = useCallback(async () => {
-    await Promise.all([loadView(), loadGraph()]);
-  }, [loadView, loadGraph]);
+  const load = loadView; // the sightings graph moved to Maude's parlor
 
   useEffect(() => {
     void load();
     // Game state is a cheap in-memory read — poll it fast so lobbies and
-    // votes feel live across browsers. The graph re-reads the chain, so it
-    // polls slower. Tab focus refreshes everything immediately.
+    // votes feel live across browsers. Tab focus refreshes immediately.
     const fast = setInterval(() => void loadView(), 4_000);
-    const slow = setInterval(() => void loadGraph(), 30_000);
     const onFocus = () => void load();
     window.addEventListener("focus", onFocus);
     return () => {
       clearInterval(fast);
-      clearInterval(slow);
       window.removeEventListener("focus", onFocus);
     };
-  }, [load, loadView, loadGraph]);
+  }, [load, loadView]);
 
   const me = view?.players.find((p) => p.address === wallet.address);
 
-  // A new day voids yesterday's ballot — clear the trial (and the hunt) so
-  // "Current vote" never carries over from a previous round.
   const round = view?.round;
-  useEffect(() => {
-    setVoted(null);
-    setVoteTarget("");
-    setPicked(null);
-    setPickTarget("");
-  }, [round]);
 
   // The fate notification: once roles are dealt, fetch yours automatically
   // when the auth signature is already cached (no Freighter popup) — but
@@ -153,18 +109,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view?.dealt, me?.address]);
 
-  // Private dawn facts (currently the tooth-sharpener offering). Fetched when the
-  // auth signature is cached — only ever this player's own notes.
-  const [privateNotes, setPrivateNotes] = useState<{ round: number; text: string }[]>([]);
-  useEffect(() => {
-    if (me && round && round >= 2 && hasCachedAuth(wallet, gameId)) {
-      playerApi
-        .notes(wallet, gameId)
-        .then((r) => setPrivateNotes(r.notes))
-        .catch(() => undefined);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me?.address, round]);
 
   // When a new morning carries a victim, roll their film — once per morning
   // per browser, marked seen on show so a refresh doesn't replay the horror.
@@ -195,7 +139,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.address, me?.character]);
-  const living = (view?.players ?? []).filter((p) => p.alive && p.address !== wallet.address);
 
   const fetchRole = async () => {
     setError(null);
@@ -207,30 +150,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
       }
       setRole(r.role);
       setRoleShown(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  const castVote = async () => {
-    setError(null);
-    try {
-      const r = await playerApi.vote(wallet, gameId, voteTarget);
-      setVoted(r.voted);
-      setVoteTarget(""); // the ballot is cast; empty the hand
-      await load(); // if this was the last vote, dawn just came
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  const castPick = async () => {
-    setError(null);
-    try {
-      const r = await playerApi.nightPick(wallet, gameId, pickTarget);
-      setPicked(r.picked);
-      setPickTarget("");
-      await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -594,31 +513,26 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
 
         <div className="panel notices">
           <h2>Town Notices</h2>
-          {view.round >= 1 && !view.winner && (
+          {view.round >= 1 && !view.winner && !view.marketClosed && (
             <p className="notice notice-plain">
-              {view.marketClosed
-                ? "The market has closed. Maude's office is open for questions."
-                : `The market is open. Maude waits for: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
+              The market is open. Maude waits for:{" "}
+              {(view.stillShopping ?? []).join(", ") || "—"}.
             </p>
           )}
-          {view.round < 1 ? (
-            <p className="notice">The shops open when the game begins.</p>
-          ) : graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
-            <>
-              <p className="notice notice-plain">Seen at the stores today:</p>
-              <div className="sightings">
-                {graph.edges
-                  .filter((e) => e.round === view.round)
-                  .map((e, i) => (
-                    <span key={i} className="sighting">
-                      {e.from} <span className="dim">→</span> {e.to}
-                    </span>
-                  ))}
-              </div>
-            </>
-          ) : (
-            <p className="notice">Nobody has been seen at a store yet today.</p>
+          {view.round >= 1 && !view.winner && view.marketClosed && (
+            <div className="notice notice-plain maude-pointer">
+              <p>
+                The market has closed —{" "}
+                <button className="link inline" onClick={onGoMaude}>
+                  Maude's office
+                </button>{" "}
+                is open. Maude McLedger is the Auditor: she holds the one key that can read
+                every sealed amount on the ledger. Ask her one question about today's
+                purchases, then take what you learn to <b>Chat &amp; Vote</b>.
+              </p>
+            </div>
           )}
+          {view.round < 1 && <p className="notice">The shops open when the game begins.</p>}
           {me?.alive && view.round >= 2 && view.phase === "day" && !view.winner && (
             <p className="notice">
               The day's allowance of {DAILY_INCOME_XLM} XLM waits at the Town Treasury, in{" "}
@@ -628,181 +542,13 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         </div>
       </div>
 
-      {view.marketClosed && view.phase === "day" && !view.winner && (
-        <div className="panel">
-          <h2>The square</h2>
-          <p className="dim">
-            Accuse, defend, bluff — the square hears everything and forgets it at dawn.
-            {me && !me.alive ? " You are a ghost now: whisper wisely, certified innocent." : ""}
-          </p>
-          <div className="chat">
-            {(view.chat ?? []).length === 0 ? (
-              <p className="dim">Nobody has said anything yet. Suspicious, honestly.</p>
-            ) : (
-              (view.chat ?? []).slice(-60).map((m, i) => (
-                <p key={i} className="chat-line" style={m.ghost ? { opacity: 0.65, fontStyle: "italic" } : undefined}>
-                  <b>
-                    {m.ghost ? "👻 " : ""}
-                    {m.name}:
-                  </b>{" "}
-                  {m.text}
-                </p>
-              ))
-            )}
-          </div>
-
-          {privateNotes.some((n) => n.round === view.round) && (
-            <div className="answer-card">
-              <b>🔒 Only you know this.</b>
-              {privateNotes
-                .filter((n) => n.round === view.round)
-                .map((n, i) => (
-                  <p key={i}>
-                    <i>{n.text}</i>
-                  </p>
-                ))}
-              <span className="dim">
-                Private to you, and provably true. Share it or sit on it.
-              </span>
-            </div>
-          )}
-
-          {me?.standsAccused && (
-            <div className="answer-card">
-              <b>⚖ You stand accused.</b> The vote split on you yesterday — pick one purchase
-              and Maude will unseal it for the whole square (she reads the chain, so it cannot
-              be a lie). Your vote unlocks after.
-              <div className="row">
-                <select value={discloseTx} onChange={(e) => setDiscloseTx(e.target.value)}>
-                  <option value="">reveal which purchase?</option>
-                  {loadHistory(wallet.address, gameId)
-                    .filter((r) => (r.round ?? 0) >= 1)
-                    .map((r) => (
-                      <option key={r.txHash} value={r.txHash}>
-                        {r.shopLabel}: {r.item}
-                      </option>
-                    ))}
-                </select>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    playerApi
-                      .disclose(wallet, gameId, discloseTx)
-                      .then(() => void load())
-                      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-                  }}
-                >
-                  Let Maude unseal it
-                </button>
-              </div>
-            </div>
-          )}
-
-          {me && (
-            <div className="row">
-              <input
-                type="text"
-                maxLength={280}
-                placeholder="say it to their faces…"
-                value={chatText}
-                onChange={(e) => setChatText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && chatText.trim()) void sendChat();
-                }}
-              />
-              <button disabled={!chatText.trim() || chatBusy} onClick={() => void sendChat()}>
-                Say it
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {(me?.alive || me?.ghostVoter) && view.phase === "day" && !view.winner && (
-        <div className="panel">
-          <h2>The trial</h2>
-          {!view.marketClosed && (
-            <p className="dim">
-              <ToteIcon /> The trial begins when the market closes.{" "}
-              {(view.stillShopping ?? []).length > 0 &&
-                `Maude waits for: ${(view.stillShopping ?? []).join(", ")}.`}
-            </p>
-          )}
-          <p className="dim">
-            Who is the werebear? Ask Maude before you vote — <b>dawn comes the moment the last
-            vote lands</b>, and it doesn't wait for unspent questions.
-            {voted && (
-              <>
-                {" "}
-                Current vote: <b>{voted}</b>.
-              </>
-            )}
-          </p>
-          {view.marketClosed && (
-            <p className="dim">
-              {(view.awaitingVotes ?? []).length > 0
-                ? `Still to vote: ${(view.awaitingVotes ?? []).join(", ")}.`
-                : "Every vote is in."}
-              {view.nightDecided === false && " The night has not been decided yet."}
-            </p>
-          )}
-          <div className="row">
-            <select value={voteTarget} onChange={(e) => setVoteTarget(e.target.value)}>
-              <option value="">accuse whom?</option>
-              {living.map((p) => (
-                <option key={p.seat} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <button
-              className="primary"
-              disabled={
-                !voteTarget || !view.marketClosed || me?.standsAccused || me?.drunkToday
-              }
-              onClick={() => void castVote()}
-            >
-              {me?.drunkToday
-                ? "🍺 Dead drunk — no vote today"
-                : me?.standsAccused
-                  ? "Reveal a purchase first (see the square)"
-                  : "Cast vote"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {role === "werebear" && me?.alive && view.phase === "day" && !view.winner && (
-        <div className="panel">
-          <h2>🐻 The hunt (only you can see this)</h2>
-          <p className="dim">
-            Pick tonight's meal. You may change your mind until the day is resolved.
-            {picked && (
-              <>
-                {" "}
-                Current pick: <b>{picked}</b>.
-              </>
-            )}
-          </p>
-          <div className="row">
-            <select value={pickTarget} onChange={(e) => setPickTarget(e.target.value)}>
-              <option value="">eat whom?</option>
-              {living.map((p) => (
-                <option key={p.seat} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <button className="primary" disabled={!pickTarget} onClick={() => void castPick()}>
-              Mark for the night
-            </button>
-          </div>
-        </div>
-      )}
-
+      {view.mornings.length > 0 && (
+        <div className="panel crier">
+          <h2>📯 The Town Crier</h2>
+          <p className="dim">Every dawn, cried in full. Newest first.</p>
       {[...view.mornings].reverse().map((m) => (
-        <div key={m.round} className="panel">
-          <h2>Morning of day {m.round + 1}</h2>
+        <div key={m.round} className="crier-day">
+          <h3>Morning of day {m.round + 1}</h3>
           {m.banished && (
             <p>
               The village banished <b>{m.banished}</b> — {m.banishedRole === "werebear" ? "🐻 THE WEREBEAR!" : "a villager. Oops."}
@@ -826,6 +572,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           {m.winner && <p className="tagline">The {m.winner} has won.</p>}
         </div>
       ))}
+        </div>
+      )}
 
       {film && (
         <div

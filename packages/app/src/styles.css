@@ -984,6 +984,25 @@ th { color: var(--ink-dim); font-weight: normal; }
 .activity-main { display: flex; flex-direction: column; min-width: 0; }
 .activity-label { font-size: 0.84rem; color: var(--ink); }
 .activity-detail { font-size: 0.72rem; color: var(--ink-dim); }
+
+/* The dawn-results modal: aimed items resolve overnight and privately —
+   their outcomes must find the player, not wait to be found. */
+.dawn-modal {
+  max-width: 460px;
+  margin: 15vh auto 0;
+  border-color: var(--gold);
+}
+.dawn-modal h2 { margin-top: 0; font-size: 1.05rem; }
+.dawn-note { font-size: 0.95rem; line-height: 1.5; }
+
+/* The Town Crier: every morning on one board. */
+.crier-day {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 12px;
+}
+.crier-day h3 { margin: 0 0 6px; color: var(--moon); font-size: 0.95rem; }
+.maude-pointer p { margin: 0; }
 .notices .sightings { margin-bottom: 10px; }
 
 /* "What the village sees": the privacy boundary as two facing columns. */
