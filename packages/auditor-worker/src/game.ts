@@ -136,7 +136,10 @@ const freshState = (): GameState => ({
 });
 
 /** Minimum lobby size before ready-up can start the game (7 for the real thing). */
-const MIN_PLAYERS = 3;
+// A real game is a FULL table: all eight faces claimed (Bri, 2026-08-04).
+// Smaller tables still exist — the GM's force-deal and the item exam use
+// them — but the automatic start waits for the whole village.
+const MIN_PLAYERS = 8;
 
 /**
  * Name an item in running prose. Catalog labels carry their own articles
@@ -307,10 +310,15 @@ export class GameRoom extends DurableObject<Env> {
   /** Deal roles: one werebear among the seated, chosen by real randomness. */
   async deal(force = false): Promise<{ dealt: true; players: number }> {
     this.requireGame();
-    if (this.state.players.length < MIN_PLAYERS) {
+    // force is the GM saying "this table is complete": it waives the full-8
+    // requirement for demos and tests, not just the re-deal guard.
+    if (this.state.players.length < MIN_PLAYERS && !force) {
       throw new Error(
-        `only ${this.state.players.length} seated — the village needs at least ${MIN_PLAYERS}`,
+        `only ${this.state.players.length} seated — the game starts at ${MIN_PLAYERS}, or the GM can force-deal a smaller table`,
       );
+    }
+    if (this.state.players.length < 3) {
+      throw new Error("even a forced game needs three villagers");
     }
     if (this.state.roles && !force) throw new Error("roles already dealt — pass force:true to re-deal");
     if (this.state.round > 0 && !force) throw new Error("game already started");

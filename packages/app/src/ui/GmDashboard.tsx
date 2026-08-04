@@ -223,7 +223,11 @@ function RoundControls({
         <button
           onClick={() =>
             void run("dealing fates…", async () => {
-              const r = await gmApi.deal(cfg);
+              // Short table? The GM's click IS the decision — force it.
+              const r = await gmApi.deal(cfg).catch(async (e) => {
+                if (String(e).includes("the game starts at")) return gmApi.deal(cfg, true);
+                throw e;
+              });
               setLastStart(`Roles dealt to ${r.players} players — one of them is very hungry.`);
               await refreshState();
             })

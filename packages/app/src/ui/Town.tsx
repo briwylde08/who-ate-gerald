@@ -281,7 +281,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               </span>
             </div>
             <p className="dim">
-              The game begins automatically when at least {minPlayers} villagers are seated and
+              The game begins automatically when all {minPlayers} players are seated and
               everyone is ready.
             </p>
             {me && (

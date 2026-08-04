@@ -260,7 +260,7 @@ async function main() {
       players: all.map((p) => ({ name: p.name, address: p.address })),
       force: true,
     });
-    await gmCall("deal", {});
+    await gmCall("deal", { force: true }); // six seats — below the full-8 auto-start
     for (const p of all) {
       const r = await p.call<{ role: "villager" | "werebear" }>("role");
       p.role = r.role;
