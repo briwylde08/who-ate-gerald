@@ -206,7 +206,7 @@ export function Intro({
                 <div key={l.id} className="lobby-row">
                   <span className="lobby-id">{l.id}</span>
                   <span className="dim">
-                    {l.seated} seated · needs {l.minPlayers}
+                    {l.seated}/{CHARACTERS.length} players in game
                   </span>
                   <button className="primary" onClick={() => chooseGame(l.id)}>
                     Join

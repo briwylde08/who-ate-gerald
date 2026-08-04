@@ -179,7 +179,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               <div key={l.id} className="lobby-row">
                 <span className="lobby-id">{l.id}</span>
                 <span className="dim">
-                  {l.seated} seated · {l.ready} ready · needs {l.minPlayers}
+                  {l.seated}/{CHARACTERS.length} players in game
                 </span>
                 <button onClick={() => switchGame(l.id)}>Join</button>
               </div>

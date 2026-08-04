@@ -38,13 +38,23 @@ export class LobbyRegistry extends DurableObject<Env> {
     await this.ctx.storage.put("games", this.games);
   }
 
-  /** A join happened here — remember the id. */
-  async touch(gameId: string): Promise<void> {
+  /** A JOIN earns a place on the board — someone actually holds a seat. */
+  async register(gameId: string): Promise<void> {
     if (gameId.toLowerCase().startsWith("private")) return;
     const now = Date.now();
     const entry = this.games[gameId];
     if (entry) entry.touchedAt = now;
     else this.games[gameId] = { createdAt: now, touchedAt: now };
+    await this.persist();
+  }
+
+  /** An open tab RENEWS a listing but never creates one: merely looking at
+   *  a game (the picker page, a curious curl) must not put it on the board
+   *  as a "0 seated" ghost. */
+  async touch(gameId: string): Promise<void> {
+    const entry = this.games[gameId];
+    if (!entry) return;
+    entry.touchedAt = Date.now();
     await this.persist();
   }
 

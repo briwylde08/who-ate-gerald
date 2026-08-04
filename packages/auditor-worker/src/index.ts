@@ -128,7 +128,7 @@ export default {
               String(body.name ?? ""),
               String(body.character ?? ""),
             );
-            await env.LOBBIES.getByName("board").touch(gameId!);
+            await env.LOBBIES.getByName("board").register(gameId!);
             return json(seat);
           }
           case "p/ready":
