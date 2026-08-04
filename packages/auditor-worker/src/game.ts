@@ -67,6 +67,9 @@ interface GameState {
   drunkards: Record<string, number>;
   /** Round whose drunkard snapshot has been taken (0 = none yet). */
   drunkSnapshotRound: number;
+  /** Ledger height at the FIRST join — this game's birth certificate.
+   *  Deposits from before it belong to other games, not this feed. */
+  createdLedger: number;
   /** The Order called the game off; the bear won by default, not by play. */
   calledOff: boolean;
   askLog: AskRecord[];
@@ -114,6 +117,7 @@ const freshState = (): GameState => ({
   mustDisclose: {},
   drunkards: {},
   drunkSnapshotRound: 0,
+  createdLedger: 0,
   calledOff: false,
   askLog: [],
   votes: {},
@@ -269,6 +273,11 @@ export class GameRoom extends DurableObject<Env> {
       existing.character = cleanCharacter || existing.character;
       await this.persist();
       return { seat: existing.seat, name: existing.name };
+    }
+    // First seat taken = the game is born. Deposits before this ledger are
+    // some OTHER game's business (Bri's wallet had 12 of them on the feed).
+    if (!this.state.createdLedger && this.state.players.length === 0) {
+      this.state.createdLedger = await indexerLatestLedger(this.env).catch(() => 0);
     }
     const player: PlayerRef = {
       seat: this.state.players.length + 1,
@@ -1276,8 +1285,14 @@ export class GameRoom extends DurableObject<Env> {
     // Deposits are the PUBLIC side of the token — amounts included. Only the
     // seated players' deposits belong in this game's feed.
     const roster = new Set(this.state.players.map((p) => p.address));
-    const deposits = (await loadDeposits(this.env, this.state.rounds)).filter((d) =>
-      roster.has(d.to),
+    const born = this.state.createdLedger ?? 0;
+    const deposits = (await loadDeposits(this.env, this.state.rounds)).filter(
+      (d) =>
+        roster.has(d.to) &&
+        // In-game rounds are already this game's ledger windows; round-0
+        // (lobby) deposits count only after the game was born. Games from
+        // before this field existed fall back to in-game rounds only.
+        (d.round >= 1 || (born > 0 && d.ledger >= born)),
     );
     return {
       round: this.state.round,
