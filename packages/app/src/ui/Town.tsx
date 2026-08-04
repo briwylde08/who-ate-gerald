@@ -305,11 +305,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         )}
 
         {!me && !view.dealt && (
-          <div className="answer-card">
-            {/* One metaphor, in the order things will happen: who you'll be,
-                the click, the popup, and why the popup is nothing to fear. */}
-            <b>You're not seated yet.</b> Join “{gameId}” as{" "}
-            <b>{loadProfile()?.name ?? "your villager"}</b>?
+          <div className="join-card">
+            {/* Just the button and, beneath it, what the popup will be and
+                why it's nothing to fear. No headline, no styling flourishes
+                (Bri's call — the answer-card border and italics are Maude's). */}
             <div className="row">
               <button
                 className="primary"

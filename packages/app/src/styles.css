@@ -1016,6 +1016,8 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .crier-day h3 { margin: 0 0 6px; color: var(--moon); font-size: 0.95rem; }
 .maude-pointer p { margin: 0; }
+/* The join prompt: plain on purpose — no gold bar, no italics. */
+.join-card { margin: 10px 0; }
 .notices .sightings { margin-bottom: 10px; }
 
 /* "What the village sees": the privacy boundary as two facing columns. */
