@@ -13,8 +13,8 @@ import {
   type CatalogItem,
 } from "../lib/catalog";
 import { loadHistory, recordPurchase } from "../lib/history";
-import { explorerTx, loadActivity, recordActivity } from "../lib/activity";
-import { fetchPublicView, loadGameId, playerApi } from "../lib/player";
+import { explorerTx, recordActivity } from "../lib/activity";
+import { fetchGraph, fetchPublicView, loadGameId, playerApi, type GraphView } from "../lib/player";
 import { ToteIcon } from "./CharIcon";
 import { useEffect } from "react";
 
@@ -116,9 +116,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // localStorage-backed, so it is this player's own record, not the chain's.
   const [boughtItems, setBoughtItems] = useState<Set<string>>(new Set());
   const [justBought, setJustBought] = useState<string | null>(null);
-  // Newest first; re-read on every render — it's a tiny localStorage list and
-  // every recordActivity is followed by a state change that re-renders us.
-  const activity = loadActivity(wallet.address).slice().reverse();
   /** The teaching moment: what the village just learned, and what it didn't. */
   const [receipt, setReceipt] = useState<{
     shopLabel: string;
@@ -128,6 +125,42 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // Aimed items need a second, private action after the purchase.
   const [others, setOthers] = useState<string[]>([]);
   const [closedShops, setClosedShops] = useState<string[]>([]);
+  /** The village-wide feed: every seated player's public txs. */
+  const [feedGraph, setFeedGraph] = useState<GraphView | null>(null);
+  useEffect(() => {
+    const pull = () =>
+      void fetchGraph(loadGameId())
+        .then(setFeedGraph)
+        .catch(() => undefined);
+    pull();
+    const t = setInterval(pull, 30_000);
+    return () => clearInterval(t);
+  }, [round]);
+
+  // My own purchases, by tx hash — used to annotate MY rows in the village
+  // feed with what this browser privately knows (the item, the amount).
+  const mine = new Map(
+    loadHistory(wallet.address, loadGameId()).map((r) => [
+      r.txHash,
+      `${r.item} — ${xlmDisplay(BigInt(r.amountStroops))} XLM (only you see this)`,
+    ]),
+  );
+  const feed = [
+    ...(feedGraph?.edges ?? [])
+      .filter((e) => e.txHash)
+      .map((e) => ({
+        ledger: e.ledger,
+        txHash: e.txHash!,
+        label: `${e.from} paid ${e.to} — amount sealed`,
+        detail: mine.get(e.txHash!),
+      })),
+    ...(feedGraph?.deposits ?? []).map((d) => ({
+      ledger: d.ledger,
+      txHash: d.txHash,
+      label: `${d.player} deposited ${d.amountXlm} XLM${d.round < 1 ? " (buy-in)" : ""} — public`,
+      detail: undefined as string | undefined,
+    })),
+  ].sort((a, b) => b.ledger - a.ledger);
   const [aimTarget, setAimTarget] = useState<Record<string, string>>({});
   const [aimShop, setAimShop] = useState<Record<string, string>>({});
   const [aimed, setAimed] = useState<Record<string, string>>({});
@@ -578,17 +611,15 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         })}
       </div>
 
-      {/* The running receipt trail: every tx this browser signed, linked to
-          the chain, newest first. The proof the game is real, one click away. */}
-      {activity.length > 0 && (
+      {/* The whole village's public txs, newest first: transfers (amount
+          sealed) and deposits (amount visible — that's the boundary rule,
+          demonstrated). Your own rows get your private detail, because this
+          is your browser and it remembers what you bought. */}
+      {feed.length > 0 && (
         <div className="panel activity-log">
-          <h3>📜 Your activity on the chain</h3>
-          <p className="dim">
-            Every transaction this browser has signed. Open any of them — the shop and your
-            signature are public; the amounts are not there to find.
-          </p>
+          <h3>Onchain activity</h3>
           <div className="activity-rows">
-            {activity.map((a, i) => (
+            {feed.map((a, i) => (
               <div key={`${a.txHash}-${i}`} className="activity-row">
                 <span className="activity-main">
                   <span className="activity-label">{a.label}</span>

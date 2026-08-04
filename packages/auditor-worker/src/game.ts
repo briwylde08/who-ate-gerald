@@ -1270,6 +1270,15 @@ export class GameRoom extends DurableObject<Env> {
       await syncIndexer(this.env);
     }
     const purchases = await this.loadAll();
+    const nameOf = (addr: string) =>
+      this.state.players.find((p) => p.address === addr)?.name ??
+      `${addr.slice(0, 4)}…${addr.slice(-4)}`;
+    // Deposits are the PUBLIC side of the token — amounts included. Only the
+    // seated players' deposits belong in this game's feed.
+    const roster = new Set(this.state.players.map((p) => p.address));
+    const deposits = (await loadDeposits(this.env, this.state.rounds)).filter((d) =>
+      roster.has(d.to),
+    );
     return {
       round: this.state.round,
       players: this.state.players.map((p) => ({
@@ -1285,9 +1294,17 @@ export class GameRoom extends DurableObject<Env> {
         .map((p) => ({
           round: p.round,
           ledger: p.ledger,
+          txHash: p.txHash,
           from: p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`,
           to: p.toLabel,
         })),
+      deposits: deposits.map((d) => ({
+        round: d.round,
+        ledger: d.ledger,
+        txHash: d.txHash,
+        player: nameOf(d.to),
+        amountXlm: d.amountXlm,
+      })),
     };
   }
 

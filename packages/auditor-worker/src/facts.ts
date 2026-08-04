@@ -173,6 +173,7 @@ function shortAddress(addr: string): string {
 export interface DepositRec {
   round: number;
   ledger: number;
+  txHash: string;
   to: string;
   amountStroops: bigint;
   amountXlm: string;
@@ -220,6 +221,7 @@ export async function loadDeposits(
     .map((e) => ({
       round: roundOf(e.ledger, rounds),
       ledger: e.ledger,
+      txHash: e.txHash,
       to: e.to,
       amountStroops: e.amount,
       amountXlm: xlmString(e.amount),
