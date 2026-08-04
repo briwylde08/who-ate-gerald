@@ -61,7 +61,7 @@ export function SixSteps({ balances, purchases }: Props) {
     {
       n: 4,
       name: "Transfer",
-      what: "Pay a shop without revealing the amount. This is the only step that hides anything.",
+      what: "Pay a shop without revealing the amount by transferring from your spendable balance into their pending balance.",
       state: purchases > 0 ? "done" : "waiting",
       note:
         purchases > 0
