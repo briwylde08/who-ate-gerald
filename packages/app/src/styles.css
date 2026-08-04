@@ -33,6 +33,15 @@ body {
    column itself stays capped at 1000px so nothing gets narrower. */
 #root { max-width: 1360px; margin: 0 auto; padding: 24px 16px 80px; }
 
+/* Only the game shell earns the full 1360: everything else (the story,
+   the welcome, the connect panel, error banners) keeps reading width.
+   The masthead and topbar manage their own width (full-bleed). */
+#root > :not(.app-shell):not(.masthead):not(.topbar) {
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .app-shell { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
 .app-main { flex: 1 1 auto; max-width: 1000px; min-width: 0; }
 .six-aside {
