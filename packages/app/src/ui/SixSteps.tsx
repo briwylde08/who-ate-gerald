@@ -93,7 +93,7 @@ export function SixSteps({ balances, purchases }: Props) {
 
   return (
     <div className="six-steps">
-      <div className="role-label">The six steps of a confidential payment</div>
+      <div className="role-label">6 steps of a confidential payment</div>
       <ol className="step-list">
         {steps.map((s) => (
           <li key={`${s.n}-${s.name}`} className={`step step-${s.state}`}>
