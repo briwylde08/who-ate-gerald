@@ -247,7 +247,7 @@ export function Intro({
         </div>
 
         <details>
-          <summary>Enter a game id instead</summary>
+          <summary>Enter a private game id</summary>
           <div className="row" style={{ marginTop: "8px" }}>
             <input
               type="text"
@@ -262,9 +262,6 @@ export function Intro({
               Use this game
             </button>
           </div>
-          <p className="dim">
-            Ids starting with “private” never appear on the board — share them yourself.
-          </p>
         </details>
       </div>
     );
