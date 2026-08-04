@@ -286,8 +286,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
             {/* No treasury pays anyone: income is PERMISSION to move more of
                 your own XLM behind the curtain, publicly. Say so. */}
             You hold {xlmString(balances.spendable)} XLM; the rules allow{" "}
-            {xlmString(remainingAllowance)} by today. Collecting deposits the missing{" "}
-            {xlmString(deficit)} XLM from your own public wallet into your sealed purse. The
+            {xlmString(remainingAllowance)} by day {Math.max(1, round)}. Collecting transfers{" "}
+            {xlmString(deficit)} XLM from your own wallet into the confidential token
+            contract's pool, where it is represented as your confidential claims. The
             deposit's amount is public on purpose — that's how the village verifies everyone
             plays within the same budget.
           </p>
