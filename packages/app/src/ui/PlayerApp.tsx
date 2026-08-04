@@ -256,7 +256,7 @@ export function PlayerApp() {
             <CharEmoji c={characterOf(profile)} /> {profile.name} {characterOf(profile)?.title}
           </button>
         )}
-        {wallet && (
+        {profile && wallet && (
           <button
             className="mono addr"
             title="Copy your roster line (paste it to the GM)"
@@ -271,31 +271,35 @@ export function PlayerApp() {
             {wallet.address.slice(0, 6)}…{wallet.address.slice(-6)} {copied ? "✓ copied" : "⧉"}
           </button>
         )}
-        {/* Read-only on purpose. Typing here used to repoint the whole app
-            without moving your SEAT, so a typo left you staring at a game you
-            were not in. Switching games goes through the intro, which knows
-            how to show the lobby board and claim a villager. */}
-        <span className="dim">game:</span>
-        <span className="mono">{gameId}</span>
-        <button
-          className="link"
-          onClick={() => {
-            setIntroAt("game"); // the chooser, NOT the villager picker
-            setProfile(null);
-          }}
-        >
-          change game
-        </button>
-        <span className="dim contract-label">confidential token contract:</span>
-        <a
-          className="mono addr"
-          href={`https://stellar.expert/explorer/testnet/contract/${DEPLOYMENT.token}`}
-          target="_blank"
-          rel="noreferrer"
-          title="The game's confidential token on Stellar testnet — every purchase lives here, amounts hidden"
-        >
-          {DEPLOYMENT.token.slice(0, 6)}…{DEPLOYMENT.token.slice(-6)} ↗
-        </a>
+        {/* Game-name text is read-only on purpose. Typing here used to
+            repoint the whole app without moving your SEAT; switching games
+            goes through the intro. Nothing in this group renders on the
+            front page — no game talk before there is a game (Bri's call). */}
+        {profile && (
+          <>
+            <span className="dim">game:</span>
+            <span className="mono">{gameId}</span>
+            <button
+              className="link"
+              onClick={() => {
+                setIntroAt("game"); // the chooser, NOT the villager picker
+                setProfile(null);
+              }}
+            >
+              change game
+            </button>
+            <span className="dim contract-label">confidential token contract:</span>
+            <a
+              className="mono addr"
+              href={`https://stellar.expert/explorer/testnet/contract/${DEPLOYMENT.token}`}
+              target="_blank"
+              rel="noreferrer"
+              title="The game's confidential token on Stellar testnet — every purchase lives here, amounts hidden"
+            >
+              {DEPLOYMENT.token.slice(0, 6)}…{DEPLOYMENT.token.slice(-6)} ↗
+            </a>
+          </>
+        )}
         <span className="spacer" />
         {/* Rules and Log out travel together so Log out can't wrap off the
             banner on its own. Available from the moment there's an identity to

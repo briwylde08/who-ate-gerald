@@ -1016,20 +1016,6 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .crier-day h3 { margin: 0 0 6px; color: var(--moon); font-size: 0.95rem; }
 .maude-pointer p { margin: 0; }
-
-/* The way back in, pinned above the story for returning players. */
-.story-continue {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  margin: 0 0 16px;
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--gold);
-  border-radius: 6px;
-  background: rgba(35, 39, 56, 0.6);
-}
 .notices .sightings { margin-bottom: 10px; }
 
 /* "What the village sees": the privacy boundary as two facing columns. */

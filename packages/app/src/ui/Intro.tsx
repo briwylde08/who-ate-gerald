@@ -107,19 +107,12 @@ export function Intro({
         : "Name yourself and pick a villager";
 
   if (page === "story") {
-    // The front page is the STORY, nothing else — no game state here (Bri's
-    // call). But eleven paragraphs with one button below the fold read as a
-    // page with no buttons at all, so Play appears above the story too.
+    // The front page is the STORY and one button, nothing else (Bri's call).
     return (
       <div className="panel story">
-        <div className="story-continue">
-          <button className="primary" onClick={() => setPage("game")} autoFocus>
-            Play Who Ate Gerald?
-          </button>
-        </div>
         <GeraldStory />
         <div className="row">
-          <button className="primary" onClick={() => setPage("game")}>
+          <button className="primary" onClick={() => setPage("game")} autoFocus>
             Play Who Ate Gerald?
           </button>
         </div>
