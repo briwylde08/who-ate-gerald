@@ -463,13 +463,13 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               <div key={`seat-${i}`} className="villager-card empty">
                 <div className="v-portrait empty-frame" aria-hidden="true" />
                 <div className="v-name">Empty seat</div>
-                <p className="v-blurb">
-                  {seatsNeeded === 1
-                    ? "Waiting for another villager."
-                    : i === 0
-                      ? `${seatsNeeded} more suspicious people required.`
-                      : "This seat is probably not cursed."}
-                </p>
+                {i === 0 && (
+                  <p className="v-blurb">
+                    {seatsNeeded === 1
+                      ? "Waiting for one more villager."
+                      : `Waiting for ${seatsNeeded} more villagers.`}
+                  </p>
+                )}
               </div>
             ))}
         </div>
