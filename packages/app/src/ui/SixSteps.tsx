@@ -43,9 +43,9 @@ export function SixSteps({ balances, purchases }: Props) {
     {
       n: 2,
       name: "Deposit",
-      what: "Public XLM goes into the shared pool and becomes a hidden claim.",
+      what: "XLM from your Freighter wallet goes into the shared pool. You receive confidential claims in return.",
       state: funded ? "done" : "waiting",
-      note: funded ? "your buy-in and daily income — public on purpose" : "not yet",
+      note: funded ? "Your daily income." : "not yet",
     },
     {
       n: 3,
