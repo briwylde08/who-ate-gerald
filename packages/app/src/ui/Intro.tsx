@@ -220,7 +220,7 @@ export function Intro({
         <h2>Start a new game</h2>
         <div className="panel">
           <p className="dim">
-            Name your village, or leave it blank for a random one. It appears on the board the
+            Name your game, or leave it blank for a random one. It appears on the board the
             moment you take a seat, so others can find it without being told the name.
           </p>
           <div className="row">
