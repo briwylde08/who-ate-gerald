@@ -1,4 +1,4 @@
-# Where we left off — 2026-08-03
+# Where we left off — 2026-08-04 (end of a very long copy-and-UX day)
 
 ## The shelf is CATALOG v9 — 12 items, live and deployed (curfew bell 35 joined in v9)
 Blacksmith: nail 20 (tie falls on the other) · cold iron key 22 (lock a
@@ -16,9 +16,13 @@ else gutters)
 
 Retired today: a bottle, ledger book, musk salve, lantern oil, unsealing
 ritual (v7 cut), silver charm (v8 — barrel took its 45 and its job).
-Aim system shipped: p/aim, server-private, for key/sock/bone/candle;
-barrel is aim "self" (declared drink). Voided purchases at barred doors
-keep the coin and do nothing (private note explains).
+Aim system shipped: p/aim, server-private, for key/sock/bone/candle.
+The barrel needs NO aim since 2026-08-03 — buying it is drinking it
+(market-close snapshot; the declare step was a dead end and is gone).
+Voided purchases at barred doors keep the coin and do nothing (private
+note explains). 2026-08-04: income 15→25/day; items are once per DAY,
+not per game (rebuy restocks the nail); auto-start at a FULL table of 8
+with GM force-deal for smaller ones.
 
 ## ✅ Verified — 2026-08-03, catalog v9 (12 items), 24/24 green
 `npm run item-test` now runs the v9 shelf end to end against the live
@@ -73,8 +77,9 @@ the missing votes. A soft timeout is a pacing decision — Bri's call.
   "door feels stiff" warning at day start. Undecided.
 - Village info is thin post-v7: Maude + sightings + tie disclosures +
   candle. Deliberate for now; revisit after a human game.
-- `MIN_PLAYERS` still 3 (game.ts). It is a FLOOR, not a cap, so 3 suits
-  demos and small tables; flip to 7 only when you want to force a full one.
+- `MIN_PLAYERS` is 8 as of 2026-08-04: the automatic start waits for a
+  full table. Short tables are a GM act — the dashboard's Deal button
+  force-deals (floor of three) on one click.
 
 ## Docs drift
 The dead V4/V5 catalog docs are gone — CATALOG.md is the living shelf and
