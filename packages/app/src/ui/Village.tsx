@@ -288,9 +288,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
             You hold {xlmString(balances.spendable)} XLM; the rules allow{" "}
             {xlmString(remainingAllowance)} by day {Math.max(1, round)}. Collecting transfers{" "}
             {xlmString(deficit)} XLM from your own wallet into the confidential token
-            contract's pool, where it is represented as your confidential claims. The
-            deposit's amount is public on purpose — that's how the village verifies everyone
-            plays within the same budget.
+            contract's pool, where it is represented as your confidential claims. Amounts
+            inside the pool are hidden, but money ENTERING it is always visible — so your
+            deposits can be checked against the schedule, and Maude's dawn audit calls out
+            anyone who takes more than the rules allow.
           </p>
           <button className="primary" onClick={() => void topUp()}>
             Collect {xlmString(deficit)} XLM
