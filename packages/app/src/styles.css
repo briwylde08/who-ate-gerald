@@ -216,18 +216,13 @@ button.link:hover { color: var(--gold); }
 /* Four shops sit two-up on wide screens — no orphan card at the end. */
 .shops {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  /* Always 2x2 (Bri): auto-fit went 4-across on wide screens and the
+     layout changed from screen to screen. One column only on phones. */
+  grid-template-columns: 1fr;
   gap: 12px;
 }
-@media (min-width: 760px) {
-  /* If the catalog ever holds an odd number of shops, centre the last one
-     at the same width rather than leaving it stranded at the left. */
-  .shops > .shop-card:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    max-width: calc(50% - 6px);
-    margin: 0 auto;
-    width: 100%;
-  }
+@media (min-width: 700px) {
+  .shops { grid-template-columns: repeat(2, 1fr); }
 }
 .shop-card h3 {
   margin: 0;
@@ -249,6 +244,9 @@ button.link:hover { color: var(--gold); }
    deed on the right. */
 .item {
   display: flex;
+  /* wrap so the aim picker can take a FULL line below — as a third flex
+     child it squeezed the item description into a wonky column. */
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
@@ -322,6 +320,7 @@ button:disabled { opacity: 0.75; cursor: not-allowed; } /* still readable */
 
 /* An aimed item is inert until pointed at somebody. */
 .aim-row {
+  flex-basis: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -684,6 +683,8 @@ th { color: var(--ink-dim); font-weight: normal; }
   text-transform: uppercase;
   color: var(--ink-dim);
 }
+.state-card { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+
 .maude-tagline {
   margin: 0 0 8px;
   color: var(--moon);

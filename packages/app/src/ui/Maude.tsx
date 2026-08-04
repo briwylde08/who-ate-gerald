@@ -122,11 +122,9 @@ export function Maude({ wallet, gameId, setError }: Props) {
             One question per villager per day, and no other villager sees her answer.
           </p>
           <div className={`seal seal-${seal}`}>{sealLabel}</div>
-        </div>
-      </div>
+          {/* Her state lives WITH her — one card, not two (Bri). */}
+          <div className="state-card">
 
-      {/* What the seal state actually means, in her voice and then plainly. */}
-      <div className="panel state-card">
         {seal === "locked" && me?.doneToday !== true && round >= 1 && (
           <p className="maude-quote">
             “Finish your errands first, dear — I don't read ledgers that are still being
@@ -142,7 +140,10 @@ export function Maude({ wallet, gameId, setError }: Props) {
             : seal === "spent"
               ? "Maude has answered for today"
               : "Maude is unavailable"}
+            </div>
         </div>
+      </div>
+
         <p className="state-note">
           {seal === "available" ? (
             "You have one question remaining today."

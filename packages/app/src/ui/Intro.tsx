@@ -107,7 +107,12 @@ export function Intro({
   // seat stays open — locking it left returning players with nothing to pick
   // and a dead button.
   useEffect(() => {
-    fetchPublicView(loadGameId())
+    // LIVE, not once: two players on the picker at the same time each saw a
+    // stale taken-set, and both walked away believing they had the same face
+    // (Ardness and Slim Shady both "had" the gravedigger). The server still
+    // refuses the second claim — this keeps the picker from lying first.
+    const pull = () =>
+      fetchPublicView(loadGameId())
       .then((v) => {
         const mine = address ? v.players.find((p) => p.address === address) : undefined;
         setTaken(
@@ -127,6 +132,9 @@ export function Intro({
         }
       })
       .catch(() => setTaken(new Set())); // no game yet — all faces free
+    pull();
+    const t = setInterval(pull, 5_000);
+    return () => clearInterval(t);
   }, [page, address]);
 
   const nameRef = useRef<HTMLInputElement>(null);

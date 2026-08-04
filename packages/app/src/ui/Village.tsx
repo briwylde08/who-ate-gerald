@@ -30,6 +30,8 @@ interface Props {
   setBusy: (b: string | null) => void;
   setError: (e: string | null) => void;
   refresh: () => Promise<void>;
+  /** Jump to Maude — the done-for-today box points there. */
+  onGoMaude: () => void;
 }
 
 /**
@@ -38,7 +40,7 @@ interface Props {
  * the visit, never the amount, and the amount IS the item. Item effects are
  * public knowledge (hover); which one YOU bought is not.
  */
-export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh }: Props) {
+export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh, onGoMaude }: Props) {
   const [armed, setArmed] = useState<string | null>(null);
 
   // Budget normalization: the allowance schedule says how much spendable a
@@ -152,13 +154,13 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       .map((e) => ({
         ledger: e.ledger,
         txHash: e.txHash!,
-        label: `${e.from} paid ${e.to} — amount sealed`,
+        label: `Day ${e.round} · ${e.from} paid ${e.to} — amount sealed`,
         detail: mine.get(e.txHash!),
       })),
     ...(feedGraph?.deposits ?? []).map((d) => ({
       ledger: d.ledger,
       txHash: d.txHash,
-      label: `${d.player} deposited ${d.amountXlm} XLM${d.round < 1 ? " (buy-in)" : ""} — public`,
+      label: `${d.round < 1 ? "Lobby" : `Day ${d.round}`} · ${d.player} deposited ${d.amountXlm} XLM${d.round < 1 ? " (buy-in)" : ""} — public`,
       detail: undefined as string | undefined,
     })),
   ].sort((a, b) => b.ledger - a.ledger);
@@ -314,11 +316,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </p>
         <p className="dim">
           Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,
-          never the amount.
+          never the amount. The only people who know the amount of the confidential token
+          transfer are you and the auditor (Maude).
         </p>
         <p className="dim">
           What each item does is public knowledge — which one you bought is not. The werebear
-          is shopping too.
+          is shopping too. DUN DUN DUN.
         </p>
       </div>
       {!dead && deficit > 0n && excess === 0n && (
@@ -420,8 +423,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         <div className="panel">
           <h3><ToteIcon />✓ Done for today</h3>
           <p className="dim">
-            The shopkeepers wave you off. Maude opens her office once the <b>whole village</b>{" "}
-            is done shopping.
+            The shopkeepers wave you off.{" "}
+            <button className="link inline" onClick={onGoMaude}>
+              Maude
+            </button>{" "}
+            opens her office once the <b>whole village</b> is done shopping.
           </p>
         </div>
       )}

@@ -322,9 +322,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           <div className="answer-card">
             {role === "werebear" ? (
               <>
-                🐻 <b>You are the werebear.</b> Gerald was delicious. Shop like an innocent, vote
-                like a patriot — and each day, pick someone to eat below. Silver is beyond you;
-                do not touch it.
+                🐻 <b>You are the werebear.</b> Gerald was delicious. Shop and vote like any
+                villager and each day, pick someone to eat.
               </>
             ) : (
               <>

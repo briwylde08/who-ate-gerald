@@ -287,7 +287,9 @@ export function PlayerApp() {
     setWallet(null);
     setBalances(null);
     setSteps(null);
-    setTab("village");
+    // Logging out then in must land on the Town Square — setTab remembers
+    // its argument, so setting "village" here made Shops the login screen.
+    setTab("town");
   };
 
   return (
@@ -545,6 +547,7 @@ export function PlayerApp() {
               setBusy={setBusy}
               setError={setError}
               refresh={() => refresh(wallet)}
+              onGoMaude={() => setTab("maude")}
             />
           </div>
           <div style={{ display: tab === "maude" ? "block" : "none" }}>
