@@ -50,7 +50,7 @@ export function SixSteps({ balances, purchases }: Props) {
     {
       n: 3,
       name: "Merge",
-      what: "Move what arrived in your pending inbox into your spendable purse.",
+      what: "New claims arrive in your pending balance. Merging moves them into the spendable balance only you control.",
       state: waiting ? "waiting" : merged ? "done" : "waiting",
       note: waiting
         ? `${xlmDisplay(balances.receiving)} XLM waiting — "Collect into purse" in The Shops`
