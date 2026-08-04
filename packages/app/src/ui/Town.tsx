@@ -110,16 +110,29 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   }, [view?.dealt, me?.address]);
 
 
-  // When a new morning carries a victim, roll their film — once per morning
+  // When a new morning carries a body, roll the right film — once per morning
   // per browser, marked seen on show so a refresh doesn't replay the horror.
+  // A caught werebear outranks a night victim (they can't share a morning:
+  // banishing the bear ends the game before any hunt).
   useEffect(() => {
     if (!view) return;
-    const m = [...view.mornings].reverse().find((x) => x.eaten);
-    if (!m?.eaten) return;
-    const victim = view.players.find((p) => p.name === m.eaten);
-    if (!victim?.character) return;
+    const m = [...view.mornings]
+      .reverse()
+      .find((x) => x.eaten || x.banishedRole === "werebear");
+    if (!m) return;
     const seenKey = `gerald:film:${gameId}:${m.round}`;
     if (localStorage.getItem(seenKey)) return;
+    if (m.banishedRole === "werebear" && m.banished) {
+      localStorage.setItem(seenKey, "1");
+      setFilm({
+        src: nightFilmSrc("werebear"),
+        caption: `${m.banished} was the werebear — and the village got them.`,
+      });
+      return;
+    }
+    if (!m.eaten) return;
+    const victim = view.players.find((p) => p.name === m.eaten);
+    if (!victim?.character) return;
     localStorage.setItem(seenKey, "1");
     setFilm({
       src: nightFilmSrc(victim.character),
