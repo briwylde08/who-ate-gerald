@@ -847,6 +847,11 @@ th { color: var(--ink-dim); font-weight: normal; }
   gap: 10px;
   margin: 16px 0 4px;
 }
+/* Cap at four across: eight villagers then read as two even rows rather
+   than five-and-three. */
+@media (min-width: 700px) {
+  .villagers { grid-template-columns: repeat(4, 1fr); }
+}
 .villager-card {
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -948,6 +953,37 @@ th { color: var(--ink-dim); font-weight: normal; }
   line-height: 1.45;
   color: #ded5c4;
 }
+.notices .notice-plain { padding-left: 0; border-left: none; }
+
+/* Day counter and the deadline it is counting toward, read as one line. */
+.phase-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.deadline-note { font-size: 0.78rem; color: var(--ink-dim); }
+/* Sits directly on top of the portraits, so it reads as their caption. */
+.headcount { margin: 14px 0 0; }
+.headcount + .villagers { margin-top: 6px; }
+
+/* The chain-activity trail at the foot of the shop floor. */
+.activity-log h3 { margin: 0 0 2px; color: var(--moon); }
+.activity-rows { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+.activity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+.activity-main { display: flex; flex-direction: column; min-width: 0; }
+.activity-label { font-size: 0.84rem; color: var(--ink); }
+.activity-detail { font-size: 0.72rem; color: var(--ink-dim); }
 .notices .sightings { margin-bottom: 10px; }
 
 /* "What the village sees": the privacy boundary as two facing columns. */
@@ -1083,6 +1119,21 @@ div.character { border: 1px solid var(--line); border-radius: 6px; background: v
   padding: 10px 14px;
   margin: 10px 0;
   font-style: italic;
+}
+
+/* The one instruction at the top of the square. Deliberately NOT an
+   answer-card: that styling is Maude's voice, and this is the house telling
+   you where to go. */
+.start-note {
+  padding: 10px 0;
+  margin: 10px 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+button.link.inline {
+  font-size: inherit;
+  color: var(--lantern);
+  padding: 0;
 }
 
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }

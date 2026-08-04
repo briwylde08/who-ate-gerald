@@ -42,9 +42,13 @@ export function PlayerApp() {
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
   const [round, setRound] = useState(0);
   const [storyOpen, setStoryOpen] = useState(false);
-  /** Where the intro opens when we send someone back to it. */
-  const [introAt, setIntroAt] = useState<"story" | "identity">("story");
+  /** Where the intro opens when we send someone back to it: "game" for the
+   *  chooser (change game), "identity" for the villager picker. */
+  const [introAt, setIntroAt] = useState<"story" | "game" | "identity">("story");
   const refreshing = useRef(false);
+  /** Always the game we are CURRENTLY in, for discarding stale poll replies. */
+  const gameIdRef = useRef(gameId);
+  gameIdRef.current = gameId;
 
   const refresh = useCallback(
     async (w: VillagerWallet) => {
@@ -177,6 +181,9 @@ export function PlayerApp() {
     const t = setInterval(async () => {
       try {
         const v = await fetchPublicView(gameId);
+        // A reply for the game we just LEFT must not touch anything: it would
+        // snap the player back to their old seat the instant they switch.
+        if (gameIdRef.current !== gameId) return;
         setRound((r) => (v.round !== r ? v.round : r));
         // One wallet, one identity: the SEAT is the truth. If the local
         // profile has drifted (picked a new name/face while already seated),
@@ -256,16 +263,21 @@ export function PlayerApp() {
             {wallet.address.slice(0, 6)}…{wallet.address.slice(-6)} {copied ? "✓ copied" : "⧉"}
           </button>
         )}
+        {/* Read-only on purpose. Typing here used to repoint the whole app
+            without moving your SEAT, so a typo left you staring at a game you
+            were not in. Switching games goes through the intro, which knows
+            how to show the lobby board and claim a villager. */}
         <span className="dim">game:</span>
-        <input
-          type="text"
-          value={gameId}
-          onChange={(e) => {
-            setGameId(e.target.value);
-            saveGameId(e.target.value);
+        <span className="mono">{gameId}</span>
+        <button
+          className="link"
+          onClick={() => {
+            setIntroAt("game"); // the chooser, NOT the villager picker
+            setProfile(null);
           }}
-          style={{ width: "110px", padding: "4px 6px", fontSize: "0.85rem" }}
-        />
+        >
+          change game
+        </button>
         <span className="dim contract-label">confidential token contract:</span>
         <a
           className="mono addr"
@@ -327,6 +339,10 @@ export function PlayerApp() {
 
       {!profile && (
         <Intro
+          // Remount when the requested page changes: Intro reads startAt into
+          // useState ONCE, so without the key "change game" clicked while the
+          // intro is already showing (the homepage) changed nothing at all.
+          key={introAt}
           onDone={(p) => {
             setProfile(p);
             setGameId(loadGameId()); // the intro may have chosen a different game
@@ -449,6 +465,7 @@ export function PlayerApp() {
               setBusy={setBusy}
               setError={setError}
               refresh={() => refresh(wallet)}
+              onGoShops={() => setTab("village")}
             />
           </div>
           <div style={{ display: tab === "ledger" ? "block" : "none" }}>

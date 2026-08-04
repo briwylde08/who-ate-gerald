@@ -52,6 +52,8 @@ export function Intro({
     const t = setInterval(pull, 10_000);
     return () => clearInterval(t);
   }, [page]);
+  /** Whatever game this browser last pointed at — may have no seats yet. */
+  const current = loadGameId();
   const chooseGame = (id: string) => {
     saveGameId(id);
     setChosenGame(id);
@@ -126,10 +128,31 @@ export function Intro({
           </button>
         </div>
 
+        {/* The game this browser is already pointed at. Without this row a
+            player who made a game but never took a seat had NO way forward:
+            the board only lists games somebody has already joined, so their
+            own empty lobby was invisible and the screen was a dead end. */}
+        {current && !lobbies.some((l) => l.id === current) && (
+          <>
+            <h2>Carry on where you were</h2>
+            <div className="panel">
+              <div className="lobby-row">
+                <span className="lobby-id">{current}</span>
+                <span className="dim">the game you were last in</span>
+                <button className="primary" onClick={() => chooseGame(current)}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
         <h2>Join an existing game</h2>
         {lobbies.length === 0 ? (
           <div className="panel">
-            <p className="dim">No games are seating players right now. Start one below.</p>
+            <p className="dim">
+              Nobody else has taken a seat in a game yet. Continue above, or start one below.
+            </p>
           </div>
         ) : (
           <div className="panel">

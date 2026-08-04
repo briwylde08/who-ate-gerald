@@ -165,7 +165,14 @@ export default {
 
       // ---- public tier
       if (isPublic) {
-        return json(action === "graph" ? await room.graphView() : await room.publicView());
+        if (action === "graph") return json(await room.graphView());
+        const view = (await room.publicView()) as { phase?: string };
+        // An open tab polls this route; in the lobby that is the sign of life
+        // that keeps the game on the board (see registry.ts MAX_AGE_MS).
+        if (view.phase === "lobby") {
+          await env.LOBBIES.getByName("board").touch(gameId!);
+        }
+        return json(view);
       }
 
       // ---- GM tier

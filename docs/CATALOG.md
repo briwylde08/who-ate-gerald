@@ -37,7 +37,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 23 | Shopkeeper's holiday *(aim: shop)* | General Store | Pick a store. Tomorrow it is closed to everyone. Announced publicly. |
 | 25 | Unquiet rest | Chapel | When you die, a 50/50 chance your ghost can still vote. The result is announced either way. |
 | 28 | The butcher's knife | The Butcher's | Your vote counts twice at today's trial. Everyone is told a double vote was cast; nobody is told whose. |
-| 32 | Sock in mouth *(aim: player)* | General Store | Pick a villager. They can still talk, but their vote does not count today. The morning report names them. |
+| 32 | Sock in mouth *(aim: player)* | General Store | Pick a villager. They can still type in the chat, but they lose their vote today. The morning report names them. |
 | 33 | Tooth sharpener | The Butcher's | Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone. |
 | 35 | Curfew bell | Blacksmith | Ring it, and the werebear stays home tonight. No hunting. No one dies tonight. |
 | 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn whether they are the werebear; otherwise you learn nothing. It never lies. |
@@ -58,6 +58,10 @@ stacking is capped). Deadline: day SIX. The werebear may buy anything.
   purchase behind a lock or holiday does nothing and the buyer learns via
   private note. (Open question: warn the locked player at day start?)
 - **Death settles debts** — a corpse owes no disclosure and is not abed.
+- **Two nails in one tie: both excused, nobody hangs.** Both nails are
+  spent; the report says "Every tied villager was carrying iron." (Code
+  path in resolveDayInner's stillTied loop; not yet in the item exam —
+  staging it needs two fresh nail-holders in one engineered tie.)
 - **Ghost votes are public**, dawn waits for them, and the roster shows 👻.
 
 ## Watch list (from the 2026-07-31 balance pass)

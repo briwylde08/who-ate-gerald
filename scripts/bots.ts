@@ -550,7 +550,9 @@ async function main() {
                   .catch(() => null);
                 if (ok) {
                   bot.votedRound = view.round;
-                  console.log(`  ${bot.name}: voted for ${target}${ok.dawn ? " — DAWN" : ""}`);
+                  // NEVER name the target: a vote is private until dawn, and
+                  // this log is read by a human who is playing the game.
+                  console.log(`  ${bot.name}: voted${ok.dawn ? " — DAWN" : ""}`);
                 }
               }
             }

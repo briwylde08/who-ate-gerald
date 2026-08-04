@@ -18,9 +18,11 @@ interface Entry {
   touchedAt: number;
 }
 
-/** Registry entries older than this are pruned — a lobby nobody joined in
- *  two days is a ghost town, not a game. */
-const MAX_AGE_MS = 48 * 60 * 60 * 1000;
+/** A lobby vanishes from the board 10 minutes after the last sign of life.
+ *  "Life" is any join OR any open tab (the app polls /public every few
+ *  seconds, and lobby-phase views touch this registry) — so a table waiting
+ *  on a slow friend stays listed as long as somebody is looking at it. */
+const MAX_AGE_MS = 10 * 60 * 1000;
 
 export class LobbyRegistry extends DurableObject<Env> {
   private games: Record<string, Entry> = {};

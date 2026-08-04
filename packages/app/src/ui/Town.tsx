@@ -15,7 +15,7 @@ import {
 import { CHARACTERS, loadProfile } from "../lib/profile";
 import { CharEmoji, ToteIcon } from "./CharIcon";
 import { loadHistory } from "../lib/history";
-import { DAILY_INCOME_XLM, SHOPS } from "../lib/catalog";
+import { DAILY_INCOME_XLM } from "../lib/catalog";
 
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 
@@ -39,12 +39,14 @@ interface Props {
   setBusy: (b: string | null) => void;
   setError: (e: string | null) => void;
   refresh: () => Promise<void>;
+  /** Jump to the shop floor — the start note points there. */
+  onGoShops: () => void;
 }
 
 type Role = "villager" | "werebear";
 
 
-export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Props) {
+export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGoShops }: Props) {
   void setBusy;
   void refresh;
   void onPhase;
@@ -285,16 +287,26 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
   return (
     <div>
       <div className="panel lobby">
-        <div className="phase-label">{phaseLabel}</div>
+        <div className="phase-head">
+          <div className="phase-label">{phaseLabel}</div>
+          {view.round >= 1 && view.maxDays && !view.winner && (
+            <span className="deadline-note">
+              If the werebear survives to day {view.maxDays}, it wins.
+            </span>
+          )}
+        </div>
         <h2 className="phase-title">{phaseTitle}</h2>
 
         {/* The one instruction that matters the moment the game starts:
             shopping happens on another tab, and nothing proceeds until
             everybody has finished. */}
         {view.round >= 1 && !view.winner && me?.alive && !me.doneToday && (
-          <div className="answer-card">
-            <b>The game has begun.</b> Go to <b>The Shops</b> to make your purchases for the
-            day, then press <b>Done buying for today</b>.
+          <div className="start-note">
+            <b>The game has begun.</b> Go to{" "}
+            <button className="link inline" onClick={onGoShops}>
+              The Shops
+            </button>{" "}
+            to make your purchases for the day, then press <b>Done buying for today</b>.
           </div>
         )}
         {me && !me.alive && me.ghostVoter && !view.winner && (
@@ -312,32 +324,22 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               : "Maude's office is open — you have one question today. Then argue it out in the square and vote."}
           </div>
         )}
-        {view.round >= 1 && view.maxDays && !view.winner && (
-          <p className="dim">
-            The clock runs for the village: if the werebear survives the dusk of day{" "}
-            {view.maxDays}, it wins.
-          </p>
-        )}
         {view.winner && view.bear && (
           <div className="answer-card" style={{ fontSize: "1.1rem" }}>
             🐻 <b>{view.bear} was the werebear.</b>{" "}
-            {view.winner === "werebear"
-              ? "They shopped beside you, voted beside you, and outlasted you all."
-              : "The village sleeps safe — and owes some apologies to the wrongly banished."}
+            {view.calledOff
+              ? "The Order called the hunt off before the village found them."
+              : view.winner === "werebear"
+                ? "They shopped beside you, voted beside you, and outlasted you all."
+                : "The village sleeps safe — and owes some apologies to the wrongly banished."}
           </div>
-        )}
-        {view.dealt && (
-          <p className="dim">
-            {view.players.filter((p) => p.alive).length} of {view.players.length} still breathing
-            {me ? (me.alive ? "" : " · you are among the departed") : ""}
-          </p>
         )}
 
         {/* The lobby's whole job: say what we're waiting for and give one
             obvious thing to press. */}
         {!view.dealt && (
           <div className="lobby-state">
-            <h3>Waiting for the village</h3>
+            <h3>Waiting for villagers</h3>
             <div className="seat-dots" role="img" aria-label={`${readyCount} of ${seats} ready`}>
               {Array.from({ length: seats }).map((_, i) => (
                 <span key={i} className={`dot${i < readyCount ? " on" : ""}`} aria-hidden="true" />
@@ -401,7 +403,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             This game is already underway — you can spectate, or join the next one.
           </p>
         )}
-        {!me && noticeBoard("Other games awaiting players")}
 
         {me && view.dealt && !roleShown && (
           <div className="answer-card">
@@ -426,14 +427,21 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
               </>
             ) : (
               <>
-                🏡 <b>You are a villager.</b> Find the werebear before it finds you. Shop
-                wisely: the right gear survives the wrong night.
+                🏡 <b>You are a villager.</b> Find the werebear before it finds you.
               </>
             )}
             <div className="row">
               <button onClick={() => setRoleShown(false)}>hide</button>
             </div>
           </div>
+        )}
+
+        {/* The headcount belongs with the faces it is counting. */}
+        {view.dealt && (
+          <p className="dim headcount">
+            {view.players.filter((p) => p.alive).length}/{view.players.length} still alive
+            {me ? (me.alive ? "" : " · you are among the departed") : ""}
+          </p>
         )}
 
         {/* The village itself: portraits, not a roster line. */}
@@ -587,7 +595,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
         <div className="panel notices">
           <h2>Town Notices</h2>
           {view.round >= 1 && !view.winner && (
-            <p className="notice">
+            <p className="notice notice-plain">
               {view.marketClosed
                 ? "The market has closed. Maude's office is open for questions."
                 : `The market is open. Maude waits for: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
@@ -597,7 +605,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
             <p className="notice">The shops open when the game begins.</p>
           ) : graph && graph.edges.filter((e) => e.round === view.round).length > 0 ? (
             <>
-              <p className="notice">Seen at the stores today:</p>
+              <p className="notice notice-plain">Seen at the stores today:</p>
               <div className="sightings">
                 {graph.edges
                   .filter((e) => e.round === view.round)
@@ -613,17 +621,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh }: Pr
           )}
           {me?.alive && view.round >= 2 && view.phase === "day" && !view.winner && (
             <p className="notice">
-              The day's allowance of {DAILY_INCOME_XLM} XLM waits at the Order's desk, in{" "}
+              The day's allowance of {DAILY_INCOME_XLM} XLM waits at the Town Treasury, in{" "}
               <b>The Shops</b>.
             </p>
           )}
-          <p className="notice">
-            {SHOPS.length} stores. {SHOPS.reduce((n, s) => n + s.items.length, 0)} wares. Two
-            visits per day.
-          </p>
-          <p className="notice">
-            The shops never run out. Apparently capitalism survived Gerald.
-          </p>
         </div>
       </div>
 

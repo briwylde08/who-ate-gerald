@@ -13,6 +13,7 @@ import {
   type CatalogItem,
 } from "../lib/catalog";
 import { loadHistory, recordPurchase } from "../lib/history";
+import { explorerTx, loadActivity, recordActivity } from "../lib/activity";
 import { fetchPublicView, loadGameId, playerApi } from "../lib/player";
 import { ToteIcon } from "./CharIcon";
 import { useEffect } from "react";
@@ -41,7 +42,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
   // Budget normalization: the allowance schedule says how much spendable a
   // law-abiding villager can hold right now. Anything above it is old-wallet
-  // money that must be surrendered to the Order before the shops will serve
+  // money that must be surrendered to the Town Treasury before the shops serve
   // you — that's how everyone verifiably plays with the same budget.
   const allowance = stroopsFromXlm(
     STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1),
@@ -51,7 +52,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     0n,
   );
   // In the lobby (round 0) the day-1 allowance already applies — settle your
-  // business with the Order BEFORE the market opens, not during it.
+  // business with the Treasury BEFORE the market opens, not during it.
   const remainingAllowance = allowance > spentThisGame ? allowance - spentThisGame : 0n;
   const excess =
     balances.spendable > remainingAllowance ? balances.spendable - remainingAllowance : 0n;
@@ -59,8 +60,14 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const surrender = async () => {
     setError(null);
     try {
-      if (!ORDER_ADDRESS) throw new Error("the Order's office is not configured");
-      await wallet.transfer(ORDER_ADDRESS, excess, onPhase);
+      if (!ORDER_ADDRESS) throw new Error("the Town Treasury is not configured");
+      const hash = await wallet.transfer(ORDER_ADDRESS, excess, onPhase);
+      recordActivity(wallet.address, {
+        at: new Date().toISOString(),
+        label: "Surrendered excess to the Town Treasury",
+        detail: `${xlmString(excess)} XLM (confidential)`,
+        txHash: hash,
+      });
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -79,8 +86,19 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     setError(null);
     setBusy("Topping up your budget (deposit + collect)…");
     try {
-      await wallet.deposit(deficit);
-      await wallet.merge();
+      const dep = await wallet.deposit(deficit);
+      recordActivity(wallet.address, {
+        at: new Date().toISOString(),
+        label: "Collected from the Town Treasury (public deposit)",
+        detail: `${xlmString(deficit)} XLM — public, so the budget is verifiable`,
+        txHash: dep,
+      });
+      const mrg = await wallet.merge();
+      recordActivity(wallet.address, {
+        at: new Date().toISOString(),
+        label: "Merged pending into purse",
+        txHash: mrg,
+      });
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -90,7 +108,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   };
 
   // Done-for-the-day: locks your stores and unlocks your Maude question.
-  // Dead players get neither stores nor the Order — the chain can't stop a
+  // Dead players get neither stores nor the Treasury — the chain can't stop a
   // ghost's transfers, but the shop floor won't offer them.
   const [doneToday, setDoneToday] = useState(false);
   const [dead, setDead] = useState(false);
@@ -98,6 +116,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // localStorage-backed, so it is this player's own record, not the chain's.
   const [boughtItems, setBoughtItems] = useState<Set<string>>(new Set());
   const [justBought, setJustBought] = useState<string | null>(null);
+  // Newest first; re-read on every render — it's a tiny localStorage list and
+  // every recordActivity is followed by a state change that re-renders us.
+  const activity = loadActivity(wallet.address).slice().reverse();
   /** The teaching moment: what the village just learned, and what it didn't. */
   const [receipt, setReceipt] = useState<{
     shopLabel: string;
@@ -216,6 +237,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         txHash: hash,
       });
       setBoughtItems((s) => new Set(s).add(item.label));
+      recordActivity(wallet.address, {
+        at: new Date().toISOString(),
+        label: `Paid ${shop.label} (confidential transfer)`,
+        detail: `${item.label} — amount sealed on chain`,
+        txHash: hash,
+      });
       setReceipt({ shopLabel: shop.label, item: item.label, amountStroops });
       setJustBought(`${shop.id}:${item.id}`);
       window.setTimeout(() => setJustBought(null), 3000);
@@ -232,7 +259,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       <div className="panel shop-howto">
         {!marketOpen && (
           <p className="shut-note">
-            🔒 The stores are shut until the game begins. Anything bought now would do nothing.
+            🔒 The stores are shut until the game begins.
           </p>
         )}
         <p>
@@ -242,6 +269,20 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           click the “Done buying for today” button.
         </p>
       </div>
+      {!dead && deficit > 0n && excess === 0n && (
+        <div className="panel">
+          <h3>⚖ The Town Treasury owes you</h3>
+          <p className="dim">
+            You hold {xlmString(balances.spendable)} XLM; the allowance at this point is{" "}
+            {xlmString(remainingAllowance)}. Daily income and old-wallet shortfalls both collect
+            here — the deposit is public, so everyone can verify it's fair.
+          </p>
+          <button className="primary" onClick={() => void topUp()}>
+            Collect {xlmString(deficit)} XLM
+          </button>
+        </div>
+      )}
+
       <div className="panel purse">
         <div className="purse-block">
           <div className="purse-label">🔒 Private purse</div>
@@ -259,7 +300,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
               onClick={async () => {
                 setBusy("Collecting…");
                 try {
-                  await wallet.merge();
+                  const hash = await wallet.merge();
+                  recordActivity(wallet.address, {
+                    at: new Date().toISOString(),
+                    label: "Merged pending into purse",
+                    txHash: hash,
+                  });
                   await refresh();
                 } catch (e) {
                   setError(e instanceof Error ? e.message : String(e));
@@ -297,32 +343,19 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       {!dead && excess > 0n && (
         <div className="panel">
-          <h3>⚖ The Order requires a word</h3>
+          <h3>⚖ The Town Treasury requires a word</h3>
           <p className="dim">
             You hold {xlmString(balances.spendable)} XLM, but the law allows{" "}
             {xlmString(remainingAllowance)} at this point in the game. Surrender the difference
-            to Maude's office and the shops will serve you — everyone plays with the same
+            to the Treasury and the shops will serve you — everyone plays with the same
             budget, verifiably.
           </p>
           <button className="primary" onClick={() => void surrender()}>
-            Surrender {xlmString(excess)} XLM to the Order
+            Surrender {xlmString(excess)} XLM to the Town Treasury
           </button>
         </div>
       )}
 
-      {!dead && deficit > 0n && excess === 0n && (
-        <div className="panel">
-          <h3>⚖ The Order owes you</h3>
-          <p className="dim">
-            You hold {xlmString(balances.spendable)} XLM; the allowance at this point is{" "}
-            {xlmString(remainingAllowance)}. Daily income and old-wallet shortfalls both collect
-            here — the deposit is public, so everyone can verify it's fair.
-          </p>
-          <button className="primary" onClick={() => void topUp()}>
-            Collect {xlmString(deficit)} XLM
-          </button>
-        </div>
-      )}
 
       {!dead && doneToday && (
         <div className="panel">
@@ -418,7 +451,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                     : doneToday
                       ? "Market closed"
                       : tooRich
-                        ? "Too rich for your blood"
+                        ? "Can't afford this item"
                         : isArmed
                           ? "Confirm?"
                           : "Buy";
@@ -525,6 +558,31 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         never the amount. What each item does is public knowledge — which one you bought is
         not. The werebear is shopping too.
       </p>
+
+      {/* The running receipt trail: every tx this browser signed, linked to
+          the chain, newest first. The proof the game is real, one click away. */}
+      {activity.length > 0 && (
+        <div className="panel activity-log">
+          <h3>📜 Your activity on the chain</h3>
+          <p className="dim">
+            Every transaction this browser has signed. Open any of them — the shop and your
+            signature are public; the amounts are not there to find.
+          </p>
+          <div className="activity-rows">
+            {activity.map((a, i) => (
+              <div key={`${a.txHash}-${i}`} className="activity-row">
+                <span className="activity-main">
+                  <span className="activity-label">{a.label}</span>
+                  {a.detail && <span className="activity-detail">{a.detail}</span>}
+                </span>
+                <a className="tx-link" href={explorerTx(a.txHash)} target="_blank" rel="noreferrer">
+                  {a.txHash.slice(0, 8)}… ↗
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

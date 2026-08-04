@@ -212,6 +212,8 @@ function RoundControls({
   refreshState: () => Promise<void>;
 }) {
   const [victim, setVictim] = useState("");
+  /** Ending a game is irreversible — arm it, then confirm. */
+  const [endArmed, setEndArmed] = useState(false);
   const [lastStart, setLastStart] = useState<string | null>(null);
 
   return (
@@ -267,6 +269,26 @@ function RoundControls({
           }
         >
           Eliminate
+        </button>
+        <span className="dim" style={{ flex: 1 }} />
+        {/* Stops the game wherever it stands and unmasks the bear, so a
+            demo cut short still gets its reveal. Two clicks: no going back. */}
+        <button
+          className={endArmed ? "armed" : ""}
+          onClick={() => {
+            if (!endArmed) {
+              setEndArmed(true);
+              window.setTimeout(() => setEndArmed(false), 4000);
+              return;
+            }
+            setEndArmed(false);
+            void run("calling off the hunt…", async () => {
+              await gmApi.end(cfg);
+              await refreshState();
+            });
+          }}
+        >
+          {endArmed ? "Really end it — the bear is revealed" : "End game"}
         </button>
       </div>
     </div>

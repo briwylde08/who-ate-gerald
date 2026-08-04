@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v9 (2026-07-31, per Bri) — 12 items, prices globally unique. ONE OF EACH ITEM PER PLAYER PER GAME (UI-enforced; repeats are audited and their stacking capped). The barrel (45) is the personal save; the curfew bell (35) is the village's night off — it beats everything, sharpened teeth included. Six-day deadline. Aimed items via p/aim; aim \"self\" = declared drink. The werebear may buy anything. Economy: 50 XLM buy-in, +15/day.",
+  "$comment": "Catalog v9 (2026-07-31, per Bri) — 12 items, prices globally unique. ONE OF EACH ITEM PER PLAYER PER GAME (UI-enforced; repeats are audited and their stacking capped). The barrel (45) is the personal save; the curfew bell (35) is the village's night off — it beats everything, sharpened teeth included. Six-day deadline. Aimed items via p/aim; the barrel needs no aim — buying it is drinking it. The werebear may buy anything. Economy: 50 XLM buy-in, +15/day.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 15,
   "shops": {
@@ -55,7 +55,7 @@
           "flavor": "Clean, mostly. That is not the point.",
           "priceXlm": 32,
           "class": "B-off",
-          "effect": "Pick a villager. They can still talk, but their vote does not count today. The morning report names them.",
+          "effect": "Pick a villager. They can still type in the chat, but they lose their vote today. The morning report names them.",
           "aim": "player"
         },
         {
@@ -108,7 +108,7 @@
         {
           "id": "geralds_finger",
           "label": "Gerald's finger",
-          "flavor": "The Order swears it is his. The Order swears a lot.",
+          "flavor": "The Mayor swears it is his. The Mayor swears a lot.",
           "priceXlm": 1,
           "class": "cover",
           "effect": "Does nothing."
@@ -116,7 +116,7 @@
         {
           "id": "unquiet_rest",
           "label": "Unquiet rest",
-          "flavor": "The Order accepts coin for almost anything.",
+          "flavor": "The Mayor accepts coin for almost anything.",
           "priceXlm": 25,
           "class": "B-def",
           "effect": "When you die, a 50/50 chance your ghost can still vote. The result is announced either way."

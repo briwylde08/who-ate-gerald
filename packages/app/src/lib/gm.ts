@@ -109,6 +109,9 @@ export const gmApi = {
 
   resolveDay: (cfg: GmConfig) => call<MorningReport>(cfg, "resolve-day", { body: {} }),
 
+  /** Stop a game in progress. Unmasks the bear rather than going quiet. */
+  end: (cfg: GmConfig) => call<{ ended: true }>(cfg, "end", { body: {} }),
+
   godView: (cfg: GmConfig) => call<GodView>(cfg, "god-view", { method: "GET" }),
 
   graph: (cfg: GmConfig) =>

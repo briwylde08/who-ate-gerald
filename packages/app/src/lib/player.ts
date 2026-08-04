@@ -150,6 +150,8 @@ export interface PublicView {
   phase: "lobby" | "day" | "ended";
   dealt: boolean;
   winner: "village" | "werebear" | null;
+  /** The Order ended the game early — the bear won by default, not by play. */
+  calledOff?: boolean;
   /** Revealed only once the game has a winner; null while roles are sealed. */
   bear?: string | null;
   players: {

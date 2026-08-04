@@ -67,6 +67,8 @@ interface GameState {
   drunkards: Record<string, number>;
   /** Round whose drunkard snapshot has been taken (0 = none yet). */
   drunkSnapshotRound: number;
+  /** The Order called the game off; the bear won by default, not by play. */
+  calledOff: boolean;
   askLog: AskRecord[];
   /** This round's votes: voter address → target player name. */
   votes: Record<string, string>;
@@ -112,6 +114,7 @@ const freshState = (): GameState => ({
   mustDisclose: {},
   drunkards: {},
   drunkSnapshotRound: 0,
+  calledOff: false,
   askLog: [],
   votes: {},
   nightPick: null,
@@ -506,7 +509,7 @@ export class GameRoom extends DurableObject<Env> {
     }
     const voter = this.playerByAddress(voterAddress);
     if (!voter) throw new Error("that address holds no seat in this game");
-    // The dead do not vote — unless they paid the Order in advance and the
+    // The dead do not vote — unless they paid the Mayor in advance and the
     // Order happened to honour it.
     if (!voter.alive && this.state.ghostVote?.[voterAddress] !== "granted") {
       throw new Error("the dead do not vote");
@@ -657,7 +660,7 @@ export class GameRoom extends DurableObject<Env> {
     delete this.state.mustDisclose[address];
     this.state.chat.push({
       round: this.state.round,
-      name: "the Order",
+      name: "the Mayor",
       text: line,
       at: new Date().toISOString(),
     });
@@ -944,8 +947,8 @@ export class GameRoom extends DurableObject<Env> {
       this.state.ghostVote[dead.address] = granted ? "granted" : "refused";
       notes.push(
         granted
-          ? `👻 ${dead.name} paid the Order in advance, and the Order delivered: their ghost keeps its vote.`
-          : `👻 ${dead.name} paid the Order in advance. The Order kept the fee and nothing else. No vote, no rest.`,
+          ? `👻 ${dead.name} paid the Mayor in advance, and the Mayor delivered: their ghost keeps its vote.`
+          : `👻 ${dead.name} paid the Mayor in advance. The Mayor kept the fee and nothing else. No vote, no rest.`,
       );
     }
 
@@ -1151,6 +1154,13 @@ export class GameRoom extends DurableObject<Env> {
    *  No winner is declared; the room just stops being a game. */
   async endGame(): Promise<{ ended: true }> {
     this.state.phase = "ended";
+    // A game cut short still has a story worth telling: unmask the bear
+    // rather than just going quiet. The village failed to find it, so the
+    // beast takes the win — but calledOff records that nobody earned it.
+    if (this.state.roles && this.state.winner === null) {
+      this.state.winner = "werebear";
+      this.state.calledOff = true;
+    }
     await this.ctx.storage.deleteAlarm();
     await this.persist();
     return { ended: true };
@@ -1165,6 +1175,7 @@ export class GameRoom extends DurableObject<Env> {
       phase: this.state.phase,
       dealt: this.state.roles !== null,
       winner: this.state.winner,
+      calledOff: this.state.calledOff === true,
       // The game is over: the masks come off. Until then, roles are sealed.
       bear:
         this.state.winner !== null && this.state.roles
