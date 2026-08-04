@@ -111,8 +111,8 @@ export function SixSteps({ balances, purchases }: Props) {
         ))}
       </ol>
       <p className="dim six-foot">
-        Steps 2 and 6 are where amounts become public. Everything in between is sealed, which
-        is why the village can see that you paid a shop and never what you paid.
+        Steps 2 and 6 are where amounts become public. Everything in between is confidential,
+        which is why the village can see that you paid a shop and never what you paid.
       </p>
     </div>
   );
