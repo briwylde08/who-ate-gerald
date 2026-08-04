@@ -29,7 +29,27 @@ body {
   min-height: 100vh;
 }
 
-#root { max-width: 1000px; margin: 0 auto; padding: 24px 16px 80px; }
+/* Wide enough for the main column AND the six-steps sidebar; the main
+   column itself stays capped at 1000px so nothing gets narrower. */
+#root { max-width: 1360px; margin: 0 auto; padding: 24px 16px 80px; }
+
+.app-shell { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
+.app-main { flex: 1 1 auto; max-width: 1000px; min-width: 0; }
+.six-aside {
+  flex: 0 0 320px;
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+.six-aside .panel { margin: 44px 0 0; } /* aligns with the first panel under the tabs */
+.six-aside .six-steps { margin: 0; padding-top: 0; border-top: none; }
+@media (max-width: 1279px) {
+  .six-aside { display: none; }
+}
+@media (min-width: 1280px) {
+  .six-inline { display: none; }
+}
 
 h1, h2, h3 { font-weight: normal; letter-spacing: 0.02em; }
 h1 { font-size: 2rem; margin: 0 0 4px; }

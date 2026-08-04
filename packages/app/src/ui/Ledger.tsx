@@ -112,7 +112,10 @@ export function Ledger({ wallet, gameId, balances, active, onGoShops }: Props) {
           </>
         )}
 
-        <SixSteps balances={balances} purchases={history.length} />
+        {/* On wide screens the six steps live in the sidebar instead. */}
+        <div className="six-inline">
+          <SixSteps balances={balances} purchases={history.length} />
+        </div>
 
         <details className="privacy-more">
           <summary>How disclosure works</summary>

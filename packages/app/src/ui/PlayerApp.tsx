@@ -13,6 +13,8 @@ import { Maude } from "./Maude";
 import { Town } from "./Town";
 import { ChatVote } from "./ChatVote";
 import { Ledger } from "./Ledger";
+import { SixSteps } from "./SixSteps";
+import { loadHistory } from "../lib/history";
 
 /**
  * A purchase takes real seconds because it really is proving a statement in
@@ -441,7 +443,8 @@ export function PlayerApp() {
       {/* No profile means the intro owns the page — the tabs and every panel
           below them must not render behind it. */}
       {profile && wallet && provisioned && balances && (
-        <>
+        <div className="app-shell">
+        <div className="app-main">
           <div className="tabs">
             <button
               className={tab === "town" ? "active" : ""}
@@ -520,7 +523,19 @@ export function PlayerApp() {
               onGoShops={() => setTab("village")}
             />
           </div>
-        </>
+        </div>
+        {/* Bri's favorite teaching surface, promoted: the six steps ride
+            beside every page on wide screens. Narrow screens keep it in
+            My Ledger instead — same component, never shown twice. */}
+        <aside className="six-aside">
+          <div className="panel">
+            <SixSteps
+              balances={balances}
+              purchases={loadHistory(wallet.address, gameId).length}
+            />
+          </div>
+        </aside>
+        </div>
       )}
 
       {busy && (
