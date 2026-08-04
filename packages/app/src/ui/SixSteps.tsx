@@ -94,10 +94,6 @@ export function SixSteps({ balances, purchases }: Props) {
   return (
     <div className="six-steps">
       <div className="role-label">The six steps of a confidential payment</div>
-      <p className="dim six-intro">
-        Every payment in this village takes the same six steps. Yours are ticked as you make
-        them — these are real transactions, not a tutorial.
-      </p>
       <ol className="step-list">
         {steps.map((s) => (
           <li key={`${s.n}-${s.name}`} className={`step step-${s.state}`}>
