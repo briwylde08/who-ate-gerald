@@ -306,8 +306,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
 
         {!me && !view.dealt && (
           <div className="answer-card">
-            <b>Take a seat in “{gameId}”.</b> Freighter will ask you to sign one message. It's
-            free, and it proves this wallet is yours.
+            {/* One metaphor, in the order things will happen: who you'll be,
+                the click, the popup, and why the popup is nothing to fear. */}
+            <b>You're not seated yet.</b> Join “{gameId}” as{" "}
+            <b>{loadProfile()?.name ?? "your villager"}</b>?
             <div className="row">
               <button
                 className="primary"
@@ -325,9 +327,14 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                     .catch((e) => setError(e instanceof Error ? e.message : String(e)));
                 }}
               >
-                Join the village
+                Join as {loadProfile()?.name ?? "your villager"}
               </button>
             </div>
+            <span className="dim">
+              When you click, Freighter will pop up once and ask you to <b>sign a message</b> —
+              it's not a payment and costs nothing. Your signature proves this wallet is yours,
+              so nobody else can ever act as you in the game.
+            </span>
           </div>
         )}
         {!me && view.dealt && (
