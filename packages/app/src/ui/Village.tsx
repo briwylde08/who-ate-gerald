@@ -299,9 +299,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
       <div className="panel purse">
         <div className="purse-block">
-          <div className="purse-label">🔒 Confidential claims</div>
+          <div className="purse-label">🔒 Confidential spending balance</div>
           <div className="purse-amount">{xlmDisplay(balances.spendable)} XLM</div>
-          <div className="purse-note">Your sealed spending balance — the village can't read it</div>
+          <div className="purse-note">
+            Confidential claims that represent your share of the confidential token contract
+            pool
+          </div>
         </div>
         {balances.receiving > 0n && (
           <div className="purse-block">
