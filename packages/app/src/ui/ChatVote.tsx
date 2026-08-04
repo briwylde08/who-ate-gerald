@@ -165,8 +165,36 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
     );
   }
 
+  const lastMorning = view.mornings.length > 0 ? view.mornings[view.mornings.length - 1] : null;
+
   return (
     <div>
+      {/* The freshest results, HERE — this is the tab everyone is on when
+          dawn breaks, so the outcome must not hide in the Town Square. */}
+      {lastMorning && (
+        <div className="panel">
+          <h2>🌅 Morning of day {lastMorning.round + 1}</h2>
+          {lastMorning.banished && (
+            <p>
+              The village banished <b>{lastMorning.banished}</b> —{" "}
+              {lastMorning.banishedRole === "werebear" ? "🐻 THE WEREBEAR!" : "a villager. Oops."}
+            </p>
+          )}
+          {lastMorning.eaten && (
+            <p>
+              <b>{lastMorning.eaten}</b> was eaten in the night, like Gerald before them.
+            </p>
+          )}
+          {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
+          {lastMorning.notes.map((n, i) => (
+            <p key={i} className="dim">
+              {n}
+            </p>
+          ))}
+          {lastMorning.winner && <p className="tagline">The {lastMorning.winner} has won.</p>}
+        </div>
+      )}
+
       {!view.marketClosed && !view.winner && (
         <div className="panel">
           <p className="dim">

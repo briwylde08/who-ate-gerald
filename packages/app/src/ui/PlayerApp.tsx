@@ -32,6 +32,10 @@ const PHASE_LABEL: Record<TxPhase, string> = {
 
 type Step = { id: string; label: string; sub?: string; status: "todo" | "doing" | "done" };
 
+/** A villager's "gets got" reel; the werebear's plays when the village
+ *  catches it. A missing file just means no film (handled by onError). */
+const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.mp4`;
+
 /** The four steps of taking a seat, worded to teach — shown as a preview
  *  before the button is pressed and ticked live while they run. */
 const STEP_COPY = {
@@ -77,6 +81,10 @@ export function PlayerApp() {
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
   const [round, setRound] = useState(0);
   const [storyOpen, setStoryOpen] = useState(false);
+  /** The night's film — APP-level, so it shows no matter which tab you're
+   *  on. It lived in the Town Square once, where dawn breaking while you
+   *  voted on Chat & Vote played it invisibly AND marked it seen. */
+  const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
   /** Where the intro opens when we send someone back to it: "game" for the
    *  chooser (change game), "identity" for the villager picker. */
   const [introAt, setIntroAt] = useState<"story" | "game" | "identity">("story");
@@ -206,6 +214,32 @@ export function PlayerApp() {
         // snap the player back to their old seat the instant they switch.
         if (gameIdRef.current !== gameId) return;
         setRound((r) => (v.round !== r ? v.round : r));
+        // Roll the right film for a fresh morning — once per morning per
+        // browser, and only ever where it can actually be SEEN.
+        const filmMorning = [...v.mornings]
+          .reverse()
+          .find((x) => x.eaten || x.banishedRole === "werebear");
+        if (filmMorning) {
+          const seenKey = `gerald:film:${gameId}:${filmMorning.round}`;
+          if (!localStorage.getItem(seenKey)) {
+            if (filmMorning.banishedRole === "werebear" && filmMorning.banished) {
+              localStorage.setItem(seenKey, "1");
+              setFilm({
+                src: nightFilmSrc("werebear"),
+                caption: `${filmMorning.banished} was the werebear — and the village got them.`,
+              });
+            } else if (filmMorning.eaten) {
+              const victim = v.players.find((p) => p.name === filmMorning.eaten);
+              if (victim?.character) {
+                localStorage.setItem(seenKey, "1");
+                setFilm({
+                  src: nightFilmSrc(victim.character),
+                  caption: `${filmMorning.eaten} was taken in the night.`,
+                });
+              }
+            }
+          }
+        }
         // One wallet, one identity: the SEAT is the truth. If the local
         // profile has drifted (picked a new name/face while already seated),
         // snap back to the seat rather than show two different people.
@@ -342,6 +376,30 @@ export function PlayerApp() {
           {(wallet || profile) && <button onClick={() => void logout()}>Log out</button>}
         </div>
       </div>
+
+      {film && (
+        <div
+          className="film-overlay"
+          role="dialog"
+          aria-label={film.caption}
+          onClick={() => setFilm(null)}
+        >
+          <div className="film-frame" onClick={(e) => e.stopPropagation()}>
+            <video
+              src={film.src}
+              autoPlay
+              muted
+              playsInline
+              controls
+              onError={() => setFilm(null)} // no reel for this villager (yet)
+            />
+            <p className="film-caption">{film.caption}</p>
+            <button className="primary" onClick={() => setFilm(null)}>
+              Close the curtains
+            </button>
+          </div>
+        </div>
+      )}
 
       {storyOpen && (
         <div className="panel story">

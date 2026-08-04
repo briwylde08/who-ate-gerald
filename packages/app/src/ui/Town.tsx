@@ -19,12 +19,7 @@ import { DAILY_INCOME_XLM } from "../lib/catalog";
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
 
 /**
- * The night's film: when a villager is eaten, their character's "gets got"
- * reel plays once for everyone at dawn. Files live in public/videos/ as
- * <characterId>_gets_got.mp4 — a missing file (the midwife, for now) just
- * means no film, handled by onError.
  */
-const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.mp4`;
 
 /**
  * The town square: your role (fetched privately), the day's income, the
@@ -55,8 +50,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   const [role, setRole] = useState<Role | null>(null);
   const [roleShown, setRoleShown] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
-  /** The night's film: {src, caption} while showing, null otherwise. */
-  const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
   /** The notice-board: other games seating players right now. */
   const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
   useEffect(() => {
@@ -110,36 +103,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   }, [view?.dealt, me?.address]);
 
 
-  // When a new morning carries a body, roll the right film — once per morning
-  // per browser, marked seen on show so a refresh doesn't replay the horror.
-  // A caught werebear outranks a night victim (they can't share a morning:
-  // banishing the bear ends the game before any hunt).
-  useEffect(() => {
-    if (!view) return;
-    const m = [...view.mornings]
-      .reverse()
-      .find((x) => x.eaten || x.banishedRole === "werebear");
-    if (!m) return;
-    const seenKey = `gerald:film:${gameId}:${m.round}`;
-    if (localStorage.getItem(seenKey)) return;
-    if (m.banishedRole === "werebear" && m.banished) {
-      localStorage.setItem(seenKey, "1");
-      setFilm({
-        src: nightFilmSrc("werebear"),
-        caption: `${m.banished} was the werebear — and the village got them.`,
-      });
-      return;
-    }
-    if (!m.eaten) return;
-    const victim = view.players.find((p) => p.name === m.eaten);
-    if (!victim?.character) return;
-    localStorage.setItem(seenKey, "1");
-    setFilm({
-      src: nightFilmSrc(victim.character),
-      caption: `${m.eaten} was taken in the night.`,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view?.mornings.length]);
 
   // Share our cosmetic character with the village once we're seated.
   useEffect(() => {
@@ -592,29 +555,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         </div>
       )}
 
-      {film && (
-        <div
-          className="film-overlay"
-          role="dialog"
-          aria-label={film.caption}
-          onClick={() => setFilm(null)}
-        >
-          <div className="film-frame" onClick={(e) => e.stopPropagation()}>
-            <video
-              src={film.src}
-              autoPlay
-              muted
-              playsInline
-              controls
-              onError={() => setFilm(null)} // no reel for this villager (yet)
-            />
-            <p className="film-caption">{film.caption}</p>
-            <button className="primary" onClick={() => setFilm(null)}>
-              Close the curtains
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
