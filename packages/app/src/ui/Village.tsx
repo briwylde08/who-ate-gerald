@@ -283,9 +283,13 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         <div className="panel">
           <h3>⚖ The Town Treasury owes you</h3>
           <p className="dim">
-            You hold {xlmString(balances.spendable)} XLM; the allowance at this point is{" "}
-            {xlmString(remainingAllowance)}. Daily income and old-wallet shortfalls both collect
-            here — the deposit is public, so everyone can verify it's fair.
+            {/* No treasury pays anyone: income is PERMISSION to move more of
+                your own XLM behind the curtain, publicly. Say so. */}
+            You hold {xlmString(balances.spendable)} XLM; the rules allow{" "}
+            {xlmString(remainingAllowance)} by today. Collecting deposits the missing{" "}
+            {xlmString(deficit)} XLM from your own public wallet into your sealed purse. The
+            deposit's amount is public on purpose — that's how the village verifies everyone
+            plays within the same budget.
           </p>
           <button className="primary" onClick={() => void topUp()}>
             Collect {xlmString(deficit)} XLM
