@@ -47,6 +47,15 @@ moment in playtest 10.) Bots always act, so bot games never show it.
 Escape hatch today: the GM's **resolve day**, which force-resolves without
 the missing votes. A soft timeout is a pacing decision — Bri's call.
 
+## Copy sweep queued (2026-08-04)
+- **"sealed" → "confidential"** everywhere, if it survives a night's sleep.
+  The six-steps footer already switched. Remaining "sealed" sites: the
+  purchase narration (PHASE_LABEL in PlayerApp), the Ledger's split rows
+  ("amount ●●●●●● sealed", "sealed on chain"), the six-steps step-2 copy
+  ("becomes a hidden claim"), the receipt ("Sealing the amount…"), the
+  purse note, and the owes-you panel. Decide once, sweep once — mixed
+  vocabulary is worse than either word.
+
 ## Open decisions
 - **Butts in seats** (2026-08-04): when real people play short-handed, how
   do bots fill the gap without a terminal? Analysis done, direction chosen:
