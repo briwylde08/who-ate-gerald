@@ -29,20 +29,23 @@ body {
   min-height: 100vh;
 }
 
-/* The game shell runs edge to edge (Bri's call — capped widths read as
-   squished next to the sidebar). Reading-width pages are capped below. */
-#root { max-width: none; margin: 0 auto; padding: 24px 24px 80px; }
+/* The game shell runs LITERALLY edge to edge (Bri's call): main column
+   from the left edge of the screen, the six-steps sidebar hard against
+   the right. The previous attempt failed because PlayerApp wraps the app
+   in one <div>, so a #root > * cap swallowed the whole thing — the rules
+   below anchor on that wrapper (.app-root) instead. */
+#root { max-width: none; margin: 0; padding: 24px 0 80px; }
 
-/* Only the game shell earns the full 1360: everything else (the story,
-   the welcome, the connect panel, error banners) keeps reading width.
-   The masthead and topbar manage their own width (full-bleed). */
-#root > :not(.app-shell):not(.masthead):not(.topbar) {
-  max-width: 1000px;
+/* Everything OUTSIDE the game shell keeps reading width: the story, the
+   welcome, the connect panel, error banners. The masthead and topbar
+   manage their own (full-bleed) width. */
+.app-root > :not(.app-shell):not(.masthead):not(.topbar) {
+  max-width: min(1000px, calc(100vw - 32px));
   margin-left: auto;
   margin-right: auto;
 }
 
-.app-shell { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
+.app-shell { display: flex; gap: 16px; align-items: flex-start; }
 .app-main { flex: 1 1 auto; min-width: 0; }
 .six-aside {
   flex: 0 0 320px;

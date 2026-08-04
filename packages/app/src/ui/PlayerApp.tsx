@@ -257,7 +257,7 @@ export function PlayerApp() {
   };
 
   return (
-    <div>
+    <div className="app-root">
       <div className="topbar">
         {profile && (
           <button
