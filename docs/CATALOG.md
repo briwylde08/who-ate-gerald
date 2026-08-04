@@ -40,7 +40,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 32 | Sock in mouth *(aim: player)* | General Store | Pick a villager. They can still type in the chat, but they lose their vote today. The morning report names them. |
 | 33 | Tooth sharpener | The Butcher's | Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone. |
 | 35 | Curfew bell | Blacksmith | Ring it, and the werebear stays home tonight. No hunting. No one dies tonight. |
-| 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn whether they are the werebear; otherwise you learn nothing. It never lies. |
+| 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn, on the spot, whether they are the werebear; otherwise you learn nothing. It never lies. |
 | 45 | Barrel of beer | General Store | You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear. |
 
 Economy: 50 XLM buy-in, +25 each morning (raised from 15, Bri 2026-08-04 — at 15/day the late game went broke and passive), two stores a day, each item

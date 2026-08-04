@@ -119,7 +119,7 @@ export const playerApi = {
 
   /** Point an aimed item (key, sock, bone, candle) at its victim. */
   aim: (w: VillagerWallet, game: string, item: string, target?: string, shop?: string) =>
-    playerCall<{ aimed: string; at: string }>(w, game, "aim", { item, target, shop }),
+    playerCall<{ aimed: string; at: string; result?: string }>(w, game, "aim", { item, target, shop }),
 };
 
 /** The notice-board: games in lobby phase, seating players right now. */

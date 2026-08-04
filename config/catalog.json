@@ -127,7 +127,7 @@
           "flavor": "Burns all night. Sees about half of it.",
           "priceXlm": 42,
           "class": "V-info",
-          "effect": "Pick a villager. A 50/50 chance you privately learn whether they are the werebear; otherwise you learn nothing. It never lies.",
+          "effect": "Pick a villager. A 50/50 chance you privately learn, on the spot, whether they are the werebear; otherwise you learn nothing. It never lies.",
           "aim": "player"
         }
       ]

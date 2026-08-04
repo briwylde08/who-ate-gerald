@@ -521,38 +521,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         </div>
       </div>
 
-      {view.mornings.length > 0 && (
-        <div className="panel crier">
-          <h2>📯 The Town Crier</h2>
-          <p className="dim">Every dawn, cried in full. Newest first.</p>
-      {[...view.mornings].reverse().map((m) => (
-        <div key={m.round} className="crier-day">
-          <h3>Morning of day {m.round + 1}</h3>
-          {m.banished && (
-            <p>
-              The village banished <b>{m.banished}</b> — {m.banishedRole === "werebear" ? "🐻 THE WEREBEAR!" : "a villager. Oops."}
-            </p>
-          )}
-          {m.eaten && (
-            <p>
-              <b>{m.eaten}</b> was eaten in the night, like Gerald before them.
-            </p>
-          )}
-          {m.notes.map((n, i) => (
-            <p key={i} className="dim">
-              {n}
-            </p>
-          ))}
-          {(m.violations ?? []).map((v, i) => (
-            <p key={i} className="dim">
-              ⚖ {v}
-            </p>
-          ))}
-          {m.winner && <p className="tagline">The {m.winner} has won.</p>}
-        </div>
-      ))}
-        </div>
-      )}
 
     </div>
   );

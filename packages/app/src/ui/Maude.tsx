@@ -42,9 +42,11 @@ interface Props {
   wallet: VillagerWallet;
   gameId: string;
   setError: (e: string | null) => void;
+  /** Jump to Chat & Vote — the post-answer pointer goes there. */
+  onGoChatVote: () => void;
 }
 
-export function Maude({ wallet, gameId, setError }: Props) {
+export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<{ round: number; question: string; answer: string }[]>([]);
@@ -291,9 +293,12 @@ export function Maude({ wallet, gameId, setError }: Props) {
               {/* Only after the newest answer: what to do with it. */}
               {i === 0 && (
                 <p className="whats-next">
-                  Now that you've gotten your insight, navigate back to the{" "}
-                  <b>Town Square</b> to discuss your findings with your fellow villagers, then
-                  pick someone to accuse.
+                  Now that you've gotten your insight, head to{" "}
+                  <button className="link inline" onClick={onGoChatVote}>
+                    Chat &amp; Vote
+                  </button>{" "}
+                  to discuss your findings with your fellow villagers, then pick someone to
+                  accuse.
                 </p>
               )}
             </div>

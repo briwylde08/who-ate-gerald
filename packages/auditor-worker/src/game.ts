@@ -648,8 +648,29 @@ export class GameRoom extends DurableObject<Env> {
     }
 
     this.state.aims.push({ round, by: address, item: itemId, target: targetName, shop: shopId });
+
+    // The long candle answers NOW (Bri: a dawn delivery arrived a whole
+    // trial too late to think with). Roles are dealt whenever aiming is
+    // possible, so the answer already exists — roll it, note it, return it
+    // in the aim response, which only the aimer ever sees. A purchase
+    // voided by a barred door still burns nothing: no roll, no answer.
+    let result: string | undefined;
+    if (itemId === "the_long_candle" && targetName) {
+      const myCandle = purchases.find(
+        (x) => x.from === address && x.round === round && x.itemGuess === item.label,
+      );
+      if (myCandle && !this.isVoided(myCandle, round)) {
+        const read = this.playerByName(targetName)!;
+        const shows = randomIndex(2) === 0;
+        const isBear = this.state.roles?.[read.address] === "werebear";
+        result = shows
+          ? `🕯 The candle worked: ${read.name} is ${isBear ? "THE WEREBEAR" : "not the werebear"}.`
+          : `🕯 The candle failed: it told you nothing about ${read.name}.`;
+        ((this.state.privateNotes ??= {})[address] ??= []).push({ round, text: result });
+      }
+    }
     await this.persist();
-    return { aimed: item.label, at: [targetName, shopId].filter(Boolean).join(" @ ") };
+    return { aimed: item.label, at: [targetName, shopId].filter(Boolean).join(" @ "), result };
   }
 
   async discloseOne(address: string, txHash: string): Promise<{ revealed: string }> {
@@ -1001,19 +1022,6 @@ export class GameRoom extends DurableObject<Env> {
       );
     }
 
-    // The long candle: an even chance the flame reads true, privately.
-    for (const a of aimedToday("the_long_candle")) {
-      const read = a.target ? this.playerByName(a.target) : null;
-      if (!read) continue;
-      const shows = randomIndex(2) === 0;
-      const isBear = roles[read.address] === "werebear";
-      ((this.state.privateNotes ??= {})[a.by] ??= []).push({
-        round: round + 1,
-        text: shows
-          ? `🕯 The candle worked: ${read.name} is ${isBear ? "THE WEREBEAR" : "not the werebear"}.`
-          : `🕯 The candle failed: it told you nothing about ${read.name}.`,
-      });
-    }
 
     // --- AUDITS: the Order notices. ----------------------------------------
     // Deposit audit: deposits made DURING THIS GAME vs the allowance

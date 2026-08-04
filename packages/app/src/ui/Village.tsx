@@ -167,6 +167,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [aimTarget, setAimTarget] = useState<Record<string, string>>({});
   const [aimShop, setAimShop] = useState<Record<string, string>>({});
   const [aimed, setAimed] = useState<Record<string, string>>({});
+  /** An aimed item that answers instantly (the candle) — shown as a modal. */
+  const [aimResult, setAimResult] = useState<string | null>(null);
   const aimsKey = `gerald:aims:${loadGameId()}:${round}`;
   // Yesterday's receipt is yesterday's news — a new day clears it.
   useEffect(() => {
@@ -243,6 +245,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         localStorage.setItem(aimsKey, JSON.stringify(next));
         return next;
       });
+      if (r.result) setAimResult(r.result);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -648,6 +651,20 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           </div>
         </div>
       )}
+      {aimResult && (
+        <div className="film-overlay" role="dialog" aria-label="Your result">
+          <div className="panel dawn-modal">
+            <h2>🕯 Only you see this</h2>
+            <p className="dawn-note">{aimResult}</p>
+            <div className="row">
+              <button className="primary" onClick={() => setAimResult(null)}>
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Narrow screens have no sidebar; the tracker lives here instead
           (it lived in My Ledger until that tab retired). */}
       <div className="six-inline">

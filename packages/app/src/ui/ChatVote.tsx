@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
 import { loadHistory } from "../lib/history";
-import { xlmDisplay } from "../lib/catalog";
+import { SHOPS, xlmDisplay } from "../lib/catalog";
 import {
   fetchPublicView,
   hasCachedAuth,
@@ -29,6 +29,12 @@ interface Props {
 }
 
 type Role = "villager" | "werebear";
+
+/** Catalog effect text by item label — the kit list explains what you hold. */
+const EFFECT_BY_LABEL = new Map(
+  SHOPS.flatMap((sh) => sh.items).map((it) => [it.label, it.effect]),
+);
+const effectOf = (label: string) => EFFECT_BY_LABEL.get(label);
 
 export function ChatVote({ wallet, gameId, setError }: Props) {
   const [view, setView] = useState<PublicView | null>(null);
@@ -173,7 +179,7 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
           dawn breaks, so the outcome must not hide in the Town Square. */}
       {lastMorning && (
         <div className="panel">
-          <h2>🌅 Morning of day {lastMorning.round + 1}</h2>
+          <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
           {lastMorning.banished && (
             <p>
               The village banished <b>{lastMorning.banished}</b> —{" "}
@@ -312,6 +318,7 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
                     {" "}
                     — {xlmDisplay(BigInt(r.amountStroops))} XLM, {r.shopLabel}
                   </span>
+                  {effectOf(r.item) && <span className="kit-effect">{effectOf(r.item)}</span>}
                 </li>
               ))}
             </ul>

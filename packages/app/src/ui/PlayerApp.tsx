@@ -551,7 +551,7 @@ export function PlayerApp() {
             />
           </div>
           <div style={{ display: tab === "maude" ? "block" : "none" }}>
-            <Maude wallet={wallet} gameId={gameId} setError={setError} />
+            <Maude wallet={wallet} gameId={gameId} setError={setError} onGoChatVote={() => setTab("chatvote")} />
           </div>
           <div style={{ display: tab === "town" ? "block" : "none" }}>
             <Town
