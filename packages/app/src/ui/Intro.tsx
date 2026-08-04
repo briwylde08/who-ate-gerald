@@ -197,9 +197,7 @@ export function Intro({
         <h2>Join an existing game</h2>
         {lobbies.length === 0 ? (
           <div className="panel">
-            <p className="dim">
-              Nobody else has taken a seat in a game yet. Continue above, or start one below.
-            </p>
+            <p className="dim">No games in progress yet.</p>
           </div>
         ) : (
           <div className="panel">
