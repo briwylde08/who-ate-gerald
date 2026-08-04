@@ -34,7 +34,7 @@ body {
    the right. The previous attempt failed because PlayerApp wraps the app
    in one <div>, so a #root > * cap swallowed the whole thing — the rules
    below anchor on that wrapper (.app-root) instead. */
-#root { max-width: none; margin: 0; padding: 24px 0 80px; }
+#root { max-width: none; margin: 0; padding: 24px 12px 80px; }
 
 /* Everything OUTSIDE the game shell keeps reading width: the story, the
    welcome, the connect panel, error banners. The masthead and topbar
