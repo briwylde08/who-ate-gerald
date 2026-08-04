@@ -278,6 +278,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           {DAILY_INCOME_XLM} XLM per day. Once you're done purchasing your items for the day,
           click the “Done buying for today” button.
         </p>
+        <p className="dim">
+          Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,
+          never the amount. What each item does is public knowledge — which one you bought is
+          not. The werebear is shopping too.
+        </p>
       </div>
       {!dead && deficit > 0n && excess === 0n && (
         <div className="panel">
@@ -569,12 +574,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           );
         })}
       </div>
-
-      <p className="dim">
-        Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,
-        never the amount. What each item does is public knowledge — which one you bought is
-        not. The werebear is shopping too.
-      </p>
 
       {/* The running receipt trail: every tx this browser signed, linked to
           the chain, newest first. The proof the game is real, one click away. */}
