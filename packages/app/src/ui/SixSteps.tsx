@@ -45,7 +45,7 @@ export function SixSteps({ balances, purchases }: Props) {
       name: "Deposit",
       what: "XLM from your Freighter wallet goes into the shared pool. You receive confidential claims in return.",
       state: funded ? "done" : "waiting",
-      note: funded ? "Your daily income." : "not yet",
+      note: funded ? "your daily income" : "not yet",
     },
     {
       n: 3,
