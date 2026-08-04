@@ -615,9 +615,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           sealed) and deposits (amount visible — that's the boundary rule,
           demonstrated). Your own rows get your private detail, because this
           is your browser and it remembers what you bought. */}
-      {feed.length > 0 && (
+      {/* Always present, even empty — a box that hides when it has nothing
+          to say is a box nobody can find ("where is the tx box?" — Bri). */}
+      {marketOpen && (
         <div className="panel activity-log">
           <h3>Onchain activity</h3>
+          {feed.length === 0 && (
+            <p className="dim">
+              Nothing yet — the village's transactions appear here as they land on the chain.
+            </p>
+          )}
           <div className="activity-rows">
             {feed.map((a, i) => (
               <div key={`${a.txHash}-${i}`} className="activity-row">
