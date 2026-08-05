@@ -190,6 +190,9 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   }
 
   const lastMorning = view.mornings.length > 0 ? view.mornings[view.mornings.length - 1] : null;
+  /** Dawn has resolved but the next day hasn't opened (the ~60s roll): the
+   *  newest morning still belongs to the CURRENT round. */
+  const dayResetting = lastMorning !== null && lastMorning.round === view.round;
 
   return (
     <div>
@@ -416,8 +419,8 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
           {/* The results are read; the next day is shopping. One click. */}
           {!view.winner && (
             <div className="row">
-              <button className="primary" onClick={onGoShops}>
-                Start new day →
+              <button className="primary" disabled={dayResetting} onClick={onGoShops}>
+                {dayResetting ? "Waiting for the day to reset…" : "Start new day →"}
               </button>
             </div>
           )}
