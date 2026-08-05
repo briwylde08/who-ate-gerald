@@ -203,6 +203,8 @@ export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
       )}
 
       <div className="panel">
+
+        <h3 className="composer-head">Choose a question, or write your own</h3>
         <div className="ask-about">
           <label htmlFor="maude-target">Ask about</label>
           <select
@@ -220,8 +222,6 @@ export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
             ))}
           </select>
         </div>
-
-        <h3 className="composer-head">Choose a question, or write your own</h3>
         {QUESTION_GROUPS.map((group) => (
           <div key={group.label} className="q-group">
             <div className="q-group-label">{group.label}</div>
