@@ -262,7 +262,9 @@ button.link:hover { color: var(--gold); }
   background: rgba(35, 39, 56, 0.8);
 }
 .item:hover .price { color: var(--lantern); }
-.item-main { min-width: 0; }
+/* flex-basis 0 so long effect text SHRINKS instead of shoving the price
+   and button to a new line — only the aim-row is allowed to wrap. */
+.item-main { flex: 1 1 0; min-width: 0; }
 .item-name {
   display: flex;
   align-items: center;
