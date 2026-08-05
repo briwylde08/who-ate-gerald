@@ -220,6 +220,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       ),
   );
 
+  /** Done with something unaimed = almost certainly a mistake. Arm first. */
+  const [doneArmed, setDoneArmed] = useState(false);
   const declareDone = async () => {
     setError(null);
     try {
@@ -473,9 +475,29 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       )}
       {!dead && !doneToday && round >= 1 && (
         <div className="row">
-          <button onClick={() => void declareDone()}>Done buying for today</button>
+          <button
+            className={doneArmed ? "armed" : ""}
+            onClick={() => {
+              // An unaimed item does NOTHING — the baker lost 23 XLM to a
+              // holiday he never pointed (game04). Make Done a deliberate
+              // second click while anything is still unaimed.
+              if (unaimed.length > 0 && !doneArmed) {
+                setDoneArmed(true);
+                window.setTimeout(() => setDoneArmed(false), 5000);
+                return;
+              }
+              setDoneArmed(false);
+              void declareDone();
+            }}
+          >
+            {doneArmed
+              ? `⚠ ${unaimed.map((it) => it.label).join(", ")} not aimed — Done anyway?`
+              : "Done buying for today"}
+          </button>
           <span className="dim">
-            locks your stores; when the whole village is done, Maude opens
+            {doneArmed
+              ? "Aim it above first, or click again to finish with it unaimed."
+              : "locks your stores; when the whole village is done, Maude opens"}
           </span>
         </div>
       )}
