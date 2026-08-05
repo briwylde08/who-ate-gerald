@@ -87,7 +87,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
 
   const topUp = async () => {
     setError(null);
-    setBusy("Topping up your budget (deposit + collect)…");
+    // Two real transactions, narrated as they happen — Bri's wording.
+    setBusy("Depositing XLM from Freighter into the confidential token contract pool…");
     try {
       const dep = await wallet.deposit(deficit);
       recordActivity(wallet.address, {
@@ -96,6 +97,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         detail: `${xlmString(deficit)} XLM — public, so the budget is verifiable`,
         txHash: dep,
       });
+      setBusy("Collecting into your spendable balance…");
       const mrg = await wallet.merge();
       recordActivity(wallet.address, {
         at: new Date().toISOString(),
