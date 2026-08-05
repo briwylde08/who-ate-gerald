@@ -6,10 +6,9 @@ import { xlmDisplay } from "../lib/catalog";
  * has ACTUALLY done on chain. Not a diagram: every ✓ here is a real
  * transaction they signed, read back from their own balances and ledger.
  *
- * Two of the six are deliberately marked as not-yours rather than hidden. The
- * receiver's merge happens in the shopkeeper's wallet, and withdrawal never
- * happens at all in this game — saying so teaches more than quietly showing
- * four steps and calling it six.
+ * Steps 5 and 6 belong to the RECEIVER — shown at full brightness with an
+ * arrow, because they're the final steps of every confidential transfer even
+ * though this game never shows them happening.
  */
 
 type State = "done" | "waiting" | "elsewhere" | "unused";
@@ -71,24 +70,26 @@ export function SixSteps({ balances, purchases }: Props) {
     {
       n: 5,
       name: "Merge",
-      what: "The receiver moves your payment from their pending into their spendable.",
+      what: "The receiver moves your payment from their pending balance into their spendable balance.",
       state: "elsewhere",
-      note: "happens in the shopkeeper's wallet, not yours",
+      note: "happens at the receiver",
     },
     {
       n: 6,
       name: "Withdraw",
-      what: "Turn a hidden claim back into ordinary XLM.",
-      state: "unused",
-      note: "never happens here — the coin stays in the wrapper all game",
+      what: "The receiver can turn confidential claims back into ordinary XLM.",
+      state: "elsewhere",
+      note: "happens at the receiver — the final step of a confidential token transfer",
     },
   ];
 
   const MARK: Record<State, string> = {
     done: "✓",
     waiting: "○",
+    // → on both closing steps: actions you won't see in this game, but
+    // still the final steps of every confidential token transfer.
     elsewhere: "→",
-    unused: "—",
+    unused: "→",
   };
 
   return (

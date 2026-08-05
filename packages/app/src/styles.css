@@ -593,7 +593,11 @@ th { color: var(--ink-dim); font-weight: normal; }
 .step-done { border-left: 2px solid var(--green); }
 .step-done .step-mark { color: var(--green); }
 .step-waiting { border-left: 2px solid #5b6284; }
-.step-elsewhere, .step-unused { opacity: 0.6; }
+/* The receiver's steps: full brightness (Bri) — they're real steps of the
+   transfer, just not yours to perform. The arrow and the moon accent say
+   "elsewhere", not "lesser". */
+.step-elsewhere, .step-unused { border-left: 2px solid var(--moon); }
+.step-elsewhere .step-mark, .step-unused .step-mark { color: var(--moon); }
 .step-body { display: flex; flex-direction: column; min-width: 0; }
 .step-name { font-size: 0.86rem; color: var(--ink); }
 .step-what { font-size: 0.74rem; color: var(--ink-dim); line-height: 1.4; margin-top: 1px; }

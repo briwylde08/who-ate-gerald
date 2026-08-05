@@ -60,16 +60,15 @@ the missing votes. A soft timeout is a pacing decision — Bri's call.
   purse note, and the owes-you panel. Decide once, sweep once — mixed
   vocabulary is worse than either word.
 
-## Queued build: the withdraw ceremony (2026-08-04, Bri approved)
-When the reckoning card shows, survivors get "Withdraw your winnings":
-remaining confidential claims back to public XLM, on-chain, right there.
-Completes the six-step story with a real transaction — the tracker's
-final "—" becomes a "✓" — and the game ends where the protocol ends:
-value leaving the wrapper. The dead's claims stay sealed in the pool,
-which suits a village full of secrets. Work: the withdraw proof flow in
-the browser (wallet method + prover exist in the SDK; ~half a day), a
-button on the winner card, and a six-steps state for "withdrawn".
-Related, cheap: label collect buttons as the merges they are.
+## Considered and declined: the withdraw ceremony (2026-08-05)
+Survivors withdrawing their winnings at the reckoning — approved on
+08-04, reconsidered next morning. Verdict: a button that does nothing
+for play, at the moment of lowest attention, adding a proof-failure
+surface to the finale. Resolution shipped instead: six-steps 5 and 6
+now display at FULL brightness with → marks, framed as the receiver's
+steps — real parts of every confidential transfer that this game simply
+never shows. Absence, explained, is the lesson. Still worth doing from
+the wreckage: label the collect buttons as the merges they are.
 
 ## Open decisions
 - **Butts in seats** (2026-08-04): when real people play short-handed, how
