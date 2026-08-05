@@ -119,55 +119,57 @@ export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
         <div className="maude-words">
           <div className="role-label">The Auditor</div>
           <h2>Maude McLedger</h2>
-          <p className="maude-tagline">Fortune teller. Ledger reader. Terrible confidante.</p>
+          <p className="dim">
+            As the Auditor, Maude holds the one key that can read every confidential amount on
+            the ledger. Her answers aren't guesses — she reads them straight from the chain, so
+            they cannot be wrong.
+          </p>
           <p className="dim">
             One question per villager per day, and no other villager sees her answer.
           </p>
           <div className={`seal seal-${seal}`}>{sealLabel}</div>
-          {/* Her state lives WITH her — one card, not two (Bri). */}
           <div className="state-card">
-
-        {seal === "locked" && me?.doneToday !== true && round >= 1 && (
-          <p className="maude-quote">
-            “Finish your errands first, dear — I don't read ledgers that are still being
-            written.”
-          </p>
-        )}
-        {seal === "locked" && me?.doneToday === true && view?.marketClosed === false && (
-          <p className="maude-quote">“One moment, dear — the market is still open.”</p>
-        )}
-        <div className="state-head">
-          {seal === "available"
-            ? "Maude is listening"
-            : seal === "spent"
-              ? "Maude has answered for today"
-              : "Maude is unavailable"}
-            </div>
-        </div>
-      </div>
-
-        <p className="state-note">
-          {seal === "available" ? (
-            "You have one question remaining today."
-          ) : seal === "spent" ? (
-            "You get a new question when the next day begins."
-          ) : round < 1 ? (
-            "Her office opens once the first day begins."
-          ) : me?.alive === false ? (
-            "The dead ask no questions."
-          ) : me?.doneToday !== true ? (
-            <>
-              Declare yourself done in <b>The Shops</b> to unlock your question.
-            </>
-          ) : (
-            <>
-              The market closes for everyone at once.
-              {(view?.stillShopping ?? []).length > 0 && (
-                <> Still shopping: {(view?.stillShopping ?? []).join(", ")}.</>
+            {seal === "locked" && me?.doneToday !== true && round >= 1 && (
+              <p className="maude-quote">
+                “Finish your errands first, dear — I don't read ledgers that are still being
+                written.”
+              </p>
+            )}
+            {seal === "locked" && me?.doneToday === true && view?.marketClosed === false && (
+              <p className="maude-quote">“One moment, dear — the market is still open.”</p>
+            )}
+            {/* No "Maude is unavailable" heading: the chip and the reason
+                line below already say it — three closed signs was two too
+                many (Bri). */}
+            {seal !== "locked" && (
+              <div className="state-head">
+                {seal === "available" ? "Maude is listening" : "Maude has answered for today"}
+              </div>
+            )}
+            <p className="state-note">
+              {seal === "available" ? (
+                "You have one question remaining today."
+              ) : seal === "spent" ? (
+                "You get a new question when the next day begins."
+              ) : round < 1 ? (
+                "Her office opens once the first day begins."
+              ) : me?.alive === false ? (
+                "The dead ask no questions."
+              ) : me?.doneToday !== true ? (
+                <>
+                  Declare yourself done in <b>The Shops</b> to unlock your question.
+                </>
+              ) : (
+                <>
+                  The market closes for everyone at once.
+                  {(view?.stillShopping ?? []).length > 0 && (
+                    <> Still shopping: {(view?.stillShopping ?? []).join(", ")}.</>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </p>
+            </p>
+          </div>
+        </div>
       </div>
 
       {round >= 1 && (
