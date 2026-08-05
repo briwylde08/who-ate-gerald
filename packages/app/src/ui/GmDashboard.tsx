@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { BearIcon } from "./CharIcon";
 import {
   generateRecipientKeys,
   recipientKeysFromSecret,
@@ -483,7 +484,15 @@ function GodPanel({
                     {p.name}
                     {p.alive ? "" : " ☠"}
                   </td>
-                  <td>{p.role === "werebear" ? "🐻 werebear" : p.role}</td>
+                  <td>
+                    {p.role === "werebear" ? (
+                      <>
+                        <BearIcon /> werebear
+                      </>
+                    ) : (
+                      p.role
+                    )}
+                  </td>
                   <td>
                     {p.purchases.length === 0
                       ? "—"

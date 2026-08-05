@@ -9,7 +9,7 @@ import {
   playerApi,
   type PublicView,
 } from "../lib/player";
-import { ToteIcon } from "./CharIcon";
+import { BearIcon, ToteIcon } from "./CharIcon";
 
 /**
  * Where the day is decided: the chat, the trial, and (for one player only)
@@ -392,7 +392,13 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
           {lastMorning.banished && (
             <p>
               The village banished <b>{lastMorning.banished}</b> —{" "}
-              {lastMorning.banishedRole === "werebear" ? "🐻 THE WEREBEAR!" : "a villager. Oops."}
+              {lastMorning.banishedRole === "werebear" ? (
+                <>
+                  <BearIcon /> THE WEREBEAR!
+                </>
+              ) : (
+                "a villager. Oops."
+              )}
             </p>
           )}
           {lastMorning.eaten && (
@@ -420,7 +426,9 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
 
       {role === "werebear" && me?.alive && view.phase === "day" && !view.winner && (
         <div className="panel">
-          <h2>🐻 The hunt (only you can see this)</h2>
+          <h2>
+            <BearIcon /> The hunt (only you can see this)
+          </h2>
           <p className="dim">
             Pick tonight's meal. You may change your mind until the day is resolved.
             {picked && (

@@ -10,3 +10,8 @@ export function CharEmoji({ c }: { c: Character | null | undefined }) {
 export function ToteIcon() {
   return <img className="char-icon" src="/characters/tote-icon.png" alt="" />;
 }
+
+/** The werebear — replaces the 🐻 emoji wherever the beast is meant. */
+export function BearIcon() {
+  return <img className="char-icon" src="/characters/bear-icon.png" alt="werebear" />;
+}

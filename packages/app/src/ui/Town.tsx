@@ -12,7 +12,7 @@ import {
   type PublicView,
 } from "../lib/player";
 import { CHARACTERS, loadProfile } from "../lib/profile";
-import { CharEmoji, ToteIcon } from "./CharIcon";
+import { BearIcon, CharEmoji, ToteIcon } from "./CharIcon";
 import { loadHistory } from "../lib/history";
 import { DAILY_INCOME_XLM } from "../lib/catalog";
 
@@ -221,7 +221,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         )}
         {view.winner && view.bear && (
           <div className="answer-card" style={{ fontSize: "1.1rem" }}>
-            🐻 <b>{view.bear} was the werebear.</b>{" "}
+            <BearIcon /> <b>{view.bear} was the werebear.</b>{" "}
             {view.calledOff
               ? "The Order called the hunt off before the village found them."
               : view.winner === "werebear"
@@ -322,7 +322,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           <div className="answer-card">
             {role === "werebear" ? (
               <>
-                🐻 <b>You are the werebear.</b> Gerald was delicious. Shop and vote like any
+                <BearIcon /> <b>You are the werebear.</b> Gerald was delicious. Shop and vote like any
                 villager and each day, pick someone to eat.
               </>
             ) : (
