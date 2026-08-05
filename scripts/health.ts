@@ -2,7 +2,7 @@
  * Phase 0 exit exam — proves the whole sovereign stack end-to-end:
  *
  *   1. RPC reachable; game token + auditor registry live.
- *   2. All 5 shops registered.
+ *   2. Every shop in the config registered.
  *   3. A throwaway "test villager" plays a miniature turn IN NODE:
  *      register → deposit → merge → confidential transfer to the Chapel.
  *      (This also proves the SHARED verifier accepts proofs for OUR token.)
@@ -65,7 +65,9 @@ async function main() {
   console.log(`our auditor registry: ${dep.auditor}`);
 
   // 2. Shops registered
-  for (const name of ["blacksmith", "general_store", "apothecary", "liquor_store", "chapel"]) {
+  // The real roster, not a hardcoded era: every shop in the config.
+  const shopNames = Object.keys(shops).filter((k) => k !== "token" && k !== "maudes_office");
+  for (const name of shopNames) {
     const acct = await client.confidentialBalance(shops[name]);
     console.log(`  ${name}: ${acct ? "registered ✓" : "NOT REGISTERED ✗"}`);
     if (!acct) process.exit(1);
