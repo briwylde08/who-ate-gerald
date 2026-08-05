@@ -54,48 +54,4 @@ parity, or by surviving to the end of day six.
 | Doc | What it's for |
 |---|---|
 | [docs/CATALOG.md](docs/CATALOG.md) | The shelf: every item, the design laws, standing rulings, balance watch list |
-| [docs/CONFIDENTIAL-TOKENS.md](docs/CONFIDENTIAL-TOKENS.md) | What the cryptography actually does, mapped onto the game |
-
-## Commands
-
-```sh
-npm run deploy:app       # build + ship the player app (Pages, direct upload)
-npm run bots <game> [n]  # fill a lobby with bot villagers — they play for real
-npm run item-test        # scripted game asserting every item's effect fires
-npm run test:auditor     # Maude's fact layer (fast, no chain writes)
-npm run test:auth        # SEP-53 player-signature verification
-npm run health           # end-to-end stack check against testnet
-# worker: cd packages/auditor-worker && npx wrangler deploy
-```
-
-The GM dashboard is at `/#gm` with the token from `config/local.gm.json`. It
-shows decrypted purchases for every player — **never screen-share it.**
-
-## Running it yourself
-
-```sh
-npm install          # Node 20+; workspaces pull in the vendored SDK
-npm run deploy:app   # or `npm run dev --workspace @gerald/app` for local
-```
-
-Everything here talks to a **Stellar testnet** deployment that already exists
-(`config/deployment.testnet.json`), so the app runs against it with nothing
-but Freighter. What a fresh clone does *not* have, because they are
-gitignored secrets:
-
-| File | Needed for |
-|---|---|
-| `config/local.gm.json` | the GM dashboard and any script that drives a game |
-| `config/local.auditor.json` | decrypting transfers (`test:auditor`, `health`) |
-| `config/local.deployer.json`, `config/local.shops.json` | deploying a new token or registering shops |
-
-Deploying your own stack instead: `npm run deploy:stack`, then
-`npm run setup:shops`, then set the worker's secrets (`AUDITOR_K`,
-`GM_TOKEN`, and the OpenAI/gateway keys Maude speaks through) with
-`npx wrangler secret put`.
-
-## Sibling project
-
-**Axe & Ember** — the single-player tutorial for the same confidential-token
-mechanics. The wallet layer, indexer, and disclosure machinery were ported
-from there; the ember-indexer worker mirrors both tokens.
+| [docs/CONFIDENTIAL-TOKENS.md](docs/CONFIDENTIAL-TOKENS.md) | How a confidential token transfer works on Stellar — the full explanation |
