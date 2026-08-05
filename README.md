@@ -30,7 +30,7 @@ invent an amount.
 
 ## A day in the village
 
-Shop (at most two of four stores, one of each ware) → everyone presses Done →
+Shop (at most two of four stores, each item once per day) → everyone presses Done →
 Maude opens for one question each → the square argues → the trial banishes on
 a plurality → the werebear eats someone → the morning report says what the
 night's items did. The village wins by banishing the bear; the bear wins at

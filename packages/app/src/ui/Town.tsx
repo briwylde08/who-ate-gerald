@@ -431,7 +431,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         {!view.dealt && (
           <div className="invite-row">
             <span className="dim">
-              Others join by entering the game id <b>{gameId}</b> in the top bar.
+              Others join by pressing <b>Play</b> and picking “{gameId}” off the board — or
+              entering the id under “Enter a private game id”.
             </span>
             <button
               className="link"

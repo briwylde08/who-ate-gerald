@@ -35,7 +35,7 @@ interface Props {
 }
 
 /**
- * The shop floor: five stores, each item a two-click button (arm, then
+ * The shop floor: four stores, each item a two-click button (arm, then
  * confirm). Every purchase is one confidential transfer — the village sees
  * the visit, never the amount, and the amount IS the item. Item effects are
  * public knowledge (hover); which one YOU bought is not.

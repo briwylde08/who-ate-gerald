@@ -1,3 +1,5 @@
+import { DAILY_INCOME_XLM, STARTING_BUDGET_XLM } from "../lib/catalog";
+
 /** The Gerald cold open — shown on first visit and via the 📜 banner button. */
 export function GeraldStory() {
   return (
@@ -21,7 +23,8 @@ export function GeraldStory() {
       <details>
         <summary>The rules</summary>
         <p className="dim">
-          Everyone starts with <b>50 XLM</b> of hidden budget and collects <b>15 more</b> each
+          Everyone starts with <b>{STARTING_BUDGET_XLM} XLM</b> of hidden budget and collects{" "}
+          <b>{DAILY_INCOME_XLM} more</b> each
           morning. Once every player is ready, roles are dealt in secret: <b>one werebear</b>,
           everyone else villagers. The werebear plays the whole day as a villager — it shops,
           talks, and votes like anyone else — and then picks who dies that night.
@@ -69,7 +72,8 @@ export function GeraldStory() {
         <p className="dim">
           Your budget is a balance in a <b>confidential token</b> on Stellar testnet. You
           deposit public XLM to fund it, and deposits are public — that's how everyone can
-          verify each player starts with the same 50 XLM and collects the same 15 per day.
+          verify each player starts with the same {STARTING_BUDGET_XLM} XLM and collects the same{" "}
+          {DAILY_INCOME_XLM} per day.
           Once the money is inside the token, your balance is stored as an encrypted
           commitment: on the ledger it is ciphertext, not a number anyone can read.
         </p>

@@ -462,8 +462,7 @@ function GodPanel({
         </button>
         {view && (
           <span className="dim">
-            pick: {view.nightPick ?? "—"} · wounded: {view.wounded ? "yes" : "no"} · venison 
-            pierces spent: {view.venisonUsed}
+            pick: {view.nightPick ?? "—"}
           </span>
         )}
       </div>
@@ -500,9 +499,6 @@ function GodPanel({
             <p className="dim">
               votes: {view.votes.map((v) => `${v.voter}→${v.target}`).join(" · ")}
             </p>
-          )}
-          {view.baneConsumed.length > 0 && (
-            <p className="dim">bearsbane spent: {view.baneConsumed.join(", ")}</p>
           )}
         </>
       )}
