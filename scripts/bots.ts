@@ -284,7 +284,6 @@ interface PublicView {
     character?: string | null;
     ready?: boolean;
     doneToday?: boolean;
-    standsAccused?: boolean;
     recovering?: boolean;
     ghostVoter?: boolean;
   }[];
@@ -524,10 +523,6 @@ async function main() {
 
           if (view.marketClosed) {
             // Stand accused? Comply — let Maude pick the purchase to unseal.
-            if (me.standsAccused) {
-              const ok = await bot.call("disclose", { txHash: "" }).catch(() => null);
-              if (ok) console.log(`  ${bot.name}: stood accused, disclosed`);
-            }
             // Table talk, once a day — half the time, point a finger at the
             // current top suspect. (The bear frames right along with them.)
             if (!isGhost && bot.chattedRound < view.round) {

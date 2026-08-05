@@ -15,7 +15,7 @@
  *          a shopkeeper's holiday are fitted for tomorrow
  *   Day 3  barred doors take the coin and give nothing (a lock aimed at one
  *          villager, a holiday shutting a store for all) · the long candle
- *          reports privately · the village hangs the beast
+ *          answers at aim time · the village hangs the beast
  *
  * Players are provisioned above the normal allowance so one villager can hold
  * several items at once: this covers item RESOLUTION, not the allowance audits
@@ -105,7 +105,6 @@ interface PublicPlayer {
   address: string;
   alive: boolean;
   recovering?: boolean;
-  standsAccused?: boolean;
 }
 
 async function gmCall<T>(action: string, body?: unknown, method = "POST"): Promise<T> {
@@ -348,7 +347,11 @@ async function main() {
     // An unbroken tie hangs nobody and puts BOTH tied villagers under suspicion:
     // they owe the village a purchase before they may vote again.
     check("nobody hangs on a tie", m2.banished === null, m2);
-    check("both tied villagers stand accused", hasNote(m2.notes, `${v1.name} stands accused`) && hasNote(m2.notes, `${v3.name} stands accused`), m2.notes);
+    check(
+      "and the tie says so plainly",
+      hasNote(m2.notes, "The vote tied: nobody is banished today."),
+      m2.notes,
+    );
 
     // ---- DAY 3 -------------------------------------------------------------
     console.log("\nDAY 3 — barred doors, the candle, and the reckoning");
@@ -367,17 +370,8 @@ async function main() {
     await v2.aim("the_long_candle", bear.name);
     await done([v1, v2, v3, bear]);
 
-    // Yesterday's tie left v1 and v3 accused. A locked mouth until they open a
-    // ledger — and the reveal is unsealed from the chain, so it cannot be a lie.
-    const gagged = await v1.call("vote", { target: bear.name }).then(
-      () => "accepted",
-      (e) => String(e),
-    );
-    check("the accused cannot vote until they disclose", String(gagged).includes("stand accused"), gagged);
-    const shown = await v1.call<{ revealed: string }>("disclose", { txHash: "" });
-    check("disclosing unseals a real purchase", /XLM/.test(shown.revealed), shown.revealed);
-    await v3.call("disclose", { txHash: "" });
-
+    // Yesterday's tie carried NO debt (Bri, 2026-08-05): everyone votes
+    // freely today. A tie simply means nobody died.
     await v1.call("vote", { target: bear.name });
     await v2.call("vote", { target: bear.name });
     await v3.call("vote", { target: bear.name });

@@ -95,10 +95,8 @@ export function GeraldStory() {
         <p className="dim">
           The token also supports an <b>auditor key</b>, held here by Maude McLedger. It
           decrypts every transfer, which is how your one question per day gets answered from
-          real ledger data rather than guesswork. And when you are accused, you nominate a
-          single purchase to unseal: the server decrypts that one transfer and publishes the
-          item, so the disclosure comes from the chain and cannot be a lie — selective
-          disclosure, which is the point of the whole scheme.
+          real ledger data rather than guesswork — selective disclosure, one narrow fact at a
+          time, which is the point of the whole scheme.
         </p>
       </details>
     </>

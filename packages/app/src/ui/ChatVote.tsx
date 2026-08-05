@@ -47,7 +47,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   const [picked, setPicked] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
-  const [discloseTx, setDiscloseTx] = useState("");
   const [privateNotes, setPrivateNotes] = useState<{ round: number; text: string }[]>([]);
   /** Fresh dawn results, shown as a modal once per round per browser. */
   const [dawnNotes, setDawnNotes] = useState<string[] | null>(null);
@@ -247,38 +246,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             </div>
           )}
 
-          {me?.standsAccused && (
-            <div className="answer-card">
-              <b>⚖ You stand accused.</b> The vote split on you yesterday — pick one purchase
-              and Maude will unseal it for the whole square (she reads the chain, so it cannot
-              be a lie). It reveals only that one purchase, nothing else you bought. Your vote
-              unlocks after. Refusing is allowed — but until you disclose, your vote stays in
-              your pocket, and the village will notice.
-              <div className="row">
-                <select value={discloseTx} onChange={(e) => setDiscloseTx(e.target.value)}>
-                  <option value="">reveal which purchase?</option>
-                  {loadHistory(wallet.address, gameId)
-                    .filter((r) => (r.round ?? 0) >= 1)
-                    .map((r) => (
-                      <option key={r.txHash} value={r.txHash}>
-                        {r.shopLabel}: {r.item}
-                      </option>
-                    ))}
-                </select>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    playerApi
-                      .disclose(wallet, gameId, discloseTx)
-                      .then(() => void loadView())
-                      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-                  }}
-                >
-                  Let Maude unseal it
-                </button>
-              </div>
-            </div>
-          )}
 
           {me && (
             <div className="row">
@@ -374,14 +341,10 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             </select>
             <button
               className="primary"
-              disabled={!voteTarget || !view.marketClosed || me?.standsAccused || me?.drunkToday}
+              disabled={!voteTarget || !view.marketClosed || me?.drunkToday}
               onClick={() => void castVote()}
             >
-              {me?.drunkToday
-                ? "🍺 Dead drunk — no vote today"
-                : me?.standsAccused
-                  ? "Reveal a purchase first (see the square)"
-                  : "Cast vote"}
+              {me?.drunkToday ? "🍺 Dead drunk — no vote today" : "Cast vote"}
             </button>
           </div>
         </div>

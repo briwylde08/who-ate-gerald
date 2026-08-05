@@ -58,11 +58,9 @@ are audited). Deadline: day SIX. The werebear may buy anything.
 - **Barred doors keep the coin.** The chain can't refuse a transfer; a
   purchase behind a lock or holiday does nothing and the buyer learns via
   private note. (Open question: warn the locked player at day start?)
-- **Death settles debts** — a corpse owes no disclosure and is not abed.
-- **Two nails in one tie: both excused, nobody hangs.** Both nails are
-  spent; the report says "Every tied villager was carrying iron." (Code
-  path in resolveDayInner's stillTied loop; not yet in the item exam —
-  staging it needs two fresh nail-holders in one engineered tie.)
+- **A tie means nobody dies** (Bri, 2026-08-05) — no banishment, no debt.
+  The old stand-accused disclosure is retired as low-impact and confusing.
+- **Two nails in one tie: both excused, nobody hangs.** Both nails spent.
 - **Ghost votes are public**, dawn waits for them, and the roster shows 👻.
 
 ## Watch list (updated 2026-08-05)
@@ -78,8 +76,8 @@ are audited). Deadline: day SIX. The werebear may buy anything.
 
 - Nail at 20 is quietly excellent for the bear in tie-heavy games.
 - Sock (32) + knife (28) swings a tally by 3 for 60 XLM by day 2.
-- Village information is thin post-v7: Maude, sightings, tie disclosures,
-  and the candle's coin flip. Deliberate; revisit after a human game.
+- Village information is thin: Maude, sightings, and the candle. (Tie
+  disclosures retired 2026-08-05 — thinner still; watch the passive bear.)
 - Bench if the village keeps losing: town clock (~30, +1 day, once).
 - Wanted: a bear-TEMPTING item (strong bear utility, damning receipt) — the
   village currently has no purchase-evidence path to a passive bear.

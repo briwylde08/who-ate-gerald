@@ -349,6 +349,16 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           {view.players.map((p) => {
             const c = p.character ? CHAR_BY_ID.get(p.character) : null;
             const isYou = p.address === wallet.address;
+            // The reckoning, visible on the faces: the bear outlined in
+            // blood, the winners in gold. Village win = the survivors;
+            // bear win = the bear alone.
+            const isBear = view.winner !== null && view.bear === p.name;
+            const isWinner =
+              view.winner === "village"
+                ? p.alive
+                : view.winner === "werebear"
+                  ? isBear
+                  : false;
             const dayParts: React.ReactNode[] = [
               p.doneToday ? (
                 <span key="done">
@@ -391,7 +401,9 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
             return (
               <div
                 key={p.seat}
-                className={`villager-card${p.alive ? "" : " dead"}${isYou ? " you" : ""}`}
+                className={`villager-card${p.alive ? "" : " dead"}${isYou ? " you" : ""}${
+                  isBear ? " bear-seat" : ""
+                }${isWinner ? " winner-seat" : ""}`}
               >
                 <div className="v-portrait">
                   {c?.image ? (
@@ -407,6 +419,12 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                     </span>
                   )}
                   {isYou && <span className="you-badge">You</span>}
+                  {isBear && (
+                    <span className="verdict-badge bear-badge">
+                      <BearIcon /> the werebear
+                    </span>
+                  )}
+                  {isWinner && !isBear && <span className="verdict-badge winner-badge">👑 winner</span>}
                 </div>
                 <div className="v-name">{p.name}</div>
                 <div className="v-role">{c?.title ?? "new in town"}</div>
@@ -507,7 +525,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
             <p key={m.round} className="notice">
               <b>Day {m.round}:</b>{" "}
               {m.banished
-                ? `${m.banished} was banished${m.banishedRole === "werebear" ? " — the werebear!" : ""}. `
+                ? `${m.banished} was banished${m.banishedRole === "werebear" ? " — the werebear! " : ". "}`
                 : "Nobody was banished. "}
               {m.eaten ? `${m.eaten} was eaten in the night.` : "Nobody was eaten."}
             </p>

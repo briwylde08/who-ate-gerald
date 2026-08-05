@@ -912,6 +912,26 @@ th { color: var(--ink-dim); font-weight: normal; }
 .villager-card.you { border-color: var(--lantern); }
 .villager-card.dead { opacity: 0.5; }
 .villager-card.empty { border-style: dashed; background: transparent; }
+/* The reckoning on the faces: blood for the beast, gold for the winners.
+   These outrank .you and .dead borders — the verdict is the story now. */
+.villager-card.bear-seat { border: 2px solid var(--blood); }
+.villager-card.winner-seat { border: 2px solid var(--gold); }
+.verdict-badge {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.bear-badge { background: rgba(179, 66, 63, 0.9); color: #fff; }
+.winner-badge { background: rgba(212, 169, 78, 0.92); color: #12141c; }
 .v-portrait { position: relative; margin-bottom: 8px; }
 .v-portrait img {
   width: 100%;

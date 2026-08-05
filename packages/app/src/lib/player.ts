@@ -91,9 +91,6 @@ export const playerApi = {
   chat: (w: VillagerWallet, game: string, text: string) =>
     playerCall<{ posted: boolean }>(w, game, "chat", { text }),
 
-  disclose: (w: VillagerWallet, game: string, txHash: string) =>
-    playerCall<{ revealed: string }>(w, game, "disclose", { txHash }),
-
   myRole: (w: VillagerWallet, game: string) =>
     playerCall<{ dealt: boolean; role: "villager" | "werebear" | null; name: string | null }>(
       w,
@@ -169,7 +166,6 @@ export interface PublicView {
     ready?: boolean;
     doneToday?: boolean;
     askedToday?: boolean;
-    standsAccused?: boolean;
     recovering?: boolean;
     /** A ghost the Order granted a vote (Unquiet rest). */
     ghostVoter?: boolean;

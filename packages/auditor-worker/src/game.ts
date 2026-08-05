@@ -62,7 +62,6 @@ interface GameState {
   /** The town square chat — per-day threads, capped. */
   chat: { round: number; name: string; text: string; at: string; ghost?: boolean }[];
   /** Tied-vote consequence: address → round in which they must disclose. */
-  mustDisclose: Record<string, number>;
   /** address -> round they were found drinking, snapshotted at market close. */
   drunkards: Record<string, number>;
   /** Round whose drunkard snapshot has been taken (0 = none yet). */
@@ -114,7 +113,6 @@ const freshState = (): GameState => ({
   asked: {},
   doneShopping: {},
   chat: [],
-  mustDisclose: {},
   drunkards: {},
   drunkSnapshotRound: 0,
   createdLedger: 0,
@@ -531,11 +529,6 @@ export class GameRoom extends DurableObject<Env> {
     if (!voter.alive && this.state.ghostVote?.[voterAddress] !== "granted") {
       throw new Error("the dead do not vote");
     }
-    if (this.state.mustDisclose[voterAddress] === this.state.round) {
-      throw new Error(
-        "you stand accused — reveal one purchase (in the town square) before you may vote",
-      );
-    }
     if (this.drunkToday(voterAddress)) {
       throw new Error("you are dead drunk in the road — the trial will manage without you");
     }
@@ -613,7 +606,7 @@ export class GameRoom extends DurableObject<Env> {
     itemId: string,
     target?: string,
     shop?: string,
-  ): Promise<{ aimed: string; at: string }> {
+  ): Promise<{ aimed: string; at: string; result?: string }> {
     this.requireDay();
     this.requireUnresolved();
     const player = this.playerByAddress(address);
@@ -673,38 +666,6 @@ export class GameRoom extends DurableObject<Env> {
     return { aimed: item.label, at: [targetName, shopId].filter(Boolean).join(" @ "), result };
   }
 
-  async discloseOne(address: string, txHash: string): Promise<{ revealed: string }> {
-    this.requireDay();
-    this.requireUnresolved();
-    const player = this.playerByAddress(address);
-    if (!player) throw new Error("that address holds no seat in this game");
-    if (this.state.mustDisclose[address] !== this.state.round) {
-      throw new Error("you do not stand accused today");
-    }
-    await syncIndexer(this.env);
-    const purchases = await this.loadAll();
-    const mine = purchases.filter(
-      (p) => p.from === address && p.round >= 1 && !p.isSurrender,
-    );
-    let line: string;
-    if (mine.length === 0) {
-      line = `⚖ ${player.name}, standing accused, opens their ledger — empty. Not one coin spent this game.`;
-    } else {
-      // Empty txHash = "Maude's choice" (used by bots): the latest purchase.
-      const pick = txHash ? mine.find((p) => p.txHash === String(txHash)) : mine[mine.length - 1];
-      if (!pick) throw new Error("pick one of your own purchases to reveal");
-      line = `⚖ ${player.name}, standing accused, lets Maude unseal one purchase: ${pick.toLabel} — ${pick.amountXlm} XLM${pick.itemGuess ? ` (${pick.itemGuess})` : ""}.`;
-    }
-    delete this.state.mustDisclose[address];
-    this.state.chat.push({
-      round: this.state.round,
-      name: "the Mayor",
-      text: line,
-      at: new Date().toISOString(),
-    });
-    await this.persist();
-    return { revealed: line };
-  }
 
   /** True once every living villager has finished today's shopping. */
   private marketClosed(): boolean {
@@ -865,16 +826,12 @@ export class GameRoom extends DurableObject<Env> {
         if (stillTied.length === 1) {
           banished = stillTied[0]!;
           notes.push(`The tie fell on ${banished.name}.`);
+        } else if (stillTied.length === 0) {
+          notes.push("Everyone in the tie had a horseshoe nail: nobody is banished today.");
         } else {
-          for (const p of stillTied) {
-            this.state.mustDisclose[p.address] = round + 1;
-            notes.push(
-              `${p.name} stands accused: they must reveal one purchase before voting tomorrow.`,
-            );
-          }
-          if (stillTied.length === 0) {
-            notes.push("Everyone in the tie had a horseshoe nail: nobody is banished today.");
-          }
+          // A tie means nobody dies (Bri, 2026-08-05). The disclosure debt
+          // this used to create was low-impact and confusing; retired.
+          notes.push("The vote tied: nobody is banished today.");
         }
       }
     } else {
@@ -883,7 +840,6 @@ export class GameRoom extends DurableObject<Env> {
     let banishedRole: Role | null = null;
     if (banished) {
       banished.alive = false;
-      delete this.state.mustDisclose[banished.address];
       delete this.state.recovering[banished.address];
       banishedRole = roles[banished.address] ?? "villager";
       const totalWeight = [...weights.values()].reduce((a, b) => a + b, 0);
@@ -969,7 +925,6 @@ export class GameRoom extends DurableObject<Env> {
       } else {
         eaten = target;
         target.alive = false;
-        delete this.state.mustDisclose[target.address];
         delete this.state.recovering[target.address];
         if (sharpTonight) {
           notes.push(
@@ -1230,7 +1185,6 @@ export class GameRoom extends DurableObject<Env> {
         ready: p.ready === true,
         doneToday: this.state.doneShopping[p.address]?.round === this.state.round,
         askedToday: (this.state.asked[p.address] ?? 0) >= this.state.round && this.state.round >= 1,
-        standsAccused: this.state.mustDisclose[p.address] === this.state.round,
         recovering: this.state.recovering[p.address] === this.state.round,
         /** A ghost the Order granted a vote — public by design. */
         ghostVoter: this.state.ghostVote?.[p.address] === "granted",

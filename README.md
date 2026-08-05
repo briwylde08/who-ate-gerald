@@ -21,7 +21,6 @@ Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
 | The price *is* the item | Exact-amount matching against the catalog; every price globally unique |
 | Everyone verifiably starts with the same budget | Buy-in and daily income arrive as *public* deposits |
 | Maude sees all, answers little | The auditor key decrypts every transfer; one question per villager per day, enforced in code |
-| An accused villager's reveal cannot be a lie | The server decrypts the purchase they nominate, straight from the chain |
 
 Maude's truthfulness is architectural, not behavioural: facts are computed in
 code (event decryption plus one narrow fact tool per question); the model only
@@ -32,7 +31,7 @@ invent an amount.
 
 Shop (at most two of four stores, each item once per day) → everyone presses Done →
 Maude opens for one question each → the square argues → the trial banishes on
-a plurality → the werebear eats someone → the morning report says what the
+a plurality (a tie means nobody dies) → the werebear eats someone → the morning report says what the
 night's items did. The village wins by banishing the bear; the bear wins at
 parity, or by surviving to the end of day six.
 
