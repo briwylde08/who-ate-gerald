@@ -85,6 +85,8 @@ export function PlayerApp() {
    *  on. It lived in the Town Square once, where dawn breaking while you
    *  voted on Chat & Vote played it invisibly AND marked it seen. */
   const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
+  /** Dead villagers collect nothing — the sidebar must not owe them. */
+  const [meAlive, setMeAlive] = useState(true);
   /** Where the intro opens when we send someone back to it: "game" for the
    *  chooser (change game), "identity" for the villager picker. */
   const [introAt, setIntroAt] = useState<"story" | "game" | "identity">("story");
@@ -244,6 +246,7 @@ export function PlayerApp() {
         // profile has drifted (picked a new name/face while already seated),
         // snap back to the seat rather than show two different people.
         const seat = v.players.find((p) => p.address === wallet.address);
+        setMeAlive(seat ? seat.alive : true);
         if (seat?.character) {
           setProfile((prof) => {
             if (prof && (prof.name !== seat.name || prof.characterId !== seat.character)) {
@@ -579,7 +582,7 @@ export function PlayerApp() {
             <SixSteps
               balances={balances}
               purchases={loadHistory(wallet.address, gameId).length}
-              owedStroops={treasuryOwed(wallet.address, gameId, round, balances.spendable)}
+              owedStroops={meAlive ? treasuryOwed(wallet.address, gameId, round, balances.spendable) : 0n}
             />
           </div>
         </aside>
