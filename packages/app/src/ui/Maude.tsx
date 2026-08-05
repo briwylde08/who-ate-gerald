@@ -121,8 +121,13 @@ export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
           <h2>Maude McLedger</h2>
           <p className="dim">
             As the Auditor, Maude holds the one key that can read every confidential amount on
-            the ledger. Her answers aren't guesses — she reads them straight from the chain, so
-            they cannot be wrong.
+            the ledger — her answers come straight from the chain.
+          </p>
+          <p className="dim">
+            An auditor isn't a contract; it's a keypair. A confidential token contract can be
+            deployed with an auditor's public key baked in, and every transfer must include its
+            amount encrypted to that key or the network rejects it. Whoever holds the matching
+            secret key can read every amount. Here, that's Maude.
           </p>
           <p className="dim">
             One question per villager per day, and no other villager sees her answer.
