@@ -55,9 +55,6 @@ parity, or by surviving to the end of day six.
 |---|---|
 | [docs/CATALOG.md](docs/CATALOG.md) | The shelf: every item, the design laws, standing rulings, balance watch list |
 | [docs/CONFIDENTIAL-TOKENS.md](docs/CONFIDENTIAL-TOKENS.md) | What the cryptography actually does, mapped onto the game |
-| [docs/DESIGN-V2.md](docs/DESIGN-V2.md) | Architecture of the automated game (carries a drift warning) |
-| [docs/TOMORROW.md](docs/TOMORROW.md) | Where things stand and what's next |
-| [docs/POSTGAME-10.md](docs/POSTGAME-10.md) | Open items from the last playtest |
 
 ## Commands
 
