@@ -26,6 +26,8 @@ interface Props {
   wallet: VillagerWallet;
   gameId: string;
   setError: (e: string | null) => void;
+  /** Jump to the Shops — the crier's "Start new day" button. */
+  onGoShops: () => void;
 }
 
 type Role = "villager" | "werebear";
@@ -36,7 +38,7 @@ const EFFECT_BY_LABEL = new Map(
 );
 const effectOf = (label: string) => EFFECT_BY_LABEL.get(label);
 
-export function ChatVote({ wallet, gameId, setError }: Props) {
+export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   const [view, setView] = useState<PublicView | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [voteTarget, setVoteTarget] = useState("");
@@ -405,6 +407,14 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
             </p>
           ))}
           {lastMorning.winner && <p className="tagline">The {lastMorning.winner} has won.</p>}
+          {/* The results are read; the next day is shopping. One click. */}
+          {!view.winner && (
+            <div className="row">
+              <button className="primary" onClick={onGoShops}>
+                Start new day →
+              </button>
+            </div>
+          )}
         </div>
       )}
 

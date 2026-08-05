@@ -568,7 +568,7 @@ export function PlayerApp() {
             />
           </div>
           <div style={{ display: tab === "chatvote" ? "block" : "none" }}>
-            <ChatVote wallet={wallet} gameId={gameId} setError={setError} />
+            <ChatVote wallet={wallet} gameId={gameId} setError={setError} onGoShops={() => setTab("village")} />
           </div>
         </div>
         {/* Bri's favorite teaching surface, promoted: the six steps ride
