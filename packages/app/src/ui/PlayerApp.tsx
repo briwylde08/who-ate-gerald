@@ -13,7 +13,7 @@ import { Maude } from "./Maude";
 import { Town } from "./Town";
 import { ChatVote } from "./ChatVote";
 import { SixSteps } from "./SixSteps";
-import { loadHistory } from "../lib/history";
+import { loadHistory, treasuryOwed } from "../lib/history";
 
 /**
  * A purchase takes real seconds because it really is proving a statement in
@@ -579,6 +579,7 @@ export function PlayerApp() {
             <SixSteps
               balances={balances}
               purchases={loadHistory(wallet.address, gameId).length}
+              owedStroops={treasuryOwed(wallet.address, gameId, round, balances.spendable)}
             />
           </div>
         </aside>

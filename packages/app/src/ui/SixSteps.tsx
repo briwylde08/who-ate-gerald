@@ -17,13 +17,18 @@ interface Props {
   balances: VillagerBalances;
   /** How many confidential transfers this browser has recorded this game. */
   purchases: number;
+  /** Stroops waiting at the Town Treasury — reopens the deposit+merge cycle. */
+  owedStroops?: bigint;
 }
 
-export function SixSteps({ balances, purchases }: Props) {
+export function SixSteps({ balances, purchases, owedStroops = 0n }: Props) {
   const registered = balances.registered;
   const funded = registered && (balances.spendable + balances.receiving > 0n || purchases > 0);
   const merged = registered && balances.spendable > 0n;
   const waiting = balances.receiving > 0n;
+  // Deposit and merge CYCLE: every day's income is a fresh pair. While the
+  // Treasury owes you, both steps reopen and point at the collect desk.
+  const owed = owedStroops > 0n;
 
   const steps: {
     n: number;
@@ -43,19 +48,25 @@ export function SixSteps({ balances, purchases }: Props) {
       n: 2,
       name: "Deposit",
       what: "XLM from your Freighter wallet goes into the shared pool. You receive confidential claims in return.",
-      state: funded ? "done" : "waiting",
-      note: funded ? "your daily income" : "not yet",
+      state: owed ? "waiting" : funded ? "done" : "waiting",
+      note: owed
+        ? `${xlmDisplay(owedStroops)} XLM waiting at the Town Treasury — collect in The Shops`
+        : funded
+          ? "your daily income"
+          : "not yet",
     },
     {
       n: 3,
       name: "Merge",
       what: "New claims arrive in your pending balance. Merging moves them into the spendable balance only you control.",
-      state: waiting ? "waiting" : merged ? "done" : "waiting",
+      state: owed || waiting ? "waiting" : merged ? "done" : "waiting",
       note: waiting
         ? `${xlmDisplay(balances.receiving)} XLM waiting — "Collect into purse" in The Shops`
-        : merged
-          ? "your purse is collected"
-          : "nothing to collect",
+        : owed
+          ? "collecting will merge it into your spendable balance"
+          : merged
+            ? "your purse is collected"
+            : "nothing to collect",
     },
     {
       n: 4,

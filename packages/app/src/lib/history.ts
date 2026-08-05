@@ -5,6 +5,7 @@
  * Testnet game stakes only; losing it loses nothing but UI labels.
  */
 import { DEPLOYMENT } from "./deployment";
+import { DAILY_INCOME_XLM, STARTING_BUDGET_XLM, stroopsFromXlm } from "./catalog";
 
 export interface PurchaseRecord {
   at: string;
@@ -39,4 +40,22 @@ export function recordPurchase(address: string, rec: PurchaseRecord): void {
   const all = loadAll(address); // append to the FULL store, across games
   all.push(rec);
   localStorage.setItem(key(address), JSON.stringify(all));
+}
+
+/**
+ * What the Town Treasury "owes" this wallet right now: the allowance the
+ * schedule permits by the given day, minus what this browser has spent this
+ * game, minus what's already in the purse. Positive = a deposit+merge cycle
+ * is waiting at the collect desk. Mirrors the Shops' own calculation.
+ */
+export function treasuryOwed(
+  address: string,
+  gameId: string,
+  round: number,
+  spendableStroops: bigint,
+): bigint {
+  const allowance = stroopsFromXlm(STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1));
+  const spent = loadHistory(address, gameId).reduce((a, r) => a + BigInt(r.amountStroops), 0n);
+  const remaining = allowance > spent ? allowance - spent : 0n;
+  return remaining > spendableStroops ? remaining - spendableStroops : 0n;
 }

@@ -683,6 +683,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           <SixSteps
             balances={balances}
             purchases={loadHistory(wallet.address, loadGameId()).length}
+            owedStroops={deficit}
           />
         </div>
       </div>
