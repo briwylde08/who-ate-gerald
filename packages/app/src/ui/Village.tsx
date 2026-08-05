@@ -456,7 +456,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           </p>
         </div>
       )}
-      {!dead && !doneToday && round >= 1 && unaimed.length > 0 && (
+      {/* NOT gated on doneToday: aiming stays possible (and necessary!)
+          after Done, and hiding this cost the baker a 23 XLM holiday he
+          believed he'd aimed (game04, day 1). */}
+      {!dead && round >= 1 && unaimed.length > 0 && (
         <div className="panel">
           <h3>⚠ Not aimed yet</h3>
           <p className="dim">
@@ -464,6 +467,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
             {unaimed.length === 1 ? "needs" : "need"} pointing at somebody before the day ends —
             until then {unaimed.length === 1 ? "it does" : "they do"} nothing at all. The picker
             is under {unaimed.length === 1 ? "the item" : "each item"} above.
+            {doneToday && " You're done shopping, but you can still aim."}
           </p>
         </div>
       )}
