@@ -1,4 +1,4 @@
-# The Catalog (v9, 2026-07-31) — living document
+# The Catalog (v9, 2026-07-31; last verified against the shelf 2026-08-05) — living document
 
 The one true description of the shelf. `config/catalog.json` is the source
 of truth the game actually reads; this doc explains the *why*. Old shelves
@@ -65,7 +65,16 @@ are audited). Deadline: day SIX. The werebear may buy anything.
   staging it needs two fresh nail-holders in one engineered tie.)
 - **Ghost votes are public**, dawn waits for them, and the roster shows 👻.
 
-## Watch list (from the 2026-07-31 balance pass)
+## Watch list (updated 2026-08-05)
+
+- **Key/holiday traffic at 25/day**: the richer economy plus once-per-day
+  rebuys produced barred doors EVERY day in the 2026-08-04 full bot game.
+  Bots buy semi-randomly; watch whether humans spam too. Lever: prices.
+- **The instant candle** (2026-08-05): same-day answers made it markedly
+  stronger than the dawn version it replaced. At 42 it's ~2 reads per
+  game; if it dominates human games, the price has room to climb.
+
+### Older items (2026-07-31 pass)
 
 - Nail at 20 is quietly excellent for the bear in tie-heavy games.
 - Sock (32) + knife (28) swings a tally by 3 for 60 XLM by day 2.
