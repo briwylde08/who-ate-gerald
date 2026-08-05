@@ -75,6 +75,22 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
   const todaysItems = round
     ? loadHistory(wallet.address, gameId).filter((r) => r.round === round)
     : [];
+  /** Where each aimed item was pointed (written by the Shops' aim flow),
+   *  keyed by item id — shown beside the kit. */
+  const myAims: Record<string, string> = (() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem(`gerald:aims:${gameId}:${round}`) ?? "{}",
+      ) as Record<string, string>;
+    } catch {
+      return {};
+    }
+  })();
+  const AIM_ID_BY_LABEL = new Map(SHOPS.flatMap((sh) => sh.items).map((it) => [it.label, it.id]));
+  /** The candle's instant answer, if this round produced one. */
+  const candleNote = privateNotes.find(
+    (n) => n.round === round && n.text.includes("candle"),
+  )?.text;
   const living = (view?.players ?? []).filter((p) => p.alive && p.address !== wallet.address);
 
   // A new day voids yesterday's ballot and pick.
@@ -175,31 +191,6 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
 
   return (
     <div>
-      {/* The freshest results, HERE — this is the tab everyone is on when
-          dawn breaks, so the outcome must not hide in the Town Square. */}
-      {lastMorning && (
-        <div className="panel">
-          <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
-          {lastMorning.banished && (
-            <p>
-              The village banished <b>{lastMorning.banished}</b> —{" "}
-              {lastMorning.banishedRole === "werebear" ? "🐻 THE WEREBEAR!" : "a villager. Oops."}
-            </p>
-          )}
-          {lastMorning.eaten && (
-            <p>
-              <b>{lastMorning.eaten}</b> was eaten in the night, like Gerald before them.
-            </p>
-          )}
-          {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
-          {lastMorning.notes.map((n, i) => (
-            <p key={i} className="dim">
-              {n}
-            </p>
-          ))}
-          {lastMorning.winner && <p className="tagline">The {lastMorning.winner} has won.</p>}
-        </div>
-      )}
 
       {!view.marketClosed && !view.winner && (
         <div className="panel">
@@ -319,6 +310,17 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
                     — {xlmDisplay(BigInt(r.amountStroops))} XLM, {r.shopLabel}
                   </span>
                   {effectOf(r.item) && <span className="kit-effect">{effectOf(r.item)}</span>}
+                  {(() => {
+                    const id = AIM_ID_BY_LABEL.get(r.item);
+                    const at = id ? myAims[id] : undefined;
+                    if (!at) return null;
+                    return (
+                      <span className="kit-aim">
+                        🎯 Aimed at {at}
+                        {r.item === "The long candle" && candleNote ? ` — ${candleNote}` : ""}
+                      </span>
+                    );
+                  })()}
                 </li>
               ))}
             </ul>
@@ -377,6 +379,32 @@ export function ChatVote({ wallet, gameId, setError }: Props) {
                   : "Cast vote"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* The freshest results, HERE — this is the tab everyone is on when
+          dawn breaks, so the outcome must not hide in the Town Square. */}
+      {lastMorning && (
+        <div className="panel">
+          <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
+          {lastMorning.banished && (
+            <p>
+              The village banished <b>{lastMorning.banished}</b> —{" "}
+              {lastMorning.banishedRole === "werebear" ? "🐻 THE WEREBEAR!" : "a villager. Oops."}
+            </p>
+          )}
+          {lastMorning.eaten && (
+            <p>
+              <b>{lastMorning.eaten}</b> was eaten in the night, like Gerald before them.
+            </p>
+          )}
+          {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
+          {lastMorning.notes.map((n, i) => (
+            <p key={i} className="dim">
+              {n}
+            </p>
+          ))}
+          {lastMorning.winner && <p className="tagline">The {lastMorning.winner} has won.</p>}
         </div>
       )}
 

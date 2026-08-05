@@ -1056,6 +1056,8 @@ th { color: var(--ink-dim); font-weight: normal; }
 .kit-list li { padding: 4px 0; font-size: 0.9rem; }
 .kit-note { margin: 8px 0 0; font-size: 0.72rem; }
 .kit-effect { display: block; font-size: 0.76rem; color: var(--ink-dim); margin-top: 1px; }
+.kit-aim { display: block; font-size: 0.78rem; color: var(--moon); margin-top: 2px; }
+.activity-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .notices .sightings { margin-bottom: 10px; }
 
 /* "What the village sees": the privacy boundary as two facing columns. */

@@ -433,6 +433,8 @@ export function PlayerApp() {
           onDone={(p) => {
             setProfile(p);
             setGameId(loadGameId()); // the intro may have chosen a different game
+            setTab("town"); // a fresh seat starts at the square, not wherever
+            // this browser's remembered tab happened to be (usually Shops)
           }}
           address={wallet?.address}
           startAt={introAt}

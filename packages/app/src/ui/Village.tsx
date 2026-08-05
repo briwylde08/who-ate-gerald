@@ -120,14 +120,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [boughtItems, setBoughtItems] = useState<Set<string>>(new Set());
   const [justBought, setJustBought] = useState<string | null>(null);
   /** The teaching moment: what the village just learned, and what it didn't. */
-  const [receipt, setReceipt] = useState<{
-    shopLabel: string;
-    item: string;
-    amountStroops: bigint;
-  } | null>(null);
   // Aimed items need a second, private action after the purchase.
   const [others, setOthers] = useState<string[]>([]);
   const [closedShops, setClosedShops] = useState<string[]>([]);
+  const [maxDays, setMaxDays] = useState<number | null>(null);
   /** The village-wide feed: every seated player's public txs. */
   const [feedGraph, setFeedGraph] = useState<GraphView | null>(null);
   useEffect(() => {
@@ -170,10 +166,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   /** An aimed item that answers instantly (the candle) — shown as a modal. */
   const [aimResult, setAimResult] = useState<string | null>(null);
   const aimsKey = `gerald:aims:${loadGameId()}:${round}`;
-  // Yesterday's receipt is yesterday's news — a new day clears it.
-  useEffect(() => {
-    setReceipt(null);
-  }, [round]);
   useEffect(() => {
     try {
       setAimed(JSON.parse(localStorage.getItem(aimsKey) ?? "{}") as Record<string, string>);
@@ -201,6 +193,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           v.players.filter((p) => p.alive && p.address !== wallet.address).map((p) => p.name),
         );
         setClosedShops(v.closedShops ?? []);
+        setMaxDays(v.maxDays ?? null);
         setDead(me ? !me.alive : false);
       })
       .catch(() => undefined);
@@ -227,6 +220,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     try {
       await playerApi.doneShopping(wallet, loadGameId());
       setDoneToday(true);
+      // Guide the eye: your shopping is now ON the chain — look, then go ask.
+      document.querySelector(".activity-log")?.scrollIntoView({ behavior: "smooth" });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -294,7 +289,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         detail: `${item.label} — amount sealed on chain`,
         txHash: hash,
       });
-      setReceipt({ shopLabel: shop.label, item: item.label, amountStroops });
       setJustBought(`${shop.id}:${item.id}`);
       window.setTimeout(() => setJustBought(null), 3000);
       await refresh();
@@ -312,6 +306,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           <p className="shut-note">
             🔒 The stores are shut until the game begins.
           </p>
+        )}
+        {round >= 1 && (
+          <div className="role-label">
+            Day {round}
+            {maxDays ? ` of ${maxDays}` : ""}
+          </div>
         )}
         <p>
           You may buy items from two shops every day. The amount of items you purchase is up to
@@ -433,28 +433,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
               Maude
             </button>{" "}
             opens her office once the <b>whole village</b> is done shopping.
-          </p>
-        </div>
-      )}
-      {receipt && (
-        <div className="panel receipt">
-          <div className="receipt-head">
-            <div className="role-label">Paid — here is what that told the village</div>
-            <button className="link" onClick={() => setReceipt(null)}>
-              dismiss
-            </button>
-          </div>
-          <p className="receipt-line">
-            <span className="receipt-tag">They now know</span>
-            you visited <b>{receipt.shopLabel}</b> today.
-          </p>
-          <p className="receipt-line">
-            <span className="receipt-tag sealed">They cannot know</span>
-            <b>{xlmDisplay(receipt.amountStroops)} XLM</b>, or <b>{receipt.item}</b>.
-          </p>
-          <p className="receipt-why">
-            Every price in the village is unique, so that number would have named the item
-            exactly. Sealing the amount is what hides the purchase.
           </p>
         </div>
       )}
@@ -656,7 +634,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           is when buy-ins land, which is worth watching. */}
       {(
         <div className="panel activity-log">
-          <h3>Onchain activity</h3>
+          <div className="activity-head">
+            <h3>Onchain activity</h3>
+            <button className="link" onClick={onGoMaude}>
+              Ask Maude a question →
+            </button>
+          </div>
           {feed.length === 0 && (
             <p className="dim">
               Nothing yet — the village's transactions appear here as they land on the chain.
