@@ -228,3 +228,7 @@ export interface ServerPurchases {
   spentStroops: string;
   purchases: ServerPurchase[];
 }
+
+/** True when the browser tab is hidden — polls should sleep, not spend. */
+export const pageHidden = (): boolean =>
+  typeof document !== "undefined" && document.visibilityState === "hidden";

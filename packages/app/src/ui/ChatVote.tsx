@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
 import { loadHistory } from "../lib/history";
 import { SHOPS, xlmDisplay } from "../lib/catalog";
 import {
   fetchPublicView,
+  pageHidden,
   hasCachedAuth,
   playerApi,
   type PublicView,
@@ -43,6 +44,8 @@ const effectOf = (label: string) => EFFECT_BY_LABEL.get(label);
 
 export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: Props) {
   const [view, setView] = useState<PublicView | null>(null);
+  const viewRef = useRef<PublicView | null>(null);
+  viewRef.current = view;
   const [role, setRole] = useState<Role | null>(null);
   const [voteTarget, setVoteTarget] = useState("");
   const [voted, setVoted] = useState<string | null>(null);
@@ -66,7 +69,10 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
 
   useEffect(() => {
     void loadView();
-    const t = setInterval(() => void loadView(), 4_000);
+    const t = setInterval(() => {
+      if (pageHidden() || viewRef.current?.winner) return;
+      void loadView();
+    }, 4_000);
     const onFocus = () => void loadView();
     window.addEventListener("focus", onFocus);
     return () => {

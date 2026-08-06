@@ -4,7 +4,7 @@ import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wall
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, saveProfile, type Profile } from "../lib/profile";
-import { fetchGraph, fetchPublicView, loadGameId, playerApi, saveGameId, type ServerPurchases } from "../lib/player";
+import { fetchGraph, fetchPublicView, loadGameId, pageHidden, playerApi, saveGameId, type ServerPurchases } from "../lib/player";
 import { CharEmoji } from "./CharIcon";
 import { Intro } from "./Intro";
 import { GeraldStory } from "./Story";
@@ -87,6 +87,9 @@ export function PlayerApp() {
   const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
   /** Dead villagers collect nothing — the sidebar must not owe them. */
   const [meAlive, setMeAlive] = useState(true);
+  /** Set once the game has a winner — every poll goes quiet (issue #12).
+   *  The reckoning is final; nothing it shows can change. */
+  const gameOverRef = useRef(false);
   /** The server's answer to "what have I spent?" — survives fresh browsers. */
   const [serverSpend, setServerSpend] = useState<ServerPurchases | null>(null);
   useEffect(() => {
@@ -107,6 +110,9 @@ export function PlayerApp() {
   /** Always the game we are CURRENTLY in, for discarding stale poll replies. */
   const gameIdRef = useRef(gameId);
   gameIdRef.current = gameId;
+  useEffect(() => {
+    gameOverRef.current = false; // a new game gets fresh polls
+  }, [gameId]);
 
   const refresh = useCallback(
     async (w: VillagerWallet) => {
@@ -220,7 +226,10 @@ export function PlayerApp() {
   // Periodic balance refresh while in the village.
   useEffect(() => {
     if (!wallet) return;
-    const t = setInterval(() => void refresh(wallet), 30_000);
+    const t = setInterval(() => {
+      if (pageHidden() || gameOverRef.current) return;
+      void refresh(wallet);
+    }, 30_000);
     return () => clearInterval(t);
   }, [wallet, refresh]);
 
@@ -230,8 +239,10 @@ export function PlayerApp() {
   useEffect(() => {
     if (!wallet) return;
     const t = setInterval(async () => {
+      if (pageHidden() || gameOverRef.current) return;
       try {
         const v = await fetchPublicView(gameId);
+        if (v.winner) gameOverRef.current = true;
         // A reply for the game we just LEFT must not touch anything: it would
         // snap the player back to their old seat the instant they switch.
         if (gameIdRef.current !== gameId) return;
@@ -577,10 +588,11 @@ export function PlayerApp() {
               refreshServerSpend={() =>
                 void playerApi.myPurchases(wallet, gameId).then(setServerSpend).catch(() => undefined)
               }
+              active={tab === "village"}
             />
           </div>
           <div style={{ display: tab === "maude" ? "block" : "none" }}>
-            <Maude wallet={wallet} gameId={gameId} setError={setError} onGoChatVote={() => setTab("chatvote")} />
+            <Maude wallet={wallet} gameId={gameId} setError={setError} onGoChatVote={() => setTab("chatvote")} active={tab === "maude"} />
           </div>
           <div style={{ display: tab === "town" ? "block" : "none" }}>
             <Town

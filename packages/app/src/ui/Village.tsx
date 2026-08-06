@@ -14,7 +14,7 @@ import {
 } from "../lib/catalog";
 import { loadHistory, recordPurchase } from "../lib/history";
 import { explorerTx, recordActivity } from "../lib/activity";
-import { fetchGraph, fetchPublicView, loadGameId, playerApi, type GraphView, type ServerPurchases } from "../lib/player";
+import { fetchGraph, fetchPublicView, loadGameId, pageHidden, playerApi, type GraphView, type ServerPurchases } from "../lib/player";
 import { ToteIcon } from "./CharIcon";
 import { SixSteps } from "./SixSteps";
 import { useEffect } from "react";
@@ -36,6 +36,8 @@ interface Props {
    *  second device (issue #16). Null until fetched; local math is fallback. */
   serverSpend: ServerPurchases | null;
   refreshServerSpend: () => void;
+  /** Is this tab the one showing? Hidden tabs don't poll (issue #12). */
+  active: boolean;
 }
 
 /**
@@ -44,7 +46,7 @@ interface Props {
  * the visit, never the amount, and the amount IS the item. Item effects are
  * public knowledge (hover); which one YOU bought is not.
  */
-export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh, onGoMaude, serverSpend, refreshServerSpend }: Props) {
+export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh, onGoMaude, serverSpend, refreshServerSpend, active }: Props) {
   const [armed, setArmed] = useState<string | null>(null);
 
   // Budget normalization: the allowance schedule says how much spendable a
@@ -139,14 +141,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   /** The village-wide feed: every seated player's public txs. */
   const [feedGraph, setFeedGraph] = useState<GraphView | null>(null);
   useEffect(() => {
-    const pull = () =>
+    const pull = () => {
+      if (pageHidden() || !active) return; // hidden tabs don't poll (issue #12)
       void fetchGraph(loadGameId())
         .then(setFeedGraph)
         .catch(() => undefined);
+    };
     pull();
     const t = setInterval(pull, 30_000);
     return () => clearInterval(t);
-  }, [round]);
+  }, [round, active]);
 
   // My own purchases, by tx hash — used to annotate MY rows in the village
   // feed with what this browser privately knows (the item, the amount).
