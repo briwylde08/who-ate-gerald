@@ -10,12 +10,12 @@
  *   Day 1  lucky iron DECIDES a tie · a socked mouth cannot swing the trial,
  *          even holding a double-voting knife · a sharpened tooth announces
  *          itself over the body
- *   Day 2  the curfew bell buys a night in which NOBODY dies · a declared
- *          barrel refuses its owner's vote without stalling dawn · a lock and
- *          a shopkeeper's holiday are fitted for tomorrow
- *   Day 3  barred doors take the coin and give nothing (a lock aimed at one
- *          villager, a holiday shutting a store for all) · the long candle
- *          answers at aim time · the village hangs the beast
+ *   Day 2  the curfew bell buys a night in which NOBODY dies · the barrel
+ *          refuses its owner's vote without stalling dawn · a lock is fitted
+ *          for tomorrow · a pizza party saves its host from the rope
+ *   Day 3  the barred door takes the coin and gives nothing · the long
+ *          candle answers at aim time · a tie banishes nobody
+ *   Day 4  the village hangs the beast
  *
  * Players are provisioned above the normal allowance so one villager can hold
  * several items at once: this covers item RESOLUTION, not the allowance audits
@@ -318,12 +318,11 @@ async function main() {
     check("and it ate the villager it aimed at", m1.eaten === v4.name, m1);
 
     // ---- DAY 2 -------------------------------------------------------------
-    console.log("\nDAY 2 — the bell, the barrel, a lock and a holiday");
+    console.log("\nDAY 2 — the bell, the barrel, a lock and a pizza party");
     await gmCall("round/start", {});
     await v1.buy(transferProver, "curfew_bell");
     await v2.buy(transferProver, "barrel_of_beer"); // no declaration: buying IS drinking
-    await v3.buy(transferProver, "shopkeepers_vacation");
-    await v3.aim("shopkeepers_vacation", undefined, "butcher");
+    await v3.buy(transferProver, "pizza_party"); // general_store — hard to hang the host
     await v3.buy(transferProver, "cold_iron_key");
     await v3.aim("cold_iron_key", v1.name, "blacksmith");
     await done([v1, v2, v3, bear]);
@@ -345,49 +344,47 @@ async function main() {
       (waiting as unknown as { awaitingVotes?: string[] }).awaitingVotes,
     );
 
-    // A tie so nobody hangs — the lock and the holiday must survive to land.
+    // The village piles onto the pizza host — the party must save them.
     await v1.call("vote", { target: v3.name });
     await v3.call("vote", { target: v1.name });
+    await bear.call("vote", { target: v3.name });
     await bear.call("night-pick", { target: v3.name }); // the bell must stop this
     const m2 = await finishDay(2);
     console.log(`  morning: ${JSON.stringify(m2.notes)}`);
     check("the curfew bell tolls", hasNote(m2.notes, "rang the curfew bell"), m2.notes);
     check("and nobody dies in the night", m2.eaten === null, m2);
     check("a lock is fitted, unattributed", hasNote(m2.notes, "cold iron key"), m2.notes);
-    check("a shopkeeper takes a holiday", hasNote(m2.notes, "closed to everyone tomorrow"), m2.notes);
-    // An unbroken tie hangs nobody and puts BOTH tied villagers under suspicion:
-    // they owe the village a purchase before they may vote again.
-    check("nobody hangs on a tie", m2.banished === null, m2);
     check(
-      "and the tie says so plainly",
-      hasNote(m2.notes, "The vote tied: nobody is banished today."),
+      "the pizza party saves the host, by name",
+      hasNote(m2.notes, `${v3.name} threw a pizza party`),
       m2.notes,
     );
+    check("and nobody is banished at the party", m2.banished === null, m2);
 
     // ---- DAY 3 -------------------------------------------------------------
-    console.log("\nDAY 3 — barred doors, the candle, and the reckoning");
+    console.log("\nDAY 3 — a barred door, the candle, and a tie");
     await gmCall("round/start", {});
-    const day3 = await publicView();
-    check(
-      "the shuttered store is public knowledge",
-      ((day3 as unknown as { closedShops?: string[] }).closedShops ?? []).includes("butcher"),
-      (day3 as unknown as { closedShops?: string[] }).closedShops,
-    );
 
-    // v1 is locked out of the Blacksmith; the Butcher's is shut to everyone.
+    // v1 is locked out of the Blacksmith by yesterday's key.
     await v1.buy(transferProver, "horseshoe_nail"); // blacksmith — locked to v1
-    await bear.buy(transferProver, "soup_bone"); // butcher — shut for all
     await v2.buy(transferProver, "the_long_candle");
     await v2.aim("the_long_candle", bear.name);
     await done([v1, v2, v3, bear]);
 
-    // Yesterday's tie carried NO debt (Bri, 2026-08-05): everyone votes
-    // freely today. A tie simply means nobody died.
-    await v1.call("vote", { target: bear.name });
-    await v2.call("vote", { target: bear.name });
-    await v3.call("vote", { target: bear.name });
+    // An engineered 2-2 tie: nobody hangs, plainly said.
+    await v1.call("vote", { target: v3.name });
+    await v2.call("vote", { target: v3.name });
+    await v3.call("vote", { target: v1.name });
+    await bear.call("vote", { target: v1.name });
+    await bear.call("night-pick", { target: v2.name }); // no bell tonight — the bear feeds
     const m3 = await finishDay(3);
     console.log(`  morning: ${JSON.stringify(m3.notes)}`);
+    check("nobody hangs on a tie", m3.banished === null, m3);
+    check(
+      "and the tie says so plainly",
+      hasNote(m3.notes, "The vote tied: nobody is banished today."),
+      m3.notes,
+    );
 
     const locked = await v1.call<{ notes: { text: string }[] }>("notes");
     check(
@@ -395,21 +392,27 @@ async function main() {
       locked.notes.some((n) => n.text.includes("would not open")),
       locked.notes,
     );
-    const shut = await bear.call<{ notes: { text: string }[] }>("notes");
-    check(
-      "a shuttered store does the same",
-      shut.notes.some((n) => n.text.includes("would not open")),
-      shut.notes,
-    );
     const flame = await v2.call<{ notes: { text: string }[] }>("notes");
     check(
       "the long candle reports — truly or not at all",
       flame.notes.some((n) => n.text.includes("candle worked") || n.text.includes("candle failed")),
       flame.notes,
     );
-    check("the village hangs the beast", m3.banished === bear.name, m3);
-    check("and it was the beast", m3.banishedRole === "werebear", m3);
-    check("the village wins", m3.winner === "village", m3);
+    check("the werebear eats freely on a bell-less night", m3.eaten === v2.name, m3);
+
+    // ---- DAY 4 -------------------------------------------------------------
+    console.log("\nDAY 4 — the reckoning");
+    await gmCall("round/start", {});
+    await done([v1, v3, bear]);
+    await v1.call("vote", { target: bear.name });
+    await v3.call("vote", { target: bear.name });
+    await bear.call("vote", { target: v1.name });
+    await bear.call("night-pick", { target: v1.name }); // moot — the rope is faster
+    const m4 = await finishDay(4);
+    console.log(`  morning: ${JSON.stringify(m4.notes)}`);
+    check("the village hangs the beast", m4.banished === bear.name, m4);
+    check("and it was the beast", m4.banishedRole === "werebear", m4);
+    check("the village wins", m4.winner === "village", m4);
 
     console.log(
       failures === 0

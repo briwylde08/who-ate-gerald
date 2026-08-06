@@ -90,6 +90,8 @@ interface GameState {
   /** Pierces spent — each venison purchase grants exactly one. (v3 — retired.) */
   /** address → horseshoe nails spent (each purchase = one tie won). */
   nailUsed: Record<string, number>;
+  /** address → pizza parties already thrown (each purchase = one save). */
+  pizzaUsed: Record<string, number>;
   /** address → tooth-sharpener offerings the beast has already accepted. */
   offeringUsed: Record<string, number>;
   /** address → whether a paid-for ghost got its vote. Decided once, at death. */
@@ -125,6 +127,7 @@ const freshState = (): GameState => ({
   nightPick: null,
   recovering: {},
   nailUsed: {},
+  pizzaUsed: {},
   offeringUsed: {},
   ghostVote: {},
   aims: [],
@@ -933,6 +936,21 @@ export class GameRoom extends DurableObject<Env> {
     } else {
       notes.push("Nobody voted. Nobody is banished today.");
     }
+    // The pizza party: hard to hang the host. Fires on ANY banishment —
+    // plurality or the tie's rope — consumes one purchase, and names the
+    // host publicly. (Strong bear utility, damning receipt: this is the
+    // bear-tempting shape the watch list wanted.)
+    if (banished) {
+      const partiesBought = this.countBought(effective, banished.address, "pizza_party", {});
+      const partiesThrown = (this.state.pizzaUsed ??= {})[banished.address] ?? 0;
+      if (partiesBought > partiesThrown) {
+        this.state.pizzaUsed[banished.address] = partiesThrown + 1;
+        notes.push(
+          `🍕 ${banished.name} threw a pizza party: the village ate, drank, and forgot the whole business. Nobody is banished today.`,
+        );
+        banished = null;
+      }
+    }
     let banishedRole: Role | null = null;
     if (banished) {
       banished.alive = false;
@@ -1054,13 +1072,6 @@ export class GameRoom extends DurableObject<Env> {
       this.state.closures.push({ round: round + 1, shop: a.shop, player: a.target });
       notes.push(
         `🔒 Someone bought a cold iron key: one villager is locked out of ${placePhrase(SHOP_BY_ID.get(a.shop)?.label ?? a.shop)} tomorrow.`,
-      );
-    }
-    for (const a of aimedToday("shopkeepers_vacation")) {
-      if (!a.shop) continue;
-      this.state.closures.push({ round: round + 1, shop: a.shop });
-      notes.push(
-        `🧳 Someone bought the shopkeeper a holiday: ${SHOP_BY_ID.get(a.shop)?.label ?? a.shop} is closed to everyone tomorrow.`,
       );
     }
 
