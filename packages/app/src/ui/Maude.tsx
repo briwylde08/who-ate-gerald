@@ -206,6 +206,16 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
         </div>
       </div>
 
+      {me?.alive === false && (
+        <div className="panel dead-door">
+          <h2>🪦 The dead ask no questions</h2>
+          <p className="dim">
+            Maude's door is closed to you. You can still watch the square, whisper as a
+            ghost, and read the mornings — but her ledger readings are for the living.
+          </p>
+        </div>
+      )}
+
       {round >= 1 && (
         <div className="panel">
           <h3 className="composer-head">Seen at the stores today</h3>

@@ -372,7 +372,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               )}
               <div className="row">
                 <button className="primary" onClick={() => setRoleShown(false)}>
-                  Tell no one
+                  Close window
                 </button>
               </div>
             </div>

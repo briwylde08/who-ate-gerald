@@ -136,6 +136,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [others, setOthers] = useState<string[]>([]);
   const [closedShops, setClosedShops] = useState<string[]>([]);
   const [maxDays, setMaxDays] = useState<number | null>(null);
+  const [myFate, setMyFate] = useState<string | null>(null);
   const [winner, setWinner] = useState<string | null>(null);
   /** Dawn has broken; the next day opens in ~60s. Aims are refused meanwhile. */
   const [dayResetting, setDayResetting] = useState(false);
@@ -216,6 +217,15 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         );
         setClosedShops(v.closedShops ?? []);
         setMaxDays(v.maxDays ?? null);
+        // Which death was it? "banished or eaten" told a ghost nothing (Bri).
+        const myName = me?.name;
+        if (myName) {
+          const b = v.mornings.find((m) => m.banished === myName);
+          const e = v.mornings.find((m) => m.eaten === myName);
+          setMyFate(
+            b ? `banished on day ${b.round}` : e ? `eaten on day ${e.round}` : null,
+          );
+        }
         setDead(me ? !me.alive : false);
         setWinner(v.winner ?? null);
         // Dawn resolved but the next day hasn't opened yet (the ~60s roll):
@@ -451,7 +461,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         <div className="panel">
           <h3>🪦 The shops serve no ghosts</h3>
           <p className="dim">
-            You are dead — banished or eaten, the market no longer concerns you. Whatever coin
+            You are dead — {myFate ?? "banished or eaten"} — and the market no longer
+            concerns you. Whatever coin
             you carry, purchases from beyond the grave hold no power at dawn. Haunt the square
             instead; the living can hear you.
           </p>
@@ -711,7 +722,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         <div className="panel activity-log">
           <div className="activity-head">
             <h3>Onchain activity</h3>
-            <button className="link" onClick={onGoMaude}>
+            <button className="primary" onClick={onGoMaude}>
               Ask Maude a question →
             </button>
           </div>

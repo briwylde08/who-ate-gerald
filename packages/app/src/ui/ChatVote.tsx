@@ -235,8 +235,32 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
    *  newest morning still belongs to the CURRENT round. */
   const dayResetting = lastMorning !== null && lastMorning.round === view.round;
 
+  const fateOf = (name: string): string | null => {
+    const b = view.mornings.find((m) => m.banished === name);
+    if (b) return `⚖ banished day ${b.round}`;
+    const e = view.mornings.find((m) => m.eaten === name);
+    if (e) return `🍽 eaten day ${e.round}`;
+    return null;
+  };
+
   return (
     <div>
+      {/* Who's who, at a glance, where the arguing happens (Bri's note). */}
+      <div className="panel roster-strip">
+        {view.players.map((p) => (
+          <span key={p.seat} className={`roster-chip${p.alive ? "" : " dead"}`}>
+            <b>{p.name}</b>
+            <span className="dim">
+              {" "}
+              {p.alive
+                ? p.drunkToday
+                  ? "🍺 dead drunk"
+                  : "alive"
+                : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
+            </span>
+          </span>
+        ))}
+      </div>
 
       {!view.marketClosed && !view.winner && (
         <div className="panel">
@@ -401,46 +425,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
         </div>
       )}
 
-      {/* The freshest results, HERE — this is the tab everyone is on when
-          dawn breaks, so the outcome must not hide in the Town Square. */}
-      {lastMorning && (
-        <div className="panel">
-          <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
-          {lastMorning.banished && (
-            <p>
-              The village banished <b>{lastMorning.banished}</b> —{" "}
-              {lastMorning.banishedRole === "werebear" ? (
-                <>
-                  <BearIcon /> THE WEREBEAR!
-                </>
-              ) : (
-                "a villager. Oops."
-              )}
-            </p>
-          )}
-          {lastMorning.eaten && (
-            <p>
-              <b>{lastMorning.eaten}</b> was eaten in the night, like Gerald before them.
-            </p>
-          )}
-          {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
-          {lastMorning.notes.map((n, i) => (
-            <p key={i} className="crier-note">
-              {n}
-            </p>
-          ))}
-          {lastMorning.winner && <p className="tagline">The {lastMorning.winner} has won.</p>}
-          {/* The results are read; the next day is shopping. One click. */}
-          {!view.winner && (
-            <div className="row">
-              <button className="primary" disabled={dayResetting} onClick={onGoShops}>
-                {dayResetting ? "Waiting for the day to reset…" : "Start new day →"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       {role === "werebear" && me?.alive && view.phase === "day" && !view.winner && (
         <div className="panel">
           <h2>
@@ -472,6 +456,51 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
               {acting ? "Marking…" : dayResetting ? "The night is over" : "Mark for the night"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* The freshest results, HERE — this is the tab everyone is on when
+          dawn breaks, so the outcome must not hide in the Town Square. */}
+      {lastMorning && (
+        <div className="panel">
+          <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
+          {lastMorning.banished && (
+            <p>
+              The village banished <b>{lastMorning.banished}</b> —{" "}
+              {lastMorning.banishedRole === "werebear" ? (
+                <>
+                  <BearIcon /> THE WEREBEAR!
+                </>
+              ) : (
+                "a villager. Oops."
+              )}
+            </p>
+          )}
+          {lastMorning.eaten && (
+            <p>
+              <b>{lastMorning.eaten}</b> was eaten in the night, like Gerald before them.
+            </p>
+          )}
+          {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
+          {lastMorning.notes.map((n, i) => (
+            <p key={i} className="crier-note">
+              {n}
+            </p>
+          ))}
+          {lastMorning.winner && <p className="tagline">The {lastMorning.winner} has won.</p>}
+          {/* The results are read; the next day is shopping. One click. */}
+          {!view.winner &&
+            me?.alive &&
+            (dayResetting ||
+              (lastMorning.round + 1 === view.round &&
+                !view.marketClosed &&
+                me?.doneToday !== true)) && (
+              <div className="row">
+                <button className="primary" disabled={dayResetting} onClick={onGoShops}>
+                  {dayResetting ? "Waiting for the day to reset…" : "Start new day →"}
+                </button>
+              </div>
+            )}
         </div>
       )}
 
