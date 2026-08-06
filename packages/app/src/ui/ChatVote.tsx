@@ -259,7 +259,10 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
                   if (e.key === "Enter" && chatText.trim()) void sendChat();
                 }}
               />
-              <button disabled={!chatText.trim() || chatBusy} onClick={() => void sendChat()}>
+              <button
+                disabled={!chatText.trim() || chatBusy || dayResetting}
+                onClick={() => void sendChat()}
+              >
                 Say it
               </button>
             </div>
@@ -341,10 +344,14 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             </select>
             <button
               className="primary"
-              disabled={!voteTarget || !view.marketClosed || me?.drunkToday}
+              disabled={!voteTarget || !view.marketClosed || me?.drunkToday || dayResetting}
               onClick={() => void castVote()}
             >
-              {me?.drunkToday ? "🍺 Dead drunk — no vote today" : "Cast vote"}
+              {me?.drunkToday
+                ? "🍺 Dead drunk — no vote today"
+                : dayResetting
+                  ? "Dawn has broken"
+                  : "Cast vote"}
             </button>
           </div>
         </div>
@@ -413,8 +420,12 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
                 </option>
               ))}
             </select>
-            <button className="primary" disabled={!pickTarget} onClick={() => void castPick()}>
-              Mark for the night
+            <button
+              className="primary"
+              disabled={!pickTarget || dayResetting}
+              onClick={() => void castPick()}
+            >
+              {dayResetting ? "The night is over" : "Mark for the night"}
             </button>
           </div>
         </div>

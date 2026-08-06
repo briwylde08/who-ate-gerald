@@ -126,6 +126,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [others, setOthers] = useState<string[]>([]);
   const [closedShops, setClosedShops] = useState<string[]>([]);
   const [maxDays, setMaxDays] = useState<number | null>(null);
+  const [winner, setWinner] = useState<string | null>(null);
+  /** Dawn has broken; the next day opens in ~60s. Aims are refused meanwhile. */
+  const [dayResetting, setDayResetting] = useState(false);
   /** The village-wide feed: every seated player's public txs. */
   const [feedGraph, setFeedGraph] = useState<GraphView | null>(null);
   useEffect(() => {
@@ -197,6 +200,11 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         setClosedShops(v.closedShops ?? []);
         setMaxDays(v.maxDays ?? null);
         setDead(me ? !me.alive : false);
+        setWinner(v.winner ?? null);
+        // Dawn resolved but the next day hasn't opened yet (the ~60s roll):
+        // the newest morning still belongs to the CURRENT round. Aiming is
+        // refused during it, so the picker must not keep inviting it.
+        setDayResetting(v.mornings.at(-1)?.round === v.round);
       })
       .catch(() => undefined);
   }, [wallet.address, round]);
@@ -426,7 +434,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       )}
 
 
-      {!dead && doneToday && (
+      {winner && (
+        <div className="panel">
+          <p className="dim">The game is over — the reckoning is in the Town Square.</p>
+        </div>
+      )}
+      {!dead && doneToday && !winner && (
         <div className="panel">
           <h3><ToteIcon />✓ Done for today</h3>
           <p className="dim">
@@ -441,15 +454,24 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       {/* NOT gated on doneToday: aiming stays possible (and necessary!)
           after Done, and hiding this cost the baker a 23 XLM holiday he
           believed he'd aimed (game04, day 1). */}
-      {!dead && round >= 1 && unaimed.length > 0 && (
+      {!dead && round >= 1 && unaimed.length > 0 && !winner && (
         <div className="panel">
-          <h3>⚠ Not aimed yet</h3>
+          <h3>{dayResetting ? "🌅 Dawn broke first" : "⚠ Not aimed yet"}</h3>
           <p className="dim">
-            {unaimed.map((it) => it.label).join(", ")}{" "}
-            {unaimed.length === 1 ? "needs" : "need"} pointing at somebody before the day ends —
-            until then {unaimed.length === 1 ? "it does" : "they do"} nothing at all. The picker
-            is under {unaimed.length === 1 ? "the item" : "each item"} above.
-            {doneToday && " You're done shopping, but you can still aim."}
+            {dayResetting ? (
+              <>
+                {unaimed.map((it) => it.label).join(", ")} never got pointed at anybody, and the
+                day is over. The coin is spent. The next day opens in a moment.
+              </>
+            ) : (
+              <>
+                {unaimed.map((it) => it.label).join(", ")}{" "}
+                {unaimed.length === 1 ? "needs" : "need"} pointing at somebody before the day
+                ends — until then {unaimed.length === 1 ? "it does" : "they do"} nothing at all.
+                The picker is under {unaimed.length === 1 ? "the item" : "each item"} above.
+                {doneToday && " You're done shopping, but you can still aim."}
+              </>
+            )}
           </p>
         </div>
       )}
@@ -607,12 +629,13 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                             )}
                             <button
                               disabled={
+                                dayResetting ||
                                 (item.aim !== "shop" && !aimTarget[item.id]) ||
                                 (item.aim !== "player" && !aimShop[item.id])
                               }
                               onClick={() => void aim(item)}
                             >
-                              Aim it
+                              {dayResetting ? "Too late — dawn broke" : "Aim it"}
                             </button>
                           </>
                         )}

@@ -137,7 +137,12 @@ export class VillagerWallet {
     }
     const res = await fetch(`${FRIENDBOT_URL}?addr=${encodeURIComponent(this.address)}`);
     if (!res.ok && res.status !== 400) {
-      throw new Error(`friendbot failed: ${res.status}`);
+      // Eight people provisioning within the same fifteen seconds rate-limit
+      // each other. This is the first error most tables ever see, so say the
+      // thing that fixes it rather than the status code.
+      throw new Error(
+        "The testnet faucet is busy — wait a few seconds and press Provision my villager again.",
+      );
     }
   }
 
