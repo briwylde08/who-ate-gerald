@@ -76,9 +76,6 @@ export interface GodView {
   }[];
   votes: { voter: string; target: string }[];
   nightPick: string | null;
-  wounded: boolean;
-  venisonUsed: number;
-  baneConsumed: string[];
   note: string;
 }
 

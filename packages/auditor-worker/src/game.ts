@@ -70,6 +70,11 @@ interface GameState {
   drunkards: Record<string, number>;
   /** Round whose drunkard snapshot has been taken (0 = none yet). */
   drunkSnapshotRound: number;
+  /** Indexer height when the last dawn resolved: purchases at or below it
+   *  were seen (and applied) by that dawn; anything above belongs to the
+   *  NEXT day. Solves both the double-fire re-bucket and the 60s dawn-gap
+   *  coin trap (issue #20.1/.6). */
+  lastDawnLedger: number;
   /** Ledger height at the FIRST join — this game's birth certificate.
    *  Deposits from before it belong to other games, not this feed. */
   createdLedger: number;
@@ -80,14 +85,9 @@ interface GameState {
   votes: Record<string, string>;
   /** This round's werebear pick: target player name, or null. */
   nightPick: string | null;
-  /** address → bearsbane already consumed. (v3 item — retired in catalog v4.) */
-  baneConsumed: Record<string, boolean>;
-  /** address → silver charms shattered (each purchase = one save). */
-  charmUsed: Record<string, number>;
   /** address → round they spend in critical condition (no vote) after a save. */
   recovering: Record<string, number>;
   /** Pierces spent — each venison purchase grants exactly one. (v3 — retired.) */
-  venisonUsed: number;
   /** address → horseshoe nails spent (each purchase = one tie won). */
   nailUsed: Record<string, number>;
   /** address → tooth-sharpener offerings the beast has already accepted. */
@@ -117,15 +117,13 @@ const freshState = (): GameState => ({
   chat: [],
   drunkards: {},
   drunkSnapshotRound: 0,
+  lastDawnLedger: 0,
   createdLedger: 0,
   calledOff: false,
   askLog: [],
   votes: {},
   nightPick: null,
-  baneConsumed: {},
-  charmUsed: {},
   recovering: {},
-  venisonUsed: 0,
   nailUsed: {},
   offeringUsed: {},
   ghostVote: {},
@@ -399,7 +397,12 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.phase === "ended") throw new Error(`game over — ${this.state.winner} won`);
     await this.sync();
     const latest = await indexerLatestLedger(this.env);
-    const startLedger = latest + 1;
+    // Open the new day exactly where the last dawn stopped seeing: anything
+    // the dawn already applied stays in its round; a purchase that slipped
+    // into the 60-second gap (or that the lagging mirror hadn't shown dawn)
+    // falls into TODAY's window and works, instead of double-firing or
+    // dying inert (issue #20.1/.6).
+    const startLedger = Math.max(latest, this.state.lastDawnLedger ?? 0) + 1;
     const prev = this.state.rounds.find((w) => w.round === this.state.round);
     if (prev && prev.endLedger === null) prev.endLedger = latest;
     this.state.round += 1;
@@ -421,9 +424,14 @@ export class GameRoom extends DurableObject<Env> {
     const p = this.playerByName(playerName);
     if (!p) throw new Error(`no player named "${playerName}"`);
     p.alive = false;
+    // The dead don't vote — and a vote left behind fed the knife-announce
+    // arithmetic and could even be "banished" a second time (issue #20.4).
+    delete this.state.votes[p.address];
     // A death can be what shuts the market — don't let the barrel slip through.
     await this.closeMarketIfDone();
     await this.persist();
+    // Eliminating the last player who owed a vote must not hang the day.
+    await this.maybeResolve();
     return { player: p.name, alive: p.alive };
   }
 
@@ -718,7 +726,13 @@ export class GameRoom extends DurableObject<Env> {
     // Players in critical condition CANNOT vote today — dawn doesn't wait
     // for a hand that can't be raised.
     const allVoted = voters.every(
-      (p) => this.state.votes[p.address] !== undefined || this.drunkToday(p.address),
+      (p) =>
+        this.state.votes[p.address] !== undefined ||
+        this.drunkToday(p.address) ||
+        // The vote gate refuses a recovering player, so dawn must not wait
+        // for them — this was a latent deadlock if `recovering` is ever
+        // revived (issue #20.5).
+        this.state.recovering[p.address] === this.state.round,
     );
     const alive = this.state.players.filter((p) => p.alive);
     const roles = this.state.roles ?? {};
@@ -864,7 +878,12 @@ export class GameRoom extends DurableObject<Env> {
     if (weights.size > 0) {
       const max = Math.max(...weights.values());
       const top = [...weights.entries()].filter(([, w]) => w === max).map(([n]) => n);
-      if (top.length === 1) banished = this.playerByName(top[0]!) ?? null;
+      if (top.length === 1) {
+        const b = this.playerByName(top[0]!);
+        // A GM-eliminated player can still lead the tally — a corpse cannot
+        // be banished a second time (issue #20.4).
+        banished = b?.alive ? b : null;
+      }
       else {
         notes.push(
           `The vote tied between ${top.join(" and ")}.`,
@@ -1082,7 +1101,8 @@ export class GameRoom extends DurableObject<Env> {
       const beforeOpening = purchases.filter(
         (x) => x.from === p.address && x.round === 0 && !x.isSurrender,
       ).length;
-      if (beforeOpening > 0) {
+      // Report lobby spending once, at the first dawn — not forever (#20.3).
+      if (beforeOpening > 0 && round === 1) {
         violations.push(
           `${p.name} spent coin at ${beforeOpening} shop${beforeOpening === 1 ? "" : "s"} before the game began — the stores were shut, and the money bought nothing.`,
         );
@@ -1090,7 +1110,9 @@ export class GameRoom extends DurableObject<Env> {
       // Once per DAY, not once per game (Bri's ruling, 2026-08-04): the
       // shelf resets each morning, so only a same-day repeat is a violation.
       const byWareDay = new Map<string, number>();
-      for (const x of purchases.filter((q) => q.from === p.address && q.round >= 1 && !q.isSurrender)) {
+      // TODAY only: a day-1 double-buy used to reappear in every remaining
+      // morning's report (issue #20.3).
+      for (const x of purchases.filter((q) => q.from === p.address && q.round === round && !q.isSurrender)) {
         if (x.itemGuess) {
           const k = `${x.round}:${x.itemGuess}`;
           byWareDay.set(k, (byWareDay.get(k) ?? 0) + 1);
@@ -1118,8 +1140,17 @@ export class GameRoom extends DurableObject<Env> {
       // a ledger height, and purchases carry theirs.
       const done = this.state.doneShopping[p.address];
       if (done?.round === round) {
+        // The indexer trails the chain by a ledger or two, so a purchase
+        // already on-chain when Done was clicked can surface after the pin.
+        // Grace, not amnesty — this is the one audit that calls someone a
+        // liar by name (issue #20.2).
+        const LATE_BUY_GRACE = 2;
         const lateBuys = purchases.filter(
-          (x) => x.from === p.address && x.round === round && !x.isSurrender && x.ledger > done.ledger,
+          (x) =>
+            x.from === p.address &&
+            x.round === round &&
+            !x.isSurrender &&
+            x.ledger > done.ledger + LATE_BUY_GRACE,
         ).length;
         if (lateBuys > 0) {
           violations.push(
@@ -1185,6 +1216,9 @@ export class GameRoom extends DurableObject<Env> {
         });
       }
     }
+
+    // Where this dawn stood: everything it could see ends here (issue #20).
+    this.state.lastDawnLedger = await indexerLatestLedger(this.env).catch(() => this.state.lastDawnLedger ?? 0);
 
     const report: MorningReport = {
       round,
@@ -1489,10 +1523,6 @@ export class GameRoom extends DurableObject<Env> {
         target,
       })),
       nightPick: this.state.nightPick,
-      venisonUsed: this.state.venisonUsed,
-      baneConsumed: Object.keys(this.state.baneConsumed).map(
-        (a) => this.playerByAddress(a)?.name ?? a.slice(0, 6),
-      ),
       note: "GM eyes only. Never screen-share this panel.",
     };
   }
