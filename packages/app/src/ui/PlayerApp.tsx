@@ -251,13 +251,20 @@ export function PlayerApp() {
         setRound((r) => (v.round !== r ? v.round : r));
         // Roll the right film for a fresh morning — once per morning per
         // browser, and only ever where it can actually be SEEN.
-        const filmMorning = [...v.mornings]
-          .reverse()
-          .find((x) => x.eaten || x.banishedRole === "werebear");
+        const filmMorning = v.mornings.length > 0 ? v.mornings[v.mornings.length - 1] : null;
         if (filmMorning) {
           const seenKey = `gerald:film:${gameId}:${filmMorning.round}`;
           if (!localStorage.getItem(seenKey)) {
-            if (filmMorning.banishedRole === "werebear" && filmMorning.banished) {
+            if (v.winner === "werebear" && !v.calledOff) {
+              // The bear wins — parity or the clock, one reel for both
+              // (Bri's film, 2026-08-06). Outranks the night's own film:
+              // this IS the ending.
+              localStorage.setItem(seenKey, "1");
+              setFilm({
+                src: "/videos/bear_wins.mp4",
+                caption: `${v.bear ?? "The werebear"} has won. The village belongs to the bear.`,
+              });
+            } else if (filmMorning.banishedRole === "werebear" && filmMorning.banished) {
               localStorage.setItem(seenKey, "1");
               setFilm({
                 src: nightFilmSrc("werebear"),
@@ -277,21 +284,13 @@ export function PlayerApp() {
                       : `${filmMorning.eaten} was taken in the night.`,
                 });
               }
-            }
-            // The day-six clock: the bear outlasts the village and nobody
-            // dies — the one ending with no visual beat. A still, not a film:
-            // the werebear at its work, never found (issue #18.3).
-            if (
-              v.winner === "werebear" &&
-              !v.calledOff &&
-              filmMorning.banishedRole !== "werebear" &&
-              !filmMorning.eaten &&
-              !localStorage.getItem(`gerald:clockend:${gameId}`)
-            ) {
-              localStorage.setItem(`gerald:clockend:${gameId}`, "1");
+            } else if (!filmMorning.eaten && !v.winner) {
+              // A quiet night gets its own reel (Bri's film, 2026-08-06):
+              // nobody eaten, game still on — the village exhales.
+              localStorage.setItem(seenKey, "1");
               setFilm({
-                src: "", // no reel — the still carries it (see film overlay)
-                caption: "Six days, and it was never found. The village belongs to the bear.",
+                src: "/videos/no_one_eaten.mp4",
+                caption: "Nobody was eaten in the night.",
               });
             }
           }
