@@ -23,7 +23,7 @@
  *
  * Usage: npm run item-test      (several minutes: real ZK proofs + testnet txs)
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -64,7 +64,17 @@ const transferCircuit = require("@ctd/sdk/circuits/transfer.json") as { bytecode
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dep = JSON.parse(readFileSync(join(repoRoot, "config/deployment.testnet.json"), "utf8"));
 const shops = JSON.parse(readFileSync(join(repoRoot, "config/shops.testnet.json"), "utf8"));
-const gm = JSON.parse(readFileSync(join(repoRoot, "config/local.gm.json"), "utf8"));
+// Nothing writes this file — it is the one config/local.* you author by hand,
+// and an unguarded read here died with a bare ENOENT before printing anything.
+const gmPath = join(repoRoot, "config/local.gm.json");
+if (!existsSync(gmPath)) {
+  console.error(
+    `missing ${gmPath}\n` +
+      `  write it by hand: { "gmToken": "<the worker's GM_TOKEN>" }`,
+  );
+  process.exit(1);
+}
+const gm = JSON.parse(readFileSync(gmPath, "utf8"));
 const catalog = JSON.parse(readFileSync(join(repoRoot, "config/catalog.json"), "utf8")) as {
   shops: Record<string, { items: { id: string; priceXlm: number }[] }>;
 };
@@ -72,7 +82,8 @@ const catalog = JSON.parse(readFileSync(join(repoRoot, "config/catalog.json"), "
 /** Bumped with the shelf — the banner must never claim a version it did not test. */
 const CATALOG_VERSION = "v9";
 
-const AUDITOR_URL = "https://gerald-auditor.briana-761.workers.dev";
+const AUDITOR_URL =
+  process.env.AUDITOR_URL ?? "https://gerald-auditor.briana-761.workers.dev";
 const GAME_ID = `items-${Date.now().toString(36)}`;
 const XLM = 10_000_000n;
 
