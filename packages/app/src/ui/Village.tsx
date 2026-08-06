@@ -213,6 +213,16 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // rounds >= 1), so the coin would simply be burned. Bar the doors.
   const marketOpen = round >= 1;
 
+  /** Today's store visits: public graph ∪ this browser's own instant log. */
+  const visitedToday = [
+    ...new Set([
+      ...visitedShops,
+      ...loadHistory(wallet.address, loadGameId())
+        .filter((r) => r.round === round)
+        .map((r) => r.shopLabel),
+    ]),
+  ];
+
   /** Bought today, needs aiming, still unaimed — dead weight until pointed. */
   const unaimed = SHOPS.flatMap((sh) => sh.items).filter(
     (it) =>
@@ -227,6 +237,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const [doneArmed, setDoneArmed] = useState(false);
   const declareDone = async () => {
     setError(null);
+    setBusy("Telling the shopkeepers you're done…");
     try {
       await playerApi.doneShopping(wallet, loadGameId());
       setDoneToday(true);
@@ -234,11 +245,17 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       document.querySelector(".activity-log")?.scrollIntoView({ behavior: "smooth" });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
     }
   };
 
   const aim = async (item: CatalogItem) => {
     setError(null);
+    // aimItem decrypts the day's ledger server-side — seconds, not instant.
+    // Without this, a double-click raced itself and the second click was told
+    // "buy it today before you aim it" about an item just aimed (issue #13).
+    setBusy("Pointing it…");
     try {
       const r = await playerApi.aim(
         wallet,
@@ -255,6 +272,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       if (r.result) setAimResult(r.result);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -514,8 +533,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       >
         {SHOPS.map((shop) => {
           const shut = closedShops.includes(shop.id);
+          // The two-stores custom, visible BEFORE the till refuses you: a
+          // third store's card shutters instead of taking your confirm and
+          // then scolding you (issue #13).
+          const capped = !shut && visitedToday.length >= 2 && !visitedToday.includes(shop.label);
           return (
-          <div key={shop.id} className={`panel shop-card${shut ? " shut" : ""}`}>
+          <div key={shop.id} className={`panel shop-card${shut || capped ? " shut" : ""}`}>
             <h3>
               {shop.icon && (
                 <span className="shop-icon" aria-hidden="true">
@@ -530,6 +553,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
               </p>
             )}
+            {capped && (
+              <p className="shut-note">
+                <ToteIcon /> Two stores a day is the custom — you've been to{" "}
+                {visitedToday.join(" and ")}.
+              </p>
+            )}
             <div className="items">
               {shop.items.map((item) => {
                 const key = `${shop.id}:${item.id}`;
@@ -537,7 +566,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const price = stroopsFromXlm(item.priceXlm);
                 const owned = boughtItems.has(item.label);
                 const tooRich = price > balances.spendable;
-                const blocked = !marketOpen || doneToday || tooRich || owned;
+                const blocked = !marketOpen || doneToday || tooRich || owned || capped;
                 const label = !marketOpen
                   ? "Not open yet"
                   : owned

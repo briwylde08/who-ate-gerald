@@ -50,6 +50,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   const [role, setRole] = useState<Role | null>(null);
   const [roleShown, setRoleShown] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
+  const [readying, setReadying] = useState(false);
   /** The notice-board: other games seating players right now. */
   const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
   useEffect(() => {
@@ -253,14 +254,17 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                 <button
                   className={`ready-btn${me.ready ? " is-ready" : ""}`}
                   aria-pressed={me.ready === true}
+                  disabled={readying}
                   onClick={() => {
+                    setReadying(true);
                     playerApi
                       .ready(wallet, gameId, !me.ready)
                       .then(() => void load())
-                      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+                      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+                      .finally(() => setReadying(false));
                   }}
                 >
-                  {me.ready ? "Ready ✓" : "I'm Ready"}
+                  {readying ? "…" : me.ready ? "Ready ✓" : "I'm Ready"}
                 </button>
                 <span className="dim">You can change your mind until the game begins.</span>
               </div>
