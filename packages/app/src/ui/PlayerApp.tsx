@@ -597,9 +597,15 @@ export function PlayerApp() {
       )}
 
       {busy && (
-        <div className="overlay">
+        <div className="overlay" role="status">
           <div className="moon" />
           <p>{busy}</p>
+          {/* A dismissed Freighter popup never settles its promise, so the
+              finally that clears this can never run — the player needs a
+              door (issue #13). The transaction may still land. */}
+          <button className="link overlay-escape" onClick={() => setBusy(null)}>
+            Hide this — the transaction may still be running
+          </button>
         </div>
       )}
     </div>

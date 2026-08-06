@@ -47,6 +47,8 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   const [picked, setPicked] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
+  /** Vote/pick in flight — the LAST vote of a day runs the entire dawn. */
+  const [acting, setActing] = useState(false);
   const [privateNotes, setPrivateNotes] = useState<{ round: number; text: string }[]>([]);
   /** Fresh dawn results, shown as a modal once per round per browser. */
   const [dawnNotes, setDawnNotes] = useState<string[] | null>(null);
@@ -152,6 +154,7 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
 
   const castVote = async () => {
     setError(null);
+    setActing(true);
     try {
       const r = await playerApi.vote(wallet, gameId, voteTarget);
       setVoted(r.voted);
@@ -159,11 +162,14 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
       await loadView();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setActing(false);
     }
   };
 
   const castPick = async () => {
     setError(null);
+    setActing(true);
     try {
       const r = await playerApi.nightPick(wallet, gameId, pickTarget);
       setPicked(r.picked);
@@ -171,6 +177,8 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
       await loadView();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setActing(false);
     }
   };
 
@@ -348,14 +356,16 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             </select>
             <button
               className="primary"
-              disabled={!voteTarget || !view.marketClosed || me?.drunkToday || dayResetting}
+              disabled={acting || !voteTarget || !view.marketClosed || me?.drunkToday || dayResetting}
               onClick={() => void castVote()}
             >
-              {me?.drunkToday
-                ? "🍺 Dead drunk — no vote today"
-                : dayResetting
-                  ? "Dawn has broken"
-                  : "Cast vote"}
+              {acting
+                ? "Casting… (the last vote of the day brings the dawn)"
+                : me?.drunkToday
+                  ? "🍺 Dead drunk — no vote today"
+                  : dayResetting
+                    ? "Dawn has broken"
+                    : "Cast vote"}
             </button>
           </div>
         </div>
@@ -426,10 +436,10 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             </select>
             <button
               className="primary"
-              disabled={!pickTarget || dayResetting}
+              disabled={acting || !pickTarget || dayResetting}
               onClick={() => void castPick()}
             >
-              {dayResetting ? "The night is over" : "Mark for the night"}
+              {acting ? "Marking…" : dayResetting ? "The night is over" : "Mark for the night"}
             </button>
           </div>
         </div>
