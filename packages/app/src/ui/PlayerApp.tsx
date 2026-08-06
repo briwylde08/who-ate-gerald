@@ -269,9 +269,30 @@ export function PlayerApp() {
                 localStorage.setItem(seenKey, "1");
                 setFilm({
                   src: nightFilmSrc(victim.character),
-                  caption: `${filmMorning.eaten} was taken in the night.`,
+                  // When it's YOU, say so — the most personal beat in the game
+                  // shouldn't read like someone else's news (issue #18).
+                  caption:
+                    victim.address === wallet.address
+                      ? "You were taken in the night."
+                      : `${filmMorning.eaten} was taken in the night.`,
                 });
               }
+            }
+            // The day-six clock: the bear outlasts the village and nobody
+            // dies — the one ending with no visual beat. A still, not a film:
+            // the werebear at its work, never found (issue #18.3).
+            if (
+              v.winner === "werebear" &&
+              !v.calledOff &&
+              filmMorning.banishedRole !== "werebear" &&
+              !filmMorning.eaten &&
+              !localStorage.getItem(`gerald:clockend:${gameId}`)
+            ) {
+              localStorage.setItem(`gerald:clockend:${gameId}`, "1");
+              setFilm({
+                src: "", // no reel — the still carries it (see film overlay)
+                caption: "Six days, and it was never found. The village belongs to the bear.",
+              });
             }
           }
         }
@@ -446,14 +467,18 @@ export function PlayerApp() {
           onClick={() => setFilm(null)}
         >
           <div className="film-frame" onClick={(e) => e.stopPropagation()}>
-            <video
-              src={film.src}
-              autoPlay
-              muted
-              playsInline
-              controls
-              onError={() => setFilm(null)} // no reel for this villager (yet)
-            />
+            {film.src ? (
+              <video
+                src={film.src}
+                autoPlay
+                muted
+                playsInline
+                controls
+                onError={() => setFilm(null)} // no reel for this villager (yet)
+              />
+            ) : (
+              <img className="film-still" src="/bg.jpg" alt="" />
+            )}
             <p className="film-caption">{film.caption}</p>
             <button className="primary" onClick={() => setFilm(null)}>
               Close the curtains

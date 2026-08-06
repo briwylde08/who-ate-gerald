@@ -1186,6 +1186,11 @@ export class GameRoom extends DurableObject<Env> {
           );
           for (const villager of last) {
             villager.alive = false;
+            // The last villager dies ON CAMERA like everyone else: marking
+            // them eaten makes the death film, the notices row, and the fate
+            // label all work for the endgame (issue #18.3). The ghost-vote
+            // loop already ran — moot anyway, the game is over.
+            eaten ??= villager;
             notes.push(
               `With no one left to stand between them, the werebear stopped pretending. ${villager.name} never saw another dawn. The village belongs to the bear.`,
             );
@@ -1230,9 +1235,9 @@ export class GameRoom extends DurableObject<Env> {
       winner: this.state.winner,
       at: new Date().toISOString(),
     };
-    if (this.state.winner === null) {
-      report.notes.push("The village stirs — the next day begins in a minute.");
-    }
+    // The countdown is housekeeping, not story — the Start-new-day button
+    // already carries it ("Waiting for the day to reset…"), so the morning
+    // report no longer ends every story on scheduling (issue #18.4).
     this.state.mornings.push(report);
     if (this.state.phase !== "ended") {
       this.state.phase = "day"; // stays until the next day opens
