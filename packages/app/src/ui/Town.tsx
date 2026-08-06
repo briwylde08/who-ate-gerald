@@ -233,7 +233,16 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         )}
         {view.winner && view.bear && (
           <div className="answer-card" style={{ fontSize: "1.1rem" }}>
-            <BearIcon /> <b>{view.bear} was the werebear.</b>{" "}
+            {(() => {
+              const bearSeat = view.players.find((p) => p.name === view.bear);
+              const bearChar = bearSeat?.character ? CHAR_BY_ID.get(bearSeat.character) : null;
+              return bearChar?.image ? (
+                <img className="reckoning-portrait" src={bearChar.image} alt="" />
+              ) : (
+                <BearIcon />
+              );
+            })()}{" "}
+            <b>{view.bear} was the werebear.</b>{" "}
             {view.calledOff
               ? "The Order called the hunt off before the village found them."
               : view.winner === "werebear"
@@ -334,19 +343,38 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           </div>
         )}
         {roleShown && role && (
-          <div className="answer-card">
-            {role === "werebear" ? (
-              <>
-                <BearIcon /> <b>You are the werebear.</b> Gerald was delicious. Shop and vote like any
-                villager and each day, pick someone to eat.
-              </>
-            ) : (
-              <>
-                🏡 <b>You are a villager.</b> Find the werebear before it finds you.
-              </>
-            )}
-            <div className="row">
-              <button onClick={() => setRoleShown(false)}>hide</button>
+          <div className="film-overlay" role="dialog" aria-label="Your fate">
+            <div className="panel dawn-modal fate-modal">
+              {(() => {
+                const myChar = me?.character ? CHAR_BY_ID.get(me.character) : null;
+                return myChar?.image ? (
+                  <img className="fate-portrait" src={myChar.image} alt="" />
+                ) : null;
+              })()}
+              {role === "werebear" ? (
+                <>
+                  <h2>
+                    <BearIcon /> You are the werebear.
+                  </h2>
+                  <p>
+                    Gerald was delicious. Shop and vote like any villager — and each day, pick
+                    someone to eat.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2>🏡 You are a villager.</h2>
+                  <p>
+                    Find the werebear before it finds you. The ledger will not tell you what
+                    anyone bought. But Maude (the auditor) will answer one question per day.
+                  </p>
+                </>
+              )}
+              <div className="row">
+                <button className="primary" onClick={() => setRoleShown(false)}>
+                  Tell no one
+                </button>
+              </div>
             </div>
           </div>
         )}

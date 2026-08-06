@@ -1086,6 +1086,36 @@ th { color: var(--ink-dim); font-weight: normal; }
 .kit-list li { padding: 4px 0; font-size: 0.9rem; }
 .kit-note { margin: 8px 0 0; font-size: 0.72rem; }
 .overlay-escape { margin-top: 14px; opacity: 0.7; }
+
+/* The fate reveal: your own face, full screen, then "Tell no one". */
+.fate-modal { text-align: center; }
+.fate-portrait {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--gold);
+  margin: 0 auto 12px;
+  display: block;
+}
+.fate-modal h2 { margin: 0 0 8px; }
+.fate-modal .row { justify-content: center; }
+
+/* The unmasking wears the face it names. */
+.reckoning-portrait {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid var(--blood);
+  vertical-align: middle;
+}
+
+/* The night's story reads like story, not caption. */
+.crier-note { margin: 6px 0; font-size: 0.95rem; line-height: 1.5; color: var(--ink); }
+
+/* The day-six ending: a still, not a film. */
+.film-still { max-width: 100%; border-radius: 8px; display: block; }
 .kit-effect { display: block; font-size: 0.76rem; color: var(--ink-dim); margin-top: 1px; }
 .kit-aim { display: block; font-size: 0.78rem; color: var(--moon); margin-top: 2px; }
 .activity-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }

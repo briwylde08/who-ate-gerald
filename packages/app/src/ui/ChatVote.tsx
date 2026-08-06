@@ -425,7 +425,7 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
           )}
           {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
           {lastMorning.notes.map((n, i) => (
-            <p key={i} className="dim">
+            <p key={i} className="crier-note">
               {n}
             </p>
           ))}
