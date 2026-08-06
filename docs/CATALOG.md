@@ -38,7 +38,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 25 | Unquiet rest | Chapel | When you die, a 50/50 chance your ghost can still vote. The result is announced either way. |
 | 28 | The butcher's knife | The Butcher's | Your vote counts twice at today's trial. If somebody hangs, the village is told a double vote was cast; nobody is ever told whose. |
 | 32 | Sock in mouth *(aim: player)* | General Store | Pick a villager. They can still type in the chat, but their vote will not count today. If they try to cast it, the morning report names them. |
-| 33 | Tooth sharpener | The Butcher's | Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone. |
+| 33 | Tooth sharpener | The Butcher's | Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does, and the morning report announces a sharpener was used. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone. |
 | 35 | Curfew bell | Blacksmith | Ring it, and the werebear stays home tonight. No hunting. No one dies tonight. |
 | 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn, on the spot, whether they are the werebear; otherwise you learn nothing. It never lies. |
 | 45 | Barrel of beer | General Store | You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear. |
@@ -52,6 +52,9 @@ are audited). Deadline: day SIX. The werebear may buy anything.
 
 - **The barrel is the apex.** Bri's ruling: it beats the sharpener; the one
   guaranteed escape, priced at the retired charm's 45 and costing your vote.
+- **The sharpener announces itself** (Bri ruling, 2026-08-06 — issue #19.1):
+  the tell is deliberate and now in the item text; the Butcher-sightings
+  narrowing is the price of a guaranteed kill.
 - **The sharpener is insurance, not a counter.** Purchases are hidden, so
   the bear can't target defenses — it pays 33 to beat whatever the prey
   might secretly hold, minus the one public loophole.
