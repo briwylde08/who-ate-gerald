@@ -116,11 +116,15 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
 
   // Private dawn facts: fetch each day, and pop unseen ones as a modal.
   useEffect(() => {
-    if (!(me && round && round >= 2 && hasCachedAuth(wallet, gameId))) return;
+    // Fetch from day 1: the long candle answers on the spot and files its note
+    // under TODAY, so gating the fetch on round >= 2 lost a 42 XLM answer the
+    // moment its modal was dismissed. Only the pop-up is a dawn thing.
+    if (!(me && round && hasCachedAuth(wallet, gameId))) return;
     playerApi
       .notes(wallet, gameId)
       .then((r) => {
         setPrivateNotes(r.notes);
+        if (round < 2) return; // day 1 has no overnight results to announce
         const fresh = r.notes.filter((n) => n.round === round).map((n) => n.text);
         if (fresh.length === 0) return;
         const seenKey = `gerald:dawnnotes:${gameId}:${round}`;
