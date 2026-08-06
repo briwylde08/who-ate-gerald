@@ -34,7 +34,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 8 | Soup bone *(aim: player)* | The Butcher's | Pick another villager. If the werebear targets you tonight, there is a 1 in 4 chance it targets them instead. |
 | 20 | Horseshoe nail | Blacksmith | If today's vote ties on you, the nail steps you out of it. Whoever is left in the tie takes the rope — if more than one is left, nobody hangs. Single use. |
 | 22 | Cold iron key *(aim: player+shop)* | Blacksmith | Pick a villager and a store. Tomorrow that store will not sell to them. Everyone is told which store was locked. Nobody is told who bought the key or who was locked out. |
-| 23 | Shopkeeper's holiday *(aim: shop)* | General Store | Pick a store. Tomorrow it is closed to everyone. Announced publicly. |
+| 23 | Pizza party | General Store | If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Works once per purchase. |
 | 25 | Unquiet rest | Chapel | When you die, a 50/50 chance your ghost can still vote. The result is announced either way. |
 | 28 | The butcher's knife | The Butcher's | Your vote counts twice at today's trial. Everyone is told a double vote was cast; nobody is ever told whose. |
 | 32 | Sock in mouth *(aim: player)* | General Store | Pick a villager. They can still type in the chat, but they lose their vote today. The morning report names them. |
@@ -88,5 +88,7 @@ are audited). Deadline: day SIX. The werebear may buy anything.
 - Village information is thin: Maude, sightings, and the candle. (Tie
   disclosures retired 2026-08-05 — thinner still; watch the passive bear.)
 - Bench if the village keeps losing: town clock (~30, +1 day, once).
-- Wanted: a bear-TEMPTING item (strong bear utility, damning receipt) — the
-  village currently has no purchase-evidence path to a passive bear.
+- ~~Wanted: a bear-TEMPTING item~~ **FOUND (2026-08-06): the pizza party.**
+  A banishment-save is worth most to the bear, and the save announces the
+  host's name — strong bear utility, damning receipt. Replaced the
+  shopkeeper's holiday (the cold iron key keeps the door-closing job).

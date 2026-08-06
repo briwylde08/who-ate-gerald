@@ -41,13 +41,12 @@
       "subtitle": "Everything you need. Nothing you can explain.",
       "items": [
         {
-          "id": "shopkeepers_vacation",
-          "label": "Shopkeeper's holiday",
-          "flavor": "Everyone deserves a rest. Tomorrow, ideally.",
+          "id": "pizza_party",
+          "label": "Pizza party",
+          "flavor": "Hard to hang the host.",
           "priceXlm": 23,
-          "class": "B-off",
-          "effect": "Pick a store. Tomorrow it is closed to everyone. Announced publicly.",
-          "aim": "shop"
+          "class": "B-def",
+          "effect": "If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Works once per purchase."
         },
         {
           "id": "sock_in_mouth",
