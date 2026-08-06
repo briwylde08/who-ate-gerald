@@ -156,6 +156,13 @@ export function PlayerApp() {
 
   const onPhase = (phase: TxPhase) => setBusy(PHASE_LABEL[phase]);
 
+  // The error banner lives above the tabs, so an error raised by a control at
+  // the bottom of the Shops rendered off-screen on a phone — from where the
+  // player was standing, the button simply did nothing.
+  useEffect(() => {
+    if (error) window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [error]);
+
   /** fund → register → deposit budget → merge, skipping what's already done. */
   const provision = async () => {
     if (!wallet || !balances) return;
@@ -422,7 +429,7 @@ export function PlayerApp() {
       </div>
 
       {error && (
-        <div className="error">
+        <div className="error" role="alert">
           {error} <button onClick={() => setError(null)}>dismiss</button>
         </div>
       )}

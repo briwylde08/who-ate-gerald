@@ -38,6 +38,12 @@ const QUESTION_GROUPS: { label: string; questions: string[] }[] = [
   },
 ];
 
+interface Answer {
+  round: number;
+  question: string;
+  answer: string;
+}
+
 interface Props {
   wallet: VillagerWallet;
   gameId: string;
@@ -49,7 +55,18 @@ interface Props {
 export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
-  const [answers, setAnswers] = useState<{ round: number; question: string; answer: string }[]>([]);
+  // Persisted, like purchases and aims already are. You get ONE question a day
+  // and the seal is spent server-side the moment it is answered, so a refresh
+  // (or the notice-board's Join, which reloads the page) used to destroy the
+  // single most expensive thing a player owns, with no way to get it back.
+  const answersKey = `gerald:maude:${gameId}`;
+  const [answers, setAnswers] = useState<Answer[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(answersKey) ?? "[]") as Answer[];
+    } catch {
+      return [];
+    }
+  });
   const [view, setView] = useState<PublicView | null>(null);
   const [graph, setGraph] = useState<GraphView | null>(null);
   const [target, setTarget] = useState("");
@@ -98,7 +115,11 @@ export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
     setError(null);
     try {
       const r = await playerApi.ask(wallet, gameId, question.trim());
-      setAnswers((a) => [{ round: r.round, question: question.trim(), answer: r.answer }, ...a]);
+      setAnswers((a) => {
+        const next = [{ round: r.round, question: question.trim(), answer: r.answer }, ...a];
+        localStorage.setItem(answersKey, JSON.stringify(next));
+        return next;
+      });
       setQuestion("");
       void fetchPublicView(gameId).then(setView).catch(() => undefined);
     } catch (e) {

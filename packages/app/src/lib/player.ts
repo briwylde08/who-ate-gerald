@@ -58,13 +58,23 @@ async function playerCall<T>(
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ address: wallet.address, signature, ...extra }),
   });
-  const body = (await resp.json()) as T & { error?: string };
+  // Parse defensively: a Cloudflare 502/1101 is an HTML page, and resp.json()
+  // throws on it BEFORE the !resp.ok branch below can produce a sane message.
+  // Every player action routes through here, so that raw
+  // "SyntaxError: Unexpected token '<'" reached the banner.
+  const body = (await resp.json().catch(() => ({}))) as T & { error?: string };
   if (!resp.ok) {
     // A stale cached signature (e.g. worker auth scheme changed) → re-sign once.
     if (resp.status === 401) {
       localStorage.removeItem(`gerald:psig:${DEPLOYMENT.token}:${gameId}:${wallet.address}`);
+      throw new Error(
+        (body.error ?? "The village record-keeper does not recognize that signature") +
+          " — press it again to re-sign.",
+      );
     }
-    throw new Error(body.error ?? `${action}: HTTP ${resp.status}`);
+    throw new Error(
+      body.error ?? "The village record-keeper isn't answering. Wait a moment and try again.",
+    );
   }
   return body;
 }
