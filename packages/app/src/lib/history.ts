@@ -58,9 +58,19 @@ export function treasuryOwed(
   serverSpentStroops?: bigint | null,
 ): bigint {
   const allowance = stroopsFromXlm(STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1));
+  // BOTH records are lower bounds on the truth: the browser can't see other
+  // devices, and the server's mirror can't see the last few seconds. Taking
+  // the server alone put a player on a money carousel — every purchase made
+  // the Treasury "owe" its price for the seconds before the mirror caught
+  // up, then demand it back (Trixy Diamond, game08). Take the max.
+  const localSpent = loadHistory(address, gameId).reduce(
+    (a, r) => a + BigInt(r.amountStroops),
+    0n,
+  );
   const spent =
-    serverSpentStroops ??
-    loadHistory(address, gameId).reduce((a, r) => a + BigInt(r.amountStroops), 0n);
+    serverSpentStroops != null && serverSpentStroops > localSpent
+      ? serverSpentStroops
+      : localSpent;
   const remaining = allowance > spent ? allowance - spent : 0n;
   return remaining > spendableStroops ? remaining - spendableStroops : 0n;
 }

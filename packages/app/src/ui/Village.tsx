@@ -56,13 +56,14 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const allowance = stroopsFromXlm(
     STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1),
   );
-  const spentThisGame =
-    serverSpend !== null
-      ? BigInt(serverSpend.spentStroops)
-      : loadHistory(wallet.address, loadGameId()).reduce(
-          (a, r) => a + BigInt(r.amountStroops),
-          0n,
-        );
+  // Max of both records — each is a lower bound (see treasuryOwed for the
+  // carousel this prevents).
+  const localSpent = loadHistory(wallet.address, loadGameId()).reduce(
+    (a, r) => a + BigInt(r.amountStroops),
+    0n,
+  );
+  const serverSpent = serverSpend !== null ? BigInt(serverSpend.spentStroops) : null;
+  const spentThisGame = serverSpent !== null && serverSpent > localSpent ? serverSpent : localSpent;
   // In the lobby (round 0) the day-1 allowance already applies — settle your
   // business with the Treasury BEFORE the market opens, not during it.
   const remainingAllowance = allowance > spentThisGame ? allowance - spentThisGame : 0n;
