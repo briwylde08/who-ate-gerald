@@ -650,13 +650,23 @@ export class GameRoom extends DurableObject<Env> {
     const round = this.state.round;
     // The purchase is seconds old: poke the mirror before looking for it.
     await this.sync();
-    const purchases = await this.loadAll();
-    const owned = this.countBought(purchases, address, itemId, { round });
+    let purchases = await this.loadAll();
+    const countOwned = () => this.countBought(purchases, address, itemId, { round });
     const alreadyAimed = this.state.aims.filter(
       (a) => a.round === round && a.by === address && a.item === itemId,
     ).length;
-    if (owned <= alreadyAimed) {
-      throw new Error(`buy ${item.label} today before you aim it`);
+    if (countOwned() <= alreadyAimed) {
+      // sync() is throttled ACROSS callers (3s), so a buy-then-aim can look
+      // at a mirror somebody else refreshed moments before the purchase
+      // landed — and a true "buy it first" becomes a false one (seen live:
+      // a bot's cold iron key rejected seconds after buying it). One
+      // unthrottled retry before we accuse the player of not shopping.
+      await syncIndexer(this.env);
+      this.chain = null;
+      purchases = await this.loadAll();
+      if (countOwned() <= alreadyAimed) {
+        throw new Error(`buy ${item.label} today before you aim it`);
+      }
     }
 
     let targetName: string | undefined;
