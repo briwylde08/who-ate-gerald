@@ -90,7 +90,7 @@ const FACT_TOOLS: FunctionTool[] = [
   ),
   tool(
     "shops_visited",
-    "Which shops one player visited (with visit counts) in one round — without revealing amounts. Use for 'did X shop at both the Blacksmith and the Apothecary', or to audit the two-shops-a-day rule.",
+    "Which shops one player visited (with visit counts) in one round — without revealing amounts. Use for 'did X shop at both the Blacksmith and the Chapel', or to audit the two-shops-a-day rule.",
     {
       player: { type: "string", description: "Player name from the roster" },
       round: { type: "integer", description: "Round number (1-based)" },

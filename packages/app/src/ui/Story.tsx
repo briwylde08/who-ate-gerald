@@ -47,9 +47,8 @@ export function GeraldStory() {
           </li>
           <li>
             <b>The trial.</b> Everyone still alive votes for the player they believe is the
-            werebear. Most votes is banished. A tie normally banishes nobody — the tied
-            players must each unseal one purchase before they may vote again — but lucky iron
-            steps its owner out of a tie, and the rope looks for whoever is left.
+            werebear. Most votes is banished. A tie banishes nobody — unless lucky iron steps
+            its owner out of the tie, and the rope finds whoever is left.
           </li>
           <li>
             <b>Night.</b> The werebear chooses someone to eat. Dawn breaks as soon as the last
@@ -63,12 +62,12 @@ export function GeraldStory() {
         <p className="dim">
           <b>The village wins</b> by banishing the werebear. <b>The werebear wins</b> if it is
           the last one standing beside a single villager, or if it is still unfound at the end
-          of <b>day six</b>. Banished and eaten players keep chatting as ghosts, but cast no
-          votes.
+          of <b>day six</b>. Banished and eaten players keep chatting as ghosts; they cast no
+          votes unless they paid the Chapel for one before they died.
         </p>
       </details>
       <details>
-        <summary>What's actually happening under the hood</summary>
+        <summary>What's actually happening: a real confidential ledger on Stellar</summary>
         <p className="dim">
           Your budget is a balance in a <b>confidential token</b> on Stellar testnet. You
           deposit public XLM to fund it, and deposits are public — that's how everyone can

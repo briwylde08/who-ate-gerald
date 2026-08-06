@@ -157,7 +157,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         <div className="panel">
           <p className="dim">
             No word from the town crier yet — either the game “{gameId}” hasn't been seated, or
-            the record-keeper is asleep. (Set the game id in the banner.)
+            the record-keeper is asleep. Use <b>change game</b> in the top bar to go somewhere
+            else.
           </p>
         </div>
         {noticeBoard("Games awaiting players")}
