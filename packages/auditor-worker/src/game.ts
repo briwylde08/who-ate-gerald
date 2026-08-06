@@ -190,7 +190,7 @@ export class GameRoom extends DurableObject<Env> {
   private lastSync = 0;
   /**
    * This game's decrypted window on the shared token.
-   * ponytail: 3s memo — plenty to collapse an 8-tab poll stampede into one
+   * 3s memo — plenty to collapse an 8-tab poll stampede into one
    * read, and every write path calls sync() first, which drops it. Remove it
    * if a read ever has to be transactional with a write in the same request.
    */
@@ -1472,7 +1472,7 @@ export class GameRoom extends DurableObject<Env> {
     this.chain = null; // the caller wants fresh — always invalidate
     if (Date.now() - this.lastSync < 3_000) return;
     this.lastSync = Date.now();
-    await this.sync();
+    await syncIndexer(this.env);
   }
 
   /** The ledger this game was born at; 0 for games predating the field. */
