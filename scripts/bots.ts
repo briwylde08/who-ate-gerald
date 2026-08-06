@@ -49,7 +49,8 @@ const dep = JSON.parse(readFileSync(join(repoRoot, "config/deployment.testnet.js
 const shopsAddr = JSON.parse(readFileSync(join(repoRoot, "config/shops.testnet.json"), "utf8"));
 const catalog = JSON.parse(readFileSync(join(repoRoot, "config/catalog.json"), "utf8"));
 
-const AUDITOR_URL = "https://gerald-auditor.briana-761.workers.dev";
+const AUDITOR_URL =
+  process.env.AUDITOR_URL ?? "https://gerald-auditor.briana-761.workers.dev";
 const XLM = 10_000_000n;
 const START = BigInt(catalog.startingBudgetXlm) * XLM;
 const INCOME = BigInt(catalog.dailyIncomeXlm) * XLM;

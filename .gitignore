@@ -5,10 +5,14 @@ dist/
 # bb.js browser build is vendored from node_modules at predev/prebuild
 packages/*/public/vendor/
 
-# local secrets: auditor key, deployer, shop keypairs
+# local secrets: auditor key, deployer, shop keypairs, GM token
 config/local*
 .env
 .env.*
+# wrangler dev reads worker secrets from here, NOT from .env — AUDITOR_K,
+# the key that decrypts every amount in the game, lives in it.
+.dev.vars
+.dev.vars.*
 
 .DS_Store
 .wrangler/
