@@ -14,7 +14,7 @@ import {
 } from "../lib/catalog";
 import { loadHistory, recordPurchase } from "../lib/history";
 import { explorerTx, recordActivity } from "../lib/activity";
-import { fetchGraph, fetchPublicView, loadGameId, playerApi, type GraphView } from "../lib/player";
+import { fetchGraph, fetchPublicView, loadGameId, playerApi, type GraphView, type ServerPurchases } from "../lib/player";
 import { ToteIcon } from "./CharIcon";
 import { SixSteps } from "./SixSteps";
 import { useEffect } from "react";
@@ -32,6 +32,10 @@ interface Props {
   refresh: () => Promise<void>;
   /** Jump to Maude — the done-for-today box points there. */
   onGoMaude: () => void;
+  /** The server's decrypted record of MY purchases — localStorage lies on a
+   *  second device (issue #16). Null until fetched; local math is fallback. */
+  serverSpend: ServerPurchases | null;
+  refreshServerSpend: () => void;
 }
 
 /**
@@ -40,7 +44,7 @@ interface Props {
  * the visit, never the amount, and the amount IS the item. Item effects are
  * public knowledge (hover); which one YOU bought is not.
  */
-export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh, onGoMaude }: Props) {
+export function Village({ wallet, balances, visitedShops, round, onPhase, setBusy, setError, refresh, onGoMaude, serverSpend, refreshServerSpend }: Props) {
   const [armed, setArmed] = useState<string | null>(null);
 
   // Budget normalization: the allowance schedule says how much spendable a
@@ -50,10 +54,13 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   const allowance = stroopsFromXlm(
     STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1),
   );
-  const spentThisGame = loadHistory(wallet.address, loadGameId()).reduce(
-    (a, r) => a + BigInt(r.amountStroops),
-    0n,
-  );
+  const spentThisGame =
+    serverSpend !== null
+      ? BigInt(serverSpend.spentStroops)
+      : loadHistory(wallet.address, loadGameId()).reduce(
+          (a, r) => a + BigInt(r.amountStroops),
+          0n,
+        );
   // In the lobby (round 0) the day-1 allowance already applies — settle your
   // business with the Treasury BEFORE the market opens, not during it.
   const remainingAllowance = allowance > spentThisGame ? allowance - spentThisGame : 0n;
@@ -180,15 +187,20 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   }, [aimsKey]);
   useEffect(() => {
     // TODAY's purchases only (Bri's ruling 2026-08-04): the shelf resets
-    // each morning, so an item bought yesterday can be bought again.
+    // each morning. Union of this browser's log and the server's decrypted
+    // record — a dropped purchase response no longer hides the aim picker
+    // for an item the chain says you own (issue #16).
     setBoughtItems(
-      new Set(
-        loadHistory(wallet.address, loadGameId())
+      new Set([
+        ...loadHistory(wallet.address, loadGameId())
           .filter((r) => r.round === round)
           .map((r) => r.item),
-      ),
+        ...(serverSpend?.purchases ?? [])
+          .filter((r) => r.round === round && r.item !== null)
+          .map((r) => r.item!),
+      ]),
     );
-  }, [wallet.address, round]);
+  }, [wallet.address, round, serverSpend]);
   useEffect(() => {
     fetchPublicView(loadGameId())
       .then((v) => {
@@ -218,6 +230,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     ...new Set([
       ...visitedShops,
       ...loadHistory(wallet.address, loadGameId())
+        .filter((r) => r.round === round)
+        .map((r) => r.shopLabel),
+      ...(serverSpend?.purchases ?? [])
         .filter((r) => r.round === round)
         .map((r) => r.shopLabel),
     ]),
@@ -319,6 +334,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         txHash: hash,
       });
       setJustBought(`${shop.id}:${item.id}`);
+      refreshServerSpend();
       window.setTimeout(() => setJustBought(null), 3000);
       await refresh();
     } catch (e) {
