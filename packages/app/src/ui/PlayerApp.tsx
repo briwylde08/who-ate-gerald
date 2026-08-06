@@ -177,6 +177,13 @@ export function PlayerApp() {
 
   const onPhase = (phase: TxPhase) => setBusy(PHASE_LABEL[phase]);
 
+  /** Tab jumps land at the TOP of the destination — tabs share one scroll
+   *  position, so 'Ask Maude' used to drop you mid-page (Bri's note). */
+  const goTab = (t: Tab) => {
+    setTab(t);
+    window.scrollTo({ top: 0 });
+  };
+
   // The error banner lives above the tabs, so an error raised by a control at
   // the bottom of the Shops rendered off-screen on a phone — from where the
   // player was standing, the button simply did nothing.
@@ -282,6 +289,21 @@ export function PlayerApp() {
                     victim.address === wallet.address
                       ? "You were taken in the night."
                       : `${filmMorning.eaten} was taken in the night.`,
+                });
+              }
+            } else if (filmMorning.banished && !v.winner) {
+              // Banishment is a death too (Bri's note — a banished ghost
+              // never got a reel). One film per morning: the bear's kill
+              // outranks it above; banishment outranks the quiet night.
+              const b = v.players.find((p) => p.name === filmMorning.banished);
+              if (b?.character) {
+                localStorage.setItem(seenKey, "1");
+                setFilm({
+                  src: nightFilmSrc(b.character),
+                  caption:
+                    b.address === wallet.address
+                      ? "You were banished by the village."
+                      : `${filmMorning.banished} was banished by the village.`,
                 });
               }
             } else if (!filmMorning.eaten && !v.winner) {
@@ -632,7 +654,7 @@ export function PlayerApp() {
               setBusy={setBusy}
               setError={setError}
               refresh={() => refresh(wallet)}
-              onGoMaude={() => setTab("maude")}
+              onGoMaude={() => goTab("maude")}
               serverSpend={serverSpend}
               refreshServerSpend={() =>
                 void playerApi.myPurchases(wallet, gameId).then(setServerSpend).catch(() => undefined)
@@ -641,7 +663,7 @@ export function PlayerApp() {
             />
           </div>
           <div style={{ display: tab === "maude" ? "block" : "none" }}>
-            <Maude wallet={wallet} gameId={gameId} setError={setError} onGoChatVote={() => setTab("chatvote")} active={tab === "maude"} />
+            <Maude wallet={wallet} gameId={gameId} setError={setError} onGoChatVote={() => goTab("chatvote")} active={tab === "maude"} />
           </div>
           <div style={{ display: tab === "town" ? "block" : "none" }}>
             <Town
@@ -651,8 +673,8 @@ export function PlayerApp() {
               setBusy={setBusy}
               setError={setError}
               refresh={() => refresh(wallet)}
-              onGoShops={() => setTab("village")}
-              onGoMaude={() => setTab("maude")}
+              onGoShops={() => goTab("village")}
+              onGoMaude={() => goTab("maude")}
             />
           </div>
           <div style={{ display: tab === "chatvote" ? "block" : "none" }}>
@@ -660,7 +682,7 @@ export function PlayerApp() {
               wallet={wallet}
               gameId={gameId}
               setError={setError}
-              onGoShops={() => setTab("village")}
+              onGoShops={() => goTab("village")}
               serverSpend={serverSpend}
             />
           </div>
