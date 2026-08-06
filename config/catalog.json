@@ -55,7 +55,7 @@
           "flavor": "Clean, mostly. That is not the point.",
           "priceXlm": 32,
           "class": "B-off",
-          "effect": "Pick a villager. They can still type in the chat, but their vote will not count today. If they try to cast it, the morning report names them.",
+          "effect": "Pick a villager. They can still type in the chat, but they lose their vote today. The morning report names them.",
           "aim": "player"
         },
         {
@@ -88,7 +88,7 @@
           "flavor": "For the meat. Obviously.",
           "priceXlm": 28,
           "class": "B-off",
-          "effect": "Your vote counts twice at today's trial. If somebody hangs, the village is told a double vote was cast; nobody is ever told whose."
+          "effect": "Your vote counts twice at today's trial. Everyone is told a double vote was cast; nobody is ever told whose."
         },
         {
           "id": "tooth_sharpener",

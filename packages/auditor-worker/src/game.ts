@@ -826,6 +826,7 @@ export class GameRoom extends DurableObject<Env> {
         .filter((n): n is string => !!n),
     );
     const weights = new Map<string, number>();
+    let knifeCast = false;
     for (const [voterAddr, targetName] of Object.entries(this.state.votes)) {
       const voter = this.playerByAddress(voterAddr);
       // A granted ghost is counted with the living at the trial.
@@ -839,16 +840,25 @@ export class GameRoom extends DurableObject<Env> {
         );
         continue;
       }
-      // A sock in the mouth: they spoke all day, but the tally cannot hear it.
-      if (socked.has(voter.name)) {
-        notes.push(
-          `🧦 Someone bought a sock in mouth for ${voter.name}: their vote did not count today.`,
-        );
-        continue;
-      }
+      // A sock in the mouth: they spoke all day, but the tally cannot hear
+      // it. (The naming happens below, from the aim — a victim who never
+      // voted is still named; 32 XLM never buys invisible nothing.)
+      if (socked.has(voter.name)) continue;
       // The knife is sharp for ONE trial — the day it was bought.
       const weight = boughtThisRound(voterAddr, "butchers_knife") ? 2 : 1;
+      if (weight === 2) knifeCast = true;
       weights.set(targetName, (weights.get(targetName) ?? 0) + weight);
+    }
+    // Ruling #19.4 (Bri, 2026-08-06): the public effects fire EVERY time.
+    for (const name of socked) {
+      notes.push(
+        `🧦 Someone bought a sock in mouth for ${name}: their vote did not count today.`,
+      );
+    }
+    if (knifeCast) {
+      notes.push(
+        "🔪 Someone's butcher's knife counted their vote twice at today's trial. Nobody is told whose.",
+      );
     }
     let banished: PlayerRef | null = null;
     if (weights.size > 0) {
@@ -899,13 +909,6 @@ export class GameRoom extends DurableObject<Env> {
       banished.alive = false;
       delete this.state.recovering[banished.address];
       banishedRole = roles[banished.address] ?? "villager";
-      const totalWeight = [...weights.values()].reduce((a, b) => a + b, 0);
-      const voterCount = Object.keys(this.state.votes).length;
-      if (totalWeight > voterCount) {
-        notes.push(
-          "🔪 Someone's butcher's knife counted their vote twice at today's trial.",
-        );
-      }
       if (banishedRole === "werebear") {
         this.state.winner = "village";
         this.state.phase = "ended";
@@ -1167,6 +1170,19 @@ export class GameRoom extends DurableObject<Env> {
             `${MAX_DAYS} days, and the village never found it. The whispers were right all along — and they will stay whispers. The werebear has won.`,
           );
         }
+      }
+    }
+
+    // Ruling #19.2 (Bri, 2026-08-06): the audit reaches the villager it
+    // names — privately, in their dawn results. The public report stays pure
+    // story; the GM console keeps its copy as a debugging view, not a policy.
+    // (Every finding starts with the player's name; see the strings above.)
+    for (const p of this.state.players) {
+      for (const v of violations.filter((x) => x.startsWith(`${p.name} `))) {
+        ((this.state.privateNotes ??= {})[p.address] ??= []).push({
+          round: round + 1,
+          text: `📕 The Order's audit named you: ${v}`,
+        });
       }
     }
 
