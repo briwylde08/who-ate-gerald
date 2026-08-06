@@ -742,8 +742,11 @@ export class GameRoom extends DurableObject<Env> {
     const effective = purchases.filter((p) => !isVoided(p));
     for (const p of purchases.filter(isVoided)) {
       ((this.state.privateNotes ??= {})[p.from] ??= []).push({
-        round,
-        text: `🔒 The ${p.toLabel} door would not open for you. Your coin bought nothing.`,
+        // round + 1, like every other dawn note: the app only ever renders
+        // notes for the round it is CURRENTLY in, and this one is written as
+        // the round closes. Filed under `round` it was never once readable.
+        round: round + 1,
+        text: `🔒 The ${p.toLabel} door would not open for you yesterday. Your coin bought nothing, and the shopkeeper kept it.`,
       });
     }
 
