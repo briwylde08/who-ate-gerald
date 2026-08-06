@@ -791,14 +791,18 @@ export class GameRoom extends DurableObject<Env> {
     // --- TRIAL: knife-doubled plurality, minus any stopped mouths. ---------
     // Dead drunk: villagers who declared a barrel today. The beast is too big
     // for beer, so its own declaration does nothing at all.
+    //
+    // Read the SNAPSHOT, not the chain. The snapshot is what the vote gate
+    // answered "are you drunk?" from when the hand went up, and what the
+    // roster and awaitingVotes are built on. Re-deriving here from live
+    // purchases let a barrel that surfaced late — declareDone's syncIndexer is
+    // best-effort and swallows its own errors — drop a vote the gate had
+    // already accepted, silently, after six people watched the roster expect
+    // it. Refresh it first from the purchases we have already loaded, so a
+    // late barrel still counts rather than counting differently.
+    await this.snapshotDrunkards(purchases);
     const drunk = new Set(
-      this.state.players
-        .filter(
-          (p) =>
-            roles[p.address] !== "werebear" &&
-            this.bought(effective, p.address, "barrel_of_beer", { round }),
-        )
-        .map((p) => p.name),
+      this.state.players.filter((p) => this.drunkToday(p.address)).map((p) => p.name),
     );
     const socked = new Set(
       aimsToday
@@ -811,7 +815,15 @@ export class GameRoom extends DurableObject<Env> {
       const voter = this.playerByAddress(voterAddr);
       // A granted ghost is counted with the living at the trial.
       if (!voter || (!voter.alive && this.state.ghostVote?.[voterAddr] !== "granted")) continue;
-      if (drunk.has(voter.name)) continue; // asleep in the road; no vote to count
+      // Asleep in the road. Say so — a vote vanishing from the tally with no
+      // explanation is how a trial hangs a different person than the table
+      // expected. The sock, three lines down, already announces itself.
+      if (drunk.has(voter.name)) {
+        notes.push(
+          `🍺 ${voter.name} was dead drunk in the road: their vote did not count today.`,
+        );
+        continue;
+      }
       // A sock in the mouth: they spoke all day, but the tally cannot hear it.
       if (socked.has(voter.name)) {
         notes.push(
@@ -909,6 +921,7 @@ export class GameRoom extends DurableObject<Env> {
         if (
           bone &&
           !sharpTonight && // a sharpened tooth is not distracted by bones
+          !drunk.has(target.name) && // nothing was going to happen anyway
           elsewhere?.alive &&
           elsewhere.address !== bearAddress &&
           randomIndex(4) === 0
@@ -921,9 +934,13 @@ export class GameRoom extends DurableObject<Env> {
         }
       }
       // The same purchase in villager hands is an offering left on the step.
+      // Scoped to TODAY, like the bear's half of the item three lines up and
+      // like the shelf's own words: "if the werebear targets you tonight".
+      // Unscoped, a sharpener bought on day 1 was still saving lives on day 5,
+      // while the bear paid the same 33 for exactly one night.
       const hasOffering =
         target !== null &&
-        this.countBought(effective, target.address, "tooth_sharpener") >
+        this.countBought(effective, target.address, "tooth_sharpener", { round }) >
           ((this.state.offeringUsed ??= {})[target.address] ?? 0);
       if (this.state.wounded) {
         this.state.wounded = false;
@@ -1107,10 +1124,17 @@ export class GameRoom extends DurableObject<Env> {
         this.state.winner = "village";
         this.state.phase = "ended";
       } else {
-        const livingVillagers = this.state.players.filter(
-          (p) => p.alive && roles[p.address] !== "werebear",
+        // Count hands that can be raised, not heartbeats. A ghost the Order
+        // granted a vote is counted with the living everywhere else — dawn
+        // waits for it (:692), the vote gate admits it (:529), the roster
+        // shows 👻 — so ending the game on the living alone conceded a trial
+        // the village could still have won two votes to one.
+        const villageVotes = this.state.players.filter(
+          (p) =>
+            roles[p.address] !== "werebear" &&
+            (p.alive || this.state.ghostVote?.[p.address] === "granted"),
         ).length;
-        if (livingVillagers <= 1) {
+        if (villageVotes <= 1) {
           // Parity: one villager cannot win a vote against one bear. The
           // game is decided — and the bear doesn't leave leftovers.
           this.state.winner = "werebear";
@@ -1359,9 +1383,11 @@ export class GameRoom extends DurableObject<Env> {
     this.state.drunkSnapshotRound = this.state.round;
   }
 
-  private async snapshotDrunkards(): Promise<void> {
+  /** `known` lets a caller that has already loaded the day's purchases reuse
+   *  them rather than pay for a second read. */
+  private async snapshotDrunkards(known?: Purchase[]): Promise<void> {
     const round = this.state.round;
-    const effective = (await this.loadAll()).filter((p) => !this.isVoided(p, round));
+    const effective = (known ?? (await this.loadAll())).filter((p) => !this.isVoided(p, round));
     for (const p of this.state.players) {
       if (!p.alive || this.state.roles?.[p.address] === "werebear") continue;
       if (this.bought(effective, p.address, "barrel_of_beer", { round })) {
