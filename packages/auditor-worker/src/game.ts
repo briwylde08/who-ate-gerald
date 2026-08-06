@@ -261,7 +261,14 @@ export class GameRoom extends DurableObject<Env> {
     character: string,
   ): Promise<{ seat: number; name: string }> {
     if (this.state.roles) throw new Error("the game is already underway — join the next one");
-    const cleanName = String(name).trim().slice(0, 24);
+    // Names are display strings that also land verbatim in Maude's
+    // fact-selection prompt (rebuilt for EVERY player's question) — so strip
+    // anything that isn't display material. A newline in a name was a prompt
+    // injection against the whole table's daily questions (issue #11).
+    const cleanName = String(name)
+      .replace(/[^\p{L}\p{N} '._-]/gu, "")
+      .trim()
+      .slice(0, 24);
     if (!cleanName) throw new Error("a villager needs a name");
     // Fairness is enforced on SPENDING, not wallet history: Maude decrypts
     // every purchase, and resolve-day flags anyone whose in-game spending
@@ -473,6 +480,11 @@ export class GameRoom extends DurableObject<Env> {
     if (typeof question !== "string" || question.trim().length === 0) {
       throw new Error("question must be a non-empty string");
     }
+    // Cap like chat does (280): an uncapped question was an uncapped model
+    // bill, and a failed ask never spends the seal, so retries were free
+    // (issue #11). Seal-on-success stays — kinder to a player whose question
+    // died to a gateway blip; the cap bounds what a retry can cost.
+    question = question.trim().slice(0, 500);
 
     await this.sync();
     const ctx = await this.factContext();
@@ -501,6 +513,8 @@ export class GameRoom extends DurableObject<Env> {
   ): Promise<AskOutcome & { asker: string; round: number }> {
     this.requireGame();
     if (this.state.round < 1) throw new Error("no day in progress");
+    question = String(question ?? "").trim().slice(0, 500); // same cap as p/ask
+    if (!question) throw new Error("question must be a non-empty string");
     const who = (asker && asker.trim()) || "the GM";
     await this.sync();
     const ctx = await this.factContext();
