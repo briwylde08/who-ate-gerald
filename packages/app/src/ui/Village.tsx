@@ -316,10 +316,10 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           </div>
         )}
         <p>
-          You may buy items from two shops every day. The amount of items you purchase is up to
-          you, as long as you can afford them. You will be given an additional{" "}
-          {DAILY_INCOME_XLM} XLM per day. Once you're done purchasing your items for the day,
-          click the “Done buying for today” button.
+          You may buy items from two shops every day, one of each item. The number of different
+          items you buy is up to you, as long as you can afford them. You will be given an
+          additional {DAILY_INCOME_XLM} XLM per day. Once you're done purchasing your items for
+          the day, click the “Done buying for today” button.
         </p>
         <p className="dim">
           Every purchase is a confidential transfer: the ledger shows <i>you paid this shop</i>,

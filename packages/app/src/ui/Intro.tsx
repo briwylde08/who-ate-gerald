@@ -308,8 +308,8 @@ export function Intro({
 
       <h2>Pick your villager</h2>
       <p className="dim">
-        Whether you are a werebear or a villager will be determined after every character has
-        been chosen.
+        Your face is just a face. Whether you are a werebear or a villager is dealt in secret
+        once all eight seats are full and everyone has readied up.
       </p>
       {seated && (
         <div className="answer-card">
