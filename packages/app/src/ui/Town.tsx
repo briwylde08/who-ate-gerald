@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { VillagerWallet, TxPhase } from "../lib/wallet";
 import {
+  pageHidden,
   playerApi,
   fetchPublicView,
   fetchGraph,
@@ -47,6 +48,8 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   void refresh;
   void onPhase;
   const [view, setView] = useState<PublicView | null>(null);
+  const viewRef = useRef<PublicView | null>(null);
+  viewRef.current = view;
   const [role, setRole] = useState<Role | null>(null);
   const [roleShown, setRoleShown] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
@@ -54,7 +57,11 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   /** The notice-board: other games seating players right now. */
   const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
   useEffect(() => {
-    const pull = () => void fetchLobbies().then(setLobbies).catch(() => undefined);
+    const pull = () => {
+      // The board only matters before the deal; sleep when hidden (issue #12).
+      if (pageHidden() || viewRef.current?.dealt) return;
+      void fetchLobbies().then(setLobbies).catch(() => undefined);
+    };
     pull();
     const t = setInterval(pull, 15_000);
     return () => clearInterval(t);
@@ -77,7 +84,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
     void load();
     // Game state is a cheap in-memory read — poll it fast so lobbies and
     // votes feel live across browsers. Tab focus refreshes immediately.
-    const fast = setInterval(() => void loadView(), 4_000);
+    const fast = setInterval(() => {
+      if (pageHidden() || viewRef.current?.winner) return;
+      void loadView();
+    }, 4_000);
     const onFocus = () => void load();
     window.addEventListener("focus", onFocus);
     return () => {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
-import { fetchGraph, fetchPublicView, playerApi, type GraphView, type PublicView } from "../lib/player";
+import { fetchGraph, fetchPublicView, pageHidden, playerApi, type GraphView, type PublicView } from "../lib/player";
 
 /**
  * Maude McLedger's parlor. One private question per villager per day; her
@@ -50,9 +50,11 @@ interface Props {
   setError: (e: string | null) => void;
   /** Jump to Chat & Vote — the post-answer pointer goes there. */
   onGoChatVote: () => void;
+  /** Is this tab the one showing? Hidden tabs don't poll (issue #12). */
+  active: boolean;
 }
 
-export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
+export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props) {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   // Persisted, like purchases and aims already are. You get ONE question a day
@@ -73,22 +75,28 @@ export function Maude({ wallet, gameId, setError, onGoChatVote }: Props) {
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const check = () =>
+    const check = () => {
+      if (pageHidden() || !active) return;
       fetchPublicView(gameId)
         .then(setView)
         .catch(() => setView(null));
+    };
     void check();
     const t = setInterval(check, 5_000);
     // The sightings live here so a player knows what to ask about without
-    // clicking around. The graph reads the chain, so it polls slower.
-    const pullGraph = () => void fetchGraph(gameId).then(setGraph).catch(() => undefined);
+    // clicking around. The graph reads the chain, so it polls slower — and
+    // only while this tab is actually the one showing (issue #12).
+    const pullGraph = () => {
+      if (pageHidden() || !active) return;
+      void fetchGraph(gameId).then(setGraph).catch(() => undefined);
+    };
     pullGraph();
     const g = setInterval(pullGraph, 30_000);
     return () => {
       clearInterval(t);
       clearInterval(g);
     };
-  }, [gameId]);
+  }, [gameId, active]);
 
   const me = view?.players.find((p) => p.address === wallet.address);
   const round = view?.round ?? 0;
