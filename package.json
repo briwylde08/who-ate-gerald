@@ -20,7 +20,8 @@
     "item-test": "tsx scripts/item-test.ts",
     "bots": "tsx scripts/bots.ts",
     "test:auth": "tsx scripts/test-auth.ts",
-    "deploy:app": "npm run build --workspace @gerald/app && wrangler pages deploy packages/app/dist --project-name who-ate-gerald --branch main"
+    "deploy:app": "npm run build --workspace @gerald/app && wrangler pages deploy packages/app/dist --project-name who-ate-gerald --branch main",
+    "check": "npm run types -w @gerald/auditor-worker && tsc -p packages/app/tsconfig.json --noEmit && tsc -p packages/auditor-worker/tsconfig.json --noEmit && tsc -p scripts/tsconfig.json"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

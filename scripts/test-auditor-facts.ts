@@ -88,6 +88,8 @@ function synthetic() {
     shopId,
     toLabel,
     amountStroops: stroopsFromXlm(xlm),
+    senderBalanceStroops: 0n,
+    isSurrender: false,
     amountXlm: xlmString(stroopsFromXlm(xlm)),
     itemGuess,
     channelsAgree: true,
