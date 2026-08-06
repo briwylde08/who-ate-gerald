@@ -110,13 +110,24 @@ export function roundOf(ledger: number, rounds: RoundWindow[]): number {
 }
 
 /**
- * Fetch every game-token event from the durable indexer, keep the transfers,
- * decrypt each with the auditor key, and decorate with players/shops/rounds.
+ * ONE pass over this game's window of the shared token feed: decrypted
+ * purchases and public deposits out of the SAME fetch.
+ *
+ * `startLedger` is the game's birth certificate (GameState.createdLedger).
+ * Every game ever played shares this token contract, so fetching from
+ * DEPLOYED_AT_LEDGER meant re-paging — and re-decrypting — the whole history
+ * on every read, to produce rows that `roundOf` then stamps round 0 and every
+ * caller filters out. Measured on the live token: 1209 events / 7 pages /
+ * 944 KB per call, against 163 events / 1 page / 128 KB for one game's window.
+ *
+ * Purchases and deposits used to be two identical fetches differing only in
+ * which event type they kept; they are one now.
  */
-export async function loadPurchases(
+export async function loadChain(
   env: IndexerEnv,
   players: PlayerRef[],
   rounds: RoundWindow[],
+  startLedger: number,
   /**
    * `allSenders` keeps transfers from wallets with no seat in this game.
    * Gameplay must never set it — the whole point is that other games sharing
@@ -124,22 +135,35 @@ export async function loadPurchases(
    * decode and decrypt at all" (npm run test:auditor) do.
    */
   opts: { allSenders?: boolean } = {},
-): Promise<Purchase[]> {
+): Promise<{ purchases: Purchase[]; deposits: DepositRec[] }> {
   const indexer = new IndexerClient({ baseUrl: env.INDEXER_URL });
   const { events } = await indexer.fetchEvents({
     contractId: env.TOKEN_CONTRACT,
-    startLedger: DEPLOYED_AT_LEDGER,
+    // 0 = a game from before createdLedger existed; fall back to the old scope.
+    startLedger: startLedger || DEPLOYED_AT_LEDGER,
   });
   const k = fromHex(env.AUDITOR_K);
   const byAddress = new Map(players.map((p) => [p.address, p]));
 
   const purchases: Purchase[] = [];
+  const deposits: DepositRec[] = [];
   for (const ev of events) {
+    if (ev.type === "deposit") {
+      deposits.push({
+        round: roundOf(ev.ledger, rounds),
+        ledger: ev.ledger,
+        txHash: ev.txHash,
+        to: ev.to,
+        amountStroops: ev.amount,
+        amountXlm: xlmString(ev.amount),
+      });
+      continue;
+    }
     if (ev.type !== "transfer") continue;
     const t = ev as TransferEvent;
-    // Every game ever played shares this token contract, so the event log
-    // holds strangers' transfers too. A sender with no seat in THIS game is
-    // somebody else's business: not a sighting, not a fact, not an audit.
+    // The event log holds strangers' transfers too. A sender with no seat in
+    // THIS game is somebody else's business: not a sighting, not a fact, not
+    // an audit.
     const player = byAddress.get(t.from) ?? null;
     if (!player && !opts.allSenders) continue;
     const audit = auditTransfer(k, t);
@@ -162,7 +186,17 @@ export async function loadPurchases(
       channelsAgree: audit.channelsAgree,
     });
   }
-  return purchases;
+  return { purchases, deposits };
+}
+
+/** Whole-history purchases. Diagnostics only (scripts/test-auditor-facts.ts). */
+export async function loadPurchases(
+  env: IndexerEnv,
+  players: PlayerRef[],
+  rounds: RoundWindow[],
+  opts: { allSenders?: boolean } = {},
+): Promise<Purchase[]> {
+  return (await loadChain(env, players, rounds, DEPLOYED_AT_LEDGER, opts)).purchases;
 }
 
 function shortAddress(addr: string): string {
@@ -177,55 +211,6 @@ export interface DepositRec {
   to: string;
   amountStroops: bigint;
   amountXlm: string;
-}
-
-/**
- * One wallet's public footprint on the game token — no decryption needed.
- * Used by the join gate: a fair fresh player has at most the starting buy-in
- * deposited and nothing spent yet.
- */
-export async function walletHistory(
-  env: { INDEXER_URL: string; TOKEN_CONTRACT: string },
-  address: string,
-): Promise<{ depositTotal: bigint; sentTransfers: number }> {
-  const indexer = new IndexerClient({ baseUrl: env.INDEXER_URL });
-  const { events } = await indexer.fetchEvents({
-    contractId: env.TOKEN_CONTRACT,
-    startLedger: DEPLOYED_AT_LEDGER,
-  });
-  let depositTotal = 0n;
-  let sentTransfers = 0;
-  for (const e of events) {
-    if (e.type === "deposit" && e.to === address) depositTotal += e.amount;
-    if (e.type === "transfer" && e.from === address) sentTransfers += 1;
-  }
-  return { depositTotal, sentTransfers };
-}
-
-/**
- * Fetch every public deposit into the game token, bucketed by round — the
- * self-auditing half of the economy (income arrives as public deposits, so
- * over-deposits are provable by anyone, no decryption needed).
- */
-export async function loadDeposits(
-  env: { INDEXER_URL: string; TOKEN_CONTRACT: string },
-  rounds: RoundWindow[],
-): Promise<DepositRec[]> {
-  const indexer = new IndexerClient({ baseUrl: env.INDEXER_URL });
-  const { events } = await indexer.fetchEvents({
-    contractId: env.TOKEN_CONTRACT,
-    startLedger: DEPLOYED_AT_LEDGER,
-  });
-  return events
-    .filter((e) => e.type === "deposit")
-    .map((e) => ({
-      round: roundOf(e.ledger, rounds),
-      ledger: e.ledger,
-      txHash: e.txHash,
-      to: e.to,
-      amountStroops: e.amount,
-      amountXlm: xlmString(e.amount),
-    }));
 }
 
 // ---------------------------------------------------------------------------
