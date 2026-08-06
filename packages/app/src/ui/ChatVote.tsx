@@ -8,6 +8,7 @@ import {
   hasCachedAuth,
   playerApi,
   type PublicView,
+  type ServerPurchases,
 } from "../lib/player";
 import { BearIcon, ToteIcon } from "./CharIcon";
 
@@ -28,6 +29,8 @@ interface Props {
   setError: (e: string | null) => void;
   /** Jump to the Shops — the crier's "Start new day" button. */
   onGoShops: () => void;
+  /** Server-decrypted own purchases; fills the kit on a fresh device. */
+  serverSpend: ServerPurchases | null;
 }
 
 type Role = "villager" | "werebear";
@@ -38,7 +41,7 @@ const EFFECT_BY_LABEL = new Map(
 );
 const effectOf = (label: string) => EFFECT_BY_LABEL.get(label);
 
-export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
+export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: Props) {
   const [view, setView] = useState<PublicView | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [voteTarget, setVoteTarget] = useState("");
@@ -76,7 +79,28 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   const round = view?.round;
   /** What this browser bought TODAY — the kit in hand while deciding. */
   const todaysItems = round
-    ? loadHistory(wallet.address, gameId).filter((r) => r.round === round)
+    ? [
+        ...loadHistory(wallet.address, gameId).filter((r) => r.round === round),
+        // The server's record fills a fresh device's empty kit (issue #16);
+        // dedupe by txHash against the local rows.
+        ...(serverSpend?.purchases ?? [])
+          .filter(
+            (r) =>
+              r.round === round &&
+              r.item !== null &&
+              !loadHistory(wallet.address, gameId).some((l) => l.txHash === r.txHash),
+          )
+          .map((r) => ({
+            round: r.round,
+            shopId: r.shopId ?? "",
+            shopLabel: r.shopLabel,
+            item: r.item!,
+            amountStroops: r.amountStroops,
+            txHash: r.txHash,
+            at: "",
+            gameId,
+          })),
+      ]
     : [];
   /** Where each aimed item was pointed (written by the Shops' aim flow),
    *  keyed by item id — shown beside the kit. */

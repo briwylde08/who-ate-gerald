@@ -1404,6 +1404,46 @@ export class GameRoom extends DurableObject<Env> {
     }
   }
 
+  /**
+   * This player's own purchases, decrypted server-side — the authoritative
+   * answer to "what have I spent this game?" The app's money maths used to
+   * be localStorage-only, so a second device thought you'd spent nothing and
+   * invited you to re-collect your whole allowance, walking you into the
+   * dawn audit (issue #16). Identity pre-verified; only ever your own rows.
+   */
+  async myPurchases(address: string): Promise<{
+    spentStroops: string;
+    purchases: {
+      round: number;
+      ledger: number;
+      txHash: string;
+      shopId: string | null;
+      shopLabel: string;
+      item: string | null;
+      amountStroops: string;
+      amountXlm: string;
+    }[];
+  }> {
+    const player = this.playerByAddress(address);
+    if (!player) throw new Error("that address holds no seat in this game");
+    const purchases = (await this.loadAll()).filter(
+      (x) => x.from === address && x.round >= 1 && !x.isSurrender,
+    );
+    return {
+      spentStroops: purchases.reduce((a, x) => a + x.amountStroops, 0n).toString(),
+      purchases: purchases.map((x) => ({
+        round: x.round,
+        ledger: x.ledger,
+        txHash: x.txHash,
+        shopId: x.shopId,
+        shopLabel: x.toLabel,
+        item: x.itemGuess,
+        amountStroops: x.amountStroops.toString(),
+        amountXlm: x.amountXlm,
+      })),
+    };
+  }
+
   /** Private dawn facts (the dogs) for ONE player — identity pre-verified. */
   notesFor(address: string): { round: number; text: string }[] {
     return (this.state.privateNotes ?? {})[address] ?? [];

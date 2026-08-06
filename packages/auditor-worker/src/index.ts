@@ -156,6 +156,8 @@ export default {
                 body.shop === undefined ? undefined : String(body.shop),
               ),
             );
+          case "p/purchases":
+            return json(await room.myPurchases(address));
           case "p/notes":
             return json({ notes: await room.notesFor(address) });
           default:

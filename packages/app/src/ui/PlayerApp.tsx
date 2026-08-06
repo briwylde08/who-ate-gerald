@@ -4,7 +4,7 @@ import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wall
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, saveProfile, type Profile } from "../lib/profile";
-import { fetchGraph, fetchPublicView, loadGameId, saveGameId } from "../lib/player";
+import { fetchGraph, fetchPublicView, loadGameId, playerApi, saveGameId, type ServerPurchases } from "../lib/player";
 import { CharEmoji } from "./CharIcon";
 import { Intro } from "./Intro";
 import { GeraldStory } from "./Story";
@@ -87,6 +87,19 @@ export function PlayerApp() {
   const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
   /** Dead villagers collect nothing — the sidebar must not owe them. */
   const [meAlive, setMeAlive] = useState(true);
+  /** The server's answer to "what have I spent?" — survives fresh browsers. */
+  const [serverSpend, setServerSpend] = useState<ServerPurchases | null>(null);
+  useEffect(() => {
+    if (!wallet || round < 1) return;
+    let stale = false;
+    playerApi
+      .myPurchases(wallet, gameId)
+      .then((r) => !stale && setServerSpend(r))
+      .catch(() => undefined); // not seated / auth not cached — local math stands
+    return () => {
+      stale = true;
+    };
+  }, [wallet, gameId, round]);
   /** Where the intro opens when we send someone back to it: "game" for the
    *  chooser (change game), "identity" for the villager picker. */
   const [introAt, setIntroAt] = useState<"story" | "game" | "identity">("story");
@@ -560,6 +573,10 @@ export function PlayerApp() {
               setError={setError}
               refresh={() => refresh(wallet)}
               onGoMaude={() => setTab("maude")}
+              serverSpend={serverSpend}
+              refreshServerSpend={() =>
+                void playerApi.myPurchases(wallet, gameId).then(setServerSpend).catch(() => undefined)
+              }
             />
           </div>
           <div style={{ display: tab === "maude" ? "block" : "none" }}>
@@ -578,7 +595,13 @@ export function PlayerApp() {
             />
           </div>
           <div style={{ display: tab === "chatvote" ? "block" : "none" }}>
-            <ChatVote wallet={wallet} gameId={gameId} setError={setError} onGoShops={() => setTab("village")} />
+            <ChatVote
+              wallet={wallet}
+              gameId={gameId}
+              setError={setError}
+              onGoShops={() => setTab("village")}
+              serverSpend={serverSpend}
+            />
           </div>
         </div>
         {/* Bri's favorite teaching surface, promoted: the six steps ride
@@ -589,7 +612,17 @@ export function PlayerApp() {
             <SixSteps
               balances={balances}
               purchases={loadHistory(wallet.address, gameId).length}
-              owedStroops={meAlive ? treasuryOwed(wallet.address, gameId, round, balances.spendable) : 0n}
+              owedStroops={
+                meAlive
+                  ? treasuryOwed(
+                      wallet.address,
+                      gameId,
+                      round,
+                      balances.spendable,
+                      serverSpend ? BigInt(serverSpend.spentStroops) : null,
+                    )
+                  : 0n
+              }
             />
           </div>
         </aside>

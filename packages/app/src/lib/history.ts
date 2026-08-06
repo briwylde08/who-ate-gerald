@@ -53,9 +53,14 @@ export function treasuryOwed(
   gameId: string,
   round: number,
   spendableStroops: bigint,
+  /** The server's decrypted spend total, when known — localStorage lies on a
+   *  second device (issue #16). */
+  serverSpentStroops?: bigint | null,
 ): bigint {
   const allowance = stroopsFromXlm(STARTING_BUDGET_XLM + DAILY_INCOME_XLM * Math.max(0, round - 1));
-  const spent = loadHistory(address, gameId).reduce((a, r) => a + BigInt(r.amountStroops), 0n);
+  const spent =
+    serverSpentStroops ??
+    loadHistory(address, gameId).reduce((a, r) => a + BigInt(r.amountStroops), 0n);
   const remaining = allowance > spent ? allowance - spent : 0n;
   return remaining > spendableStroops ? remaining - spendableStroops : 0n;
 }

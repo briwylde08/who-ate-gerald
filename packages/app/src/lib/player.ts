@@ -120,6 +120,11 @@ export const playerApi = {
   nightPick: (w: VillagerWallet, game: string, target: string) =>
     playerCall<{ picked: string; dawn: boolean }>(w, game, "night-pick", { target }),
 
+  /** Your own decrypted purchases — the server's answer to "what have I
+   *  spent?", immune to fresh browsers and cleared storage. */
+  myPurchases: (w: VillagerWallet, game: string) =>
+    playerCall<ServerPurchases>(w, game, "purchases"),
+
   /** Private dawn facts — only ever your own. */
   notes: (w: VillagerWallet, game: string) =>
     playerCall<{ notes: { round: number; text: string }[] }>(w, game, "notes"),
@@ -207,4 +212,19 @@ export interface GraphView {
   /** Public deposits by seated players — the visible side of the token. */
   deposits?: { round: number; ledger: number; txHash: string; player: string; amountXlm: string }[];
   edges: { round: number; ledger: number; txHash?: string; from: string; to: string }[];
+}
+
+export interface ServerPurchase {
+  round: number;
+  ledger: number;
+  txHash: string;
+  shopId: string | null;
+  shopLabel: string;
+  item: string | null;
+  amountStroops: string;
+  amountXlm: string;
+}
+export interface ServerPurchases {
+  spentStroops: string;
+  purchases: ServerPurchase[];
 }
