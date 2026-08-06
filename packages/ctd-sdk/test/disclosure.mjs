@@ -36,7 +36,7 @@ import { buildDiscloseRecipientWitness } from "../src/witness/disclose-recipient
 import { buildDiscloseSenderWitness } from "../src/witness/disclose-sender.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const artifactsDir = join(here, "..", "..", "disclosure", "artifacts");
+const artifactsDir = join(here, "..", "..", "ctd-disclosure", "artifacts");
 const loadArtifact = (n) => JSON.parse(readFileSync(join(artifactsDir, n), "utf8"));
 const circuit = loadArtifact("disclose_recipient.json");
 const vkJson = loadArtifact("disclose_recipient.vk.json");

@@ -1,11 +1,15 @@
 /**
- * One Durable Object per game — v2 (DESIGN-V2.md): the game runs itself.
- * The DO deals roles, enforces one private Maude question per player per
- * day, collects votes and the werebear's night pick, and resolves each
- * morning in code. Catalog v4 (CATALOG-V4.md): knife-doubled tallies, nail
- * tie-excusals, charm saves (ham hides the save), trap wounds, and the dawn
- * readings — bottle rumor, ledger book, unsealing ritual, candle last words,
- * the dogs' private whisper. Days open themselves on a 60s alarm.
+ * One Durable Object per game: the game runs itself. The DO deals roles,
+ * enforces one private Maude question per player per day, collects votes and
+ * the werebear's night pick, and resolves each morning in code — knife-doubled
+ * tallies, nail tie-excusals, socked mouths, the curfew bell, barred doors,
+ * and the dawn readings. Days open themselves on a 60s alarm.
+ *
+ * The shelf these rules act on is config/catalog.json; docs/CATALOG.md
+ * explains why each ware exists. Retired shelves live in git history, not in
+ * parallel files — so this comment names no catalog version, and
+ * `npm run test:catalog` checks that every item the rules act on is still
+ * sold.
  */
 import { DurableObject } from "cloudflare:workers";
 
@@ -76,8 +80,6 @@ interface GameState {
   votes: Record<string, string>;
   /** This round's werebear pick: target player name, or null. */
   nightPick: string | null;
-  /** Werebear wounded by a trap — its next night is skipped. */
-  wounded: boolean;
   /** address → bearsbane already consumed. (v3 item — retired in catalog v4.) */
   baneConsumed: Record<string, boolean>;
   /** address → silver charms shattered (each purchase = one save). */
@@ -120,7 +122,6 @@ const freshState = (): GameState => ({
   askLog: [],
   votes: {},
   nightPick: null,
-  wounded: false,
   baneConsumed: {},
   charmUsed: {},
   recovering: {},
@@ -942,10 +943,7 @@ export class GameRoom extends DurableObject<Env> {
         target !== null &&
         this.countBought(effective, target.address, "tooth_sharpener", { round }) >
           ((this.state.offeringUsed ??= {})[target.address] ?? 0);
-      if (this.state.wounded) {
-        this.state.wounded = false;
-        notes.push("A quiet night. Something large limped past the mill and took nothing.");
-      } else if (!target || !target.alive) {
+      if (!target || !target.alive) {
         notes.push("A quiet night: the werebear's chosen prey was already dead.");
       } else if (drunk.has(target.name)) {
         // Nothing wakes a drunk villager, the beast included. The save is
@@ -977,10 +975,6 @@ export class GameRoom extends DurableObject<Env> {
           notes.push(
             `🦷 The werebear used a tooth sharpener: nothing ${target.name} carried could save them.`,
           );
-        }
-        if (boughtEver(target.address, "lantern_oil")) {
-          const fact = this.lanternFact(effective, bearAddress);
-          notes.push(`🏮 By ${target.name}'s still-lit lantern, Maude reads one true thing: ${fact}`);
         }
       }
     }
@@ -1425,7 +1419,6 @@ export class GameRoom extends DurableObject<Env> {
         target,
       })),
       nightPick: this.state.nightPick,
-      wounded: this.state.wounded,
       venisonUsed: this.state.venisonUsed,
       baneConsumed: Object.keys(this.state.baneConsumed).map(
         (a) => this.playerByAddress(a)?.name ?? a.slice(0, 6),
@@ -1501,18 +1494,6 @@ export class GameRoom extends DurableObject<Env> {
         p.amountStroops === item.price &&
         (opts.round === undefined ? p.round >= 1 : p.round === opts.round),
     ).length;
-  }
-
-  /** Lantern oil's dying gift: one true, bear-anonymous fact from the ledger. */
-  private lanternFact(purchases: Purchase[], bearAddress: string): string {
-    const bearBuys = purchases
-      .filter((p) => p.from === bearAddress && p.round >= 1)
-      .sort((a, b) => b.ledger - a.ledger);
-    const latest = bearBuys[0];
-    if (!latest) return "the werebear has not spent a single coin since Gerald died. Frugal, for a monster.";
-    return `the werebear's most recent purchase was at ${placePhrase(latest.toLabel)}: ${
-      latest.itemGuess ? itemPhrase(latest.itemGuess) : `${latest.amountXlm} XLM of something`
-    }.`;
   }
 
   /**
