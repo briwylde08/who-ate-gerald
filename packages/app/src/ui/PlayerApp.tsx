@@ -90,6 +90,8 @@ export function PlayerApp() {
   /** Set once the game has a winner — every poll goes quiet (issue #12).
    *  The reckoning is final; nothing it shows can change. */
   const gameOverRef = useRef(false);
+  /** A lobby re-seat (Change villager) in flight — don't stack joins. */
+  const reseating = useRef(false);
   /** The server's answer to "what have I spent?" — survives fresh browsers. */
   const [serverSpend, setServerSpend] = useState<ServerPurchases | null>(null);
   useEffect(() => {
@@ -273,23 +275,46 @@ export function PlayerApp() {
             }
           }
         }
-        // One wallet, one identity: the SEAT is the truth. If the local
-        // profile has drifted (picked a new name/face while already seated),
-        // snap back to the seat rather than show two different people.
+        // One wallet, one identity: the SEAT is the truth — but before the
+        // deal, the truth is allowed to CHANGE. The old behavior snapped any
+        // local profile drift straight back to the seat, which made "Change
+        // villager" a button that always failed and blamed the player
+        // (issue #14). The Intro promises face-switching while the lobby is
+        // open, and the server allows it; now the app actually asks.
         const seat = v.players.find((p) => p.address === wallet.address);
         setMeAlive(seat ? seat.alive : true);
         if (seat?.character) {
-          setProfile((prof) => {
-            if (prof && (prof.name !== seat.name || prof.characterId !== seat.character)) {
-              const fixed = { name: seat.name, characterId: seat.character! };
-              saveProfile(fixed);
-              setError(
-                `This wallet is already seated in “${gameId}” as ${seat.name} — one wallet, one villager. To be somebody else, use a different game or wallet.`,
-              );
-              return fixed;
-            }
-            return prof;
-          });
+          const prof = loadProfile();
+          const drifted =
+            prof && (prof.name !== seat.name || prof.characterId !== seat.character);
+          if (drifted && !v.dealt && !reseating.current) {
+            // Lobby: push the new identity to the seat. join() renames and
+            // re-faces an existing seat, and refuses a face someone else holds.
+            reseating.current = true;
+            playerApi
+              .join(wallet, gameId, prof.name, prof.characterId)
+              .then(() => setError(null))
+              .catch((e) => {
+                // Face taken (or similar): the seat stays; snap the profile back.
+                const fixed = { name: seat.name, characterId: seat.character! };
+                saveProfile(fixed);
+                setProfile(fixed);
+                setError(
+                  `Couldn't switch: ${e instanceof Error ? e.message : String(e)} — you're still ${seat.name}.`,
+                );
+              })
+              .finally(() => {
+                reseating.current = false;
+              });
+          } else if (drifted && v.dealt) {
+            // Underway: faces are set. Snap back, and say why.
+            const fixed = { name: seat.name, characterId: seat.character! };
+            saveProfile(fixed);
+            setProfile(fixed);
+            setError(
+              `The game is underway — your face is set. You are ${seat.name} in “${gameId}”.`,
+            );
+          }
         }
       } catch {
         // no game yet — the slow refresh will catch up
