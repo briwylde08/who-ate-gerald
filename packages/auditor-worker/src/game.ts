@@ -712,10 +712,18 @@ export class GameRoom extends DurableObject<Env> {
     if (allVoted && bearReady) {
       try {
         await this.resolveDay();
-        return true;
       } catch {
-        return true; // dawn already breaking on another request — that counts
+        // Either dawn is already breaking on another request, or it failed
+        // outright. Don't guess which — ask the state below.
       }
+      // Dawn happened only if a morning exists. Reporting `true` on a failed
+      // dawn told the app to wait for a report that was never coming, and
+      // nothing would ever retry: every vote was already in.
+      if (this.state.mornings.some((m) => m.round === this.state.round)) return true;
+      // Dawn was due and did not come. Nothing else will trigger it — the last
+      // hand is already up — so ask the crier to try again shortly.
+      await this.ctx.storage.setAlarm(Date.now() + 15_000);
+      return false;
     }
     return false;
   }
@@ -731,6 +739,16 @@ export class GameRoom extends DurableObject<Env> {
     this.resolving = true;
     try {
       return await this.resolveDayInner();
+    } catch (err) {
+      // resolveDayInner mutates `this.state` as it goes — it banishes, it
+      // kills, it spends nails — and persists only at the very end. An error
+      // partway (loadAll and loadDeposits are network calls) leaves those
+      // deaths live in memory but unsaved, and the NEXT persist() from any
+      // path (a chat line, a vote) would write that half-dawn to storage
+      // forever. Storage is still clean here: reload from it.
+      const stored = await this.ctx.storage.get<GameState>("state");
+      this.state = stored ? { ...freshState(), ...stored } : freshState();
+      throw err;
     } finally {
       this.resolving = false;
     }
@@ -1140,16 +1158,22 @@ export class GameRoom extends DurableObject<Env> {
     return report;
   }
 
-  /** The town crier: opens the next day a minute after dawn. */
+  /**
+   * The town crier. Two jobs: open the next day a minute after dawn, and —
+   * because nothing else can — retry a dawn that was due but failed. Without
+   * the second job an indexer blip on the last vote of the day stalled the
+   * game permanently: every hand was already up, so no request would ever
+   * call maybeResolve again.
+   */
   async alarm(): Promise<void> {
-    const resolved = this.state.mornings.some((m) => m.round === this.state.round);
-    if (
-      this.state.phase === "day" &&
-      this.state.roles !== null &&
-      resolved // current day is done and nobody (GM) opened the next one yet
-    ) {
-      await this.startDay();
+    if (this.state.phase !== "day" || this.state.roles === null) return;
+    if (this.state.mornings.some((m) => m.round === this.state.round)) {
+      await this.startDay(); // dawn came; roll into morning
+      return;
     }
+    // maybeResolve re-checks that dawn is actually due, and re-arms this alarm
+    // if it fails again. A day still waiting on a vote simply does nothing.
+    await this.maybeResolve();
   }
 
   /** GM: close a game outright — lobby abandoned, playtest done, etc.
