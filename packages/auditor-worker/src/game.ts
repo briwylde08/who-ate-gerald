@@ -13,9 +13,9 @@ import { answerQuestion, type AskOutcome } from "./ask";
 import { SHOP_BY_ID, stroopsFromXlm, xlmString, STARTING_BUDGET_XLM, DAILY_INCOME_XLM } from "./catalog";
 import {
   indexerLatestLedger,
-  loadDeposits,
-  loadPurchases,
+  loadChain,
   syncIndexer,
+  type DepositRec,
   type FactContext,
   type PlayerRef,
   type Purchase,
@@ -185,8 +185,17 @@ for (const shop of SHOP_BY_ID.values()) {
 
 export class GameRoom extends DurableObject<Env> {
   private state: GameState = freshState();
-  /** Throttle for read-path indexer syncs (graph polls every 30s per client). */
-  private lastGraphSync = 0;
+  /** Last time we poked the indexer's /sync. Eight players pressing Done at
+   *  once used to be eight sync POSTs; now it is one. */
+  private lastSync = 0;
+  /**
+   * This game's decrypted window on the shared token.
+   * ponytail: 3s memo — plenty to collapse an 8-tab poll stampede into one
+   * read, and every write path calls sync() first, which drops it. Remove it
+   * if a read ever has to be transactional with a write in the same request.
+   */
+  private chain: { at: number; data: { purchases: Purchase[]; deposits: DepositRec[] } } | null =
+    null;
   /** In-flight lock: resolveDay awaits external I/O, and the DO delivers new
    * events during those awaits — without this, a vote and the bear's pick
    * landing together can resolve the same day twice. */
@@ -380,7 +389,7 @@ export class GameRoom extends DurableObject<Env> {
     this.requireGame();
     if (!this.state.roles) throw new Error("deal roles first (POST /deal)");
     if (this.state.phase === "ended") throw new Error(`game over — ${this.state.winner} won`);
-    await syncIndexer(this.env);
+    await this.sync();
     const latest = await indexerLatestLedger(this.env);
     const startLedger = latest + 1;
     const prev = this.state.rounds.find((w) => w.round === this.state.round);
@@ -420,7 +429,7 @@ export class GameRoom extends DurableObject<Env> {
     const player = this.playerByAddress(address);
     if (!player) throw new Error("that address holds no seat in this game");
     if (!player.alive) throw new Error("the dead are, by definition, done shopping");
-    await syncIndexer(this.env);
+    await this.sync();
     const ledger = await indexerLatestLedger(this.env);
     this.state.doneShopping[address] = { round: this.state.round, ledger };
     // If that was the last villager, the barrel takes effect now — no second
@@ -464,7 +473,7 @@ export class GameRoom extends DurableObject<Env> {
       throw new Error("question must be a non-empty string");
     }
 
-    await syncIndexer(this.env);
+    await this.sync();
     const ctx = await this.factContext();
     const outcome = await answerQuestion(this.env, ctx, question.trim(), player.name);
 
@@ -492,7 +501,7 @@ export class GameRoom extends DurableObject<Env> {
     this.requireGame();
     if (this.state.round < 1) throw new Error("no day in progress");
     const who = (asker && asker.trim()) || "the GM";
-    await syncIndexer(this.env);
+    await this.sync();
     const ctx = await this.factContext();
     const outcome = await answerQuestion(this.env, ctx, question.trim(), who);
     this.state.askLog.push({
@@ -617,7 +626,7 @@ export class GameRoom extends DurableObject<Env> {
 
     const round = this.state.round;
     // The purchase is seconds old: poke the mirror before looking for it.
-    await syncIndexer(this.env);
+    await this.sync();
     const purchases = await this.loadAll();
     const owned = this.countBought(purchases, address, itemId, { round });
     const alreadyAimed = this.state.aims.filter(
@@ -729,7 +738,7 @@ export class GameRoom extends DurableObject<Env> {
 
   private async resolveDayInner(): Promise<MorningReport> {
     const round = this.state.round;
-    await syncIndexer(this.env);
+    await this.sync();
     const purchases = await this.loadAll();
     const roles = this.state.roles!;
     const notes: string[] = [];
@@ -983,7 +992,7 @@ export class GameRoom extends DurableObject<Env> {
     // schedule. Pre-game history is irrelevant (the Order's desk normalizes
     // balances and the spend audit caps usage) — this tripwire exists for
     // mid-game top-ups only.
-    const deposits = await loadDeposits(this.env, this.state.rounds);
+    const deposits = await this.loadDepositsCached();
     const allowedTotal = stroopsFromXlm(STARTING_BUDGET_XLM + DAILY_INCOME_XLM * (round - 1));
     for (const p of this.state.players) {
       const depTotal = deposits
@@ -1234,12 +1243,15 @@ export class GameRoom extends DurableObject<Env> {
 
   /** Public payment graph — who paid whom, NO amounts. Spectator-safe. */
   async graphView(): Promise<Record<string, unknown>> {
-    // Keep the sightings fresh: poke the mirror, at most once per 20s no
-    // matter how many spectators are polling.
-    if (Date.now() - this.lastGraphSync > 20_000) {
-      this.lastGraphSync = Date.now();
-      await syncIndexer(this.env);
+    // An empty roster has no graph: return before touching the network. The
+    // app polls /graph for a game id it hasn't joined yet, and this route is
+    // unauthenticated — without this, GET /games/<anything>/graph spun up a DO
+    // and pulled the whole token feed for a game that does not exist.
+    if (this.state.players.length === 0) {
+      return { round: 0, players: [], edges: [], deposits: [] };
     }
+    // Keep the sightings fresh; sync() throttles for every caller now.
+    await this.sync();
     const purchases = await this.loadAll();
     const nameOf = (addr: string) =>
       this.state.players.find((p) => p.address === addr)?.name ??
@@ -1248,7 +1260,7 @@ export class GameRoom extends DurableObject<Env> {
     // seated players' deposits belong in this game's feed.
     const roster = new Set(this.state.players.map((p) => p.address));
     const born = this.state.createdLedger ?? 0;
-    const deposits = (await loadDeposits(this.env, this.state.rounds)).filter(
+    const deposits = (await this.loadDepositsCached()).filter(
       (d) =>
         roster.has(d.to) &&
         // In-game rounds are already this game's ledger windows; round-0
@@ -1339,7 +1351,7 @@ export class GameRoom extends DurableObject<Env> {
   /** GM god-view of the current round: decrypted purchases + votes + pick. */
   async godView(): Promise<Record<string, unknown>> {
     this.requireGame();
-    await syncIndexer(this.env);
+    await this.sync();
     const purchases = await this.loadAll();
     const round = this.state.round;
     const roles = this.state.roles;
@@ -1450,8 +1462,42 @@ export class GameRoom extends DurableObject<Env> {
     }.`;
   }
 
+  /**
+   * Poke the indexer and drop the memo. Throttled: eight players clicking Done
+   * in the same second produced eight sync POSTs to a single-instance worker.
+   * 3s (not the old graph path's 20s) because aimItem and declareDone are
+   * looking for a purchase that is seconds old.
+   */
+  private async sync(): Promise<void> {
+    this.chain = null; // the caller wants fresh — always invalidate
+    if (Date.now() - this.lastSync < 3_000) return;
+    this.lastSync = Date.now();
+    await this.sync();
+  }
+
+  /** The ledger this game was born at; 0 for games predating the field. */
+  private startLedger(): number {
+    return this.state.createdLedger || 0;
+  }
+
+  private async loadChainCached(): Promise<{ purchases: Purchase[]; deposits: DepositRec[] }> {
+    if (this.chain && Date.now() - this.chain.at < 3_000) return this.chain.data;
+    const data = await loadChain(
+      this.env,
+      this.state.players,
+      this.state.rounds,
+      this.startLedger(),
+    );
+    this.chain = { at: Date.now(), data };
+    return data;
+  }
+
   private async loadAll(): Promise<Purchase[]> {
-    return loadPurchases(this.env, this.state.players, this.state.rounds);
+    return (await this.loadChainCached()).purchases;
+  }
+
+  private async loadDepositsCached(): Promise<DepositRec[]> {
+    return (await this.loadChainCached()).deposits;
   }
 
   private async factContext(): Promise<FactContext> {
