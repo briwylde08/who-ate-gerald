@@ -1,10 +1,10 @@
 /**
- * Vendor @aztec/bb.js's browser build into packages/game/public/vendor/bb.
+ * Vendor @aztec/bb.js's browser build into packages/app/public/vendor/bb.
  *
  * bb.js spawns its wasm Web Worker via
  *   new Worker(new URL('./main.worker.js', import.meta.url), { type: 'module' })
  * so it must be served as an intact directory at a stable public path and
- * loaded as native ESM (see packages/game/src/lib/bb-loader.ts) — a bundler
+ * loaded as native ESM (see packages/app/src/lib/bb-loader.ts) — a bundler
  * would move index.js into a hashed chunk whose sibling worker doesn't exist,
  * and proving would hang forever.
  */
