@@ -142,6 +142,19 @@ export function Intro({
     return () => clearInterval(t);
   }, [page, address]);
 
+  // Recognized seat + connected wallet = nothing left to choose: go straight
+  // in (Bri: skip the character screen). EXCEPT when the player came via
+  // "Change villager" (startAt === "identity"), where standing on the picker
+  // while holding a seat is the whole point.
+  useEffect(() => {
+    if (page !== "identity" || startAt === "identity") return;
+    if (!address || !seated?.character) return;
+    const p = { name: seated.name, characterId: seated.character };
+    saveProfile(p);
+    onDone(p);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, address, seated?.character]);
+
   const nameRef = useRef<HTMLInputElement>(null);
   const named = name.trim().length > 0;
   const ready = named && characterId !== null;
