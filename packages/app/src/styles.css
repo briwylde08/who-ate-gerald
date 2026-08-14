@@ -1093,6 +1093,7 @@ th { color: var(--ink-dim); font-weight: normal; }
 .roster-chip.dead b { text-decoration: line-through; opacity: 0.65; }
 
 /* Maude's door, shut to the dead — unmissably. */
+.reclaim-card { border-left: 3px solid var(--gold); }
 .dead-door { border-left: 3px solid var(--blood); }
 .dead-door h2 { margin: 0 0 6px; }
 

@@ -542,6 +542,7 @@ export function PlayerApp() {
             // this browser's remembered tab happened to be (usually Shops)
           }}
           address={wallet?.address}
+          onConnect={() => void connect()}
           startAt={introAt}
         />
       )}
