@@ -1008,7 +1008,9 @@ export class GameRoom extends DurableObject<Env> {
         this.countBought(effective, target.address, "tooth_sharpener", { round }) >
           ((this.state.offeringUsed ??= {})[target.address] ?? 0);
       if (!target || !target.alive) {
-        notes.push("A quiet night: the werebear's chosen prey was already dead.");
+        // The pick only accepts the living, so the one way prey pre-dies is
+        // that day's trial — say so precisely (Bri).
+        notes.push("A quiet night: the werebear's chosen prey had already been banished.");
       } else if (drunk.has(target.name)) {
         // Nothing wakes a drunk villager, the beast included. The save is
         // announced but never NAMED — who was protected, and how, stays theirs.
