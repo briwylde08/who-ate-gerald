@@ -31,12 +31,15 @@ function tameGameName(raw: string): string {
 export function Intro({
   onDone,
   address,
+  onConnect,
   startAt,
 }: {
   onDone: (p: Profile) => void;
   /** The connected wallet, when there is one — so your own seat isn't
       mistaken for someone else's claim. */
   address?: string;
+  /** Wake Freighter — offered when a seat might be yours but we can't tell. */
+  onConnect?: () => void;
   /** "identity" jumps straight to the villager picker (Change villager). */
   startAt?: "story" | "game" | "identity";
 }) {
@@ -101,6 +104,7 @@ export function Intro({
   const [characterId, setCharacterId] = useState<string | null>(null);
   const [taken, setTaken] = useState<Set<string>>(new Set());
   const [seated, setSeated] = useState<{ name: string; character?: string | null } | null>(null);
+  const [seatCount, setSeatCount] = useState(0);
   const [gameDealt, setGameDealt] = useState(false);
 
   // One face per game: grey out characters claimed by OTHER players. Your own
@@ -124,6 +128,7 @@ export function Intro({
           ),
         );
         setSeated(mine ? { name: mine.name, character: mine.character } : null);
+        setSeatCount(v.players.length);
         setGameDealt(v.dealt === true);
         // Already seated in this game? Offer that identity back, pre-filled.
         if (mine) {
@@ -286,6 +291,27 @@ export function Intro({
         <p className="dim">
           Game: <b className="mono">{chosenGame}</b>
         </p>
+      )}
+
+      {/* Without a wallet, the picker can't recognize a returning player: it
+          greys their OWN face as "claimed" and asks them to be somebody new
+          ("it tries to have me pick a new character..." — Bri, locked out of
+          her own midwife). If seats exist and we can't see an address, offer
+          the connect BEFORE the picker misleads anyone. */}
+      {!address && seatCount > 0 && onConnect && (
+        <div className="panel reclaim-card">
+          <p>
+            <b>Already have a seat in “{chosenGame ?? loadGameId()}”?</b> Connect Freighter
+            first — the village recognizes villagers by wallet, and until then your own face
+            shows as claimed.
+          </p>
+          <div className="row">
+            <button className="primary" onClick={onConnect}>
+              Connect Freighter
+            </button>
+            <span className="dim">New here? Just pick a villager below.</span>
+          </div>
+        </div>
       )}
 
       <div className="panel">
