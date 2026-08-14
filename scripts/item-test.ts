@@ -285,6 +285,9 @@ async function main() {
 
     const done = async (players: Player[]) => {
       for (const p of players) await p.call("done").catch(() => undefined);
+      // NOTE: the ask-or-pass gate does NOT bite here — only CHAT waits for
+      // the clock, and this exam never chats. Passing would break day 1's
+      // explicit ask (a pass spends the seal).
     };
 
     // ---- DAY 1 -----------------------------------------------------------

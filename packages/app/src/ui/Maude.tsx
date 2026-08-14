@@ -182,7 +182,7 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
             )}
             <p className="state-note">
               {seal === "available" ? (
-                "You have one question remaining today."
+                "You have one question today — ask it or pass. The village argues once everyone has."
               ) : seal === "spent" ? (
                 "You get a new question when the next day begins."
               ) : round < 1 ? (
@@ -317,6 +317,18 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
           {question.includes("[player]") && (
             <span className="dim">Pick a villager above, or type a name yourself.</span>
           )}
+          {seal === "available" && (
+            <button
+              onClick={() => {
+                playerApi
+                  .passQuestion(wallet, gameId)
+                  .then(() => void fetchPublicView(gameId).then(setView).catch(() => undefined))
+                  .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+              }}
+            >
+              No question today
+            </button>
+          )}
         </div>
       </div>
 
@@ -334,18 +346,21 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
               {/* Why she could answer at all: the auditor key is a real feature
                   of the token, not a story device. */}
               <p className="answer-source">
-                Read with the Auditor's key — the one key that can open every sealed amount.
+                Read with the Auditor's key — the one key that can open every confidential amount.
               </p>
               {/* Only after the newest answer: what to do with it. */}
               {i === 0 && (
-                <p className="whats-next">
-                  Now that you've gotten your insight, head to{" "}
-                  <button className="link inline" onClick={onGoChatVote}>
-                    Chat &amp; Vote
-                  </button>{" "}
-                  to discuss your findings with your fellow villagers, then pick someone to
-                  accuse.
-                </p>
+                <>
+                  <p className="whats-next">
+                    Now that you've gotten your insight, discuss your findings with your
+                    fellow villagers, then pick someone to accuse.
+                  </p>
+                  <div className="row">
+                    <button className="primary" onClick={onGoChatVote}>
+                      Chat &amp; Vote →
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           ))

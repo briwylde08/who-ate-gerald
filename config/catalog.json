@@ -29,7 +29,7 @@
           "id": "curfew_bell",
           "label": "Curfew bell",
           "flavor": "DING DONG. MURDER HAS BEEN RESCHEDULED.",
-          "priceXlm": 35,
+          "priceXlm": 44,
           "class": "V-def",
           "effect": "Ring it, and the werebear stays home tonight. No hunting. No one dies tonight."
         }
@@ -46,7 +46,7 @@
           "flavor": "Hard to hang the host.",
           "priceXlm": 23,
           "class": "B-def",
-          "effect": "If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Works once per purchase."
+          "effect": "If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Each purchase saves you once."
         },
         {
           "id": "sock_in_mouth",

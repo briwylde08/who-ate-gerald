@@ -56,6 +56,12 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
   /** Vote/pick in flight — the LAST vote of a day runs the entire dawn. */
   const [acting, setActing] = useState(false);
   const [privateNotes, setPrivateNotes] = useState<{ round: number; text: string }[]>([]);
+  /** One re-render per second while the chat clock runs — cheap and local. */
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 1_000);
+    return () => clearInterval(t);
+  }, []);
   /** Fresh dawn results, shown as a modal once per round per browser. */
   const [dawnNotes, setDawnNotes] = useState<string[] | null>(null);
 
@@ -235,6 +241,13 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
    *  newest morning still belongs to the CURRENT round. */
   const dayResetting = lastMorning !== null && lastMorning.round === view.round;
 
+  // The argument's three states: gate open (waiting on Maude), clock
+  // running (2:00 → 0:00), square closed (vote!).
+  const clockStart = view?.chatClockStart ?? 0;
+  const clockLeftMs = clockStart ? Math.max(0, 120_000 - (nowTick - clockStart)) : 0;
+  const gateWaiting = view?.marketClosed === true && !clockStart;
+  const squareClosed = clockStart > 0 && clockLeftMs === 0;
+
   const fateOf = (name: string): string | null => {
     const b = view.mornings.find((m) => m.banished === name);
     if (b) return `⚖ banished day ${b.round}`;
@@ -273,11 +286,32 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
 
       {view.marketClosed && view.phase === "day" && !view.winner && (
         <div className="panel">
-          <h2>The square</h2>
-          <p className="dim">
-            Accuse, defend, bluff — the square hears everything and forgets it at dawn.
-            {me && !me.alive ? " You are a ghost now: whisper wisely, certified innocent." : ""}
-          </p>
+          <h2>
+            The square
+            {clockStart > 0 && !squareClosed && !view.winner && (
+              <span className="chat-clock">
+                {" "}
+                {Math.floor(clockLeftMs / 60000)}:
+                {String(Math.floor((clockLeftMs % 60000) / 1000)).padStart(2, "0")}
+              </span>
+            )}
+          </h2>
+          {gateWaiting && (
+            <p className="dim">
+              The argument begins once everyone has asked Maude or passed — still waiting on:{" "}
+              {(view.awaitingAsk ?? []).join(", ") || "…"}.
+            </p>
+          )}
+          {squareClosed && !view.winner && (
+            <p className="crier-note">🤫 The square has gone quiet — cast your vote below.</p>
+          )}
+          {!gateWaiting && !squareClosed && (
+            <p className="dim">
+              Accuse, defend, bluff — you have two minutes, and the square forgets it all at
+              dawn.
+              {me && !me.alive ? " You are a ghost now: whisper wisely, certified innocent." : ""}
+            </p>
+          )}
           <div className="chat">
             {(view.chat ?? []).length === 0 ? (
               <p className="dim">Nobody has said anything yet. Suspicious, honestly.</p>
@@ -326,10 +360,10 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
                 }}
               />
               <button
-                disabled={!chatText.trim() || chatBusy || dayResetting}
+                disabled={!chatText.trim() || chatBusy || dayResetting || gateWaiting || squareClosed}
                 onClick={() => void sendChat()}
               >
-                Say it
+                {gateWaiting ? "Waiting on Maude…" : squareClosed ? "The square is closed" : "Say it"}
               </button>
             </div>
           )}
@@ -373,6 +407,9 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
       {(me?.alive || me?.ghostVoter) && view.phase === "day" && !view.winner && (
         <div className="panel">
           <h2>The trial</h2>
+          {squareClosed && !voted && !me?.drunkToday && (
+            <p className="crier-note vote-nag">⏰ The square has gone quiet — the trial waits on your vote.</p>
+          )}
           {!view.marketClosed && (
             <p className="dim">
               <ToteIcon /> The trial begins when the market closes.{" "}

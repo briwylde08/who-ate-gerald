@@ -371,9 +371,21 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                 </>
               )}
               <div className="row">
-                <button className="primary" onClick={() => setRoleShown(false)}>
-                  Close window
-                </button>
+                {role === "werebear" ? (
+                  <button className="primary" onClick={() => setRoleShown(false)}>
+                    Close window
+                  </button>
+                ) : (
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setRoleShown(false);
+                      onGoShops();
+                    }}
+                  >
+                    Go to the Shops →
+                  </button>
+                )}
               </div>
             </div>
           </div>
