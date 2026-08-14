@@ -291,22 +291,13 @@ export function PlayerApp() {
                       : `${filmMorning.eaten} was taken in the night.`,
                 });
               }
-            } else if (filmMorning.banished && !v.winner) {
-              // Banishment is a death too (Bri's note — a banished ghost
-              // never got a reel). One film per morning: the bear's kill
-              // outranks it above; banishment outranks the quiet night.
-              const b = v.players.find((p) => p.name === filmMorning.banished);
-              if (b?.character) {
-                localStorage.setItem(seenKey, "1");
-                setFilm({
-                  src: nightFilmSrc(b.character),
-                  caption:
-                    b.address === wallet.address
-                      ? "You were banished by the village."
-                      : `${filmMorning.banished} was banished by the village.`,
-                });
-              }
             } else if (!filmMorning.eaten && !v.winner) {
+              // Banishment gets NO reel (Bri's ruling, 2026-08-14): the
+              // gets-got films depict a werebear attack, and playing one
+              // over a village trial told the wrong story (game11 — Wick
+              // banished, bell rang, and his "attack" reel rolled against
+              // a 'nobody died tonight' note). The crier carries trials;
+              // the films are the bear's alone.
               // A quiet night gets its own reel (Bri's film, 2026-08-06):
               // nobody eaten, game still on — the village exhales.
               localStorage.setItem(seenKey, "1");
