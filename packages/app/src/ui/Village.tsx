@@ -460,12 +460,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       {dead && (
         <div className="panel">
           <h3>🪦 The shops serve no ghosts</h3>
-          <p className="dim">
-            You are dead — {myFate ?? "banished or eaten"} — and the market no longer
-            concerns you. Whatever coin
-            you carry, purchases from beyond the grave hold no power at dawn. Haunt the square
-            instead; the living can hear you.
-          </p>
+          <p className="dim">You can't shop — {myFate ?? "you're dead"}.</p>
         </div>
       )}
 
