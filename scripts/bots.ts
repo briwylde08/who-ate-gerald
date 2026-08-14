@@ -520,6 +520,9 @@ async function main() {
             await bot.call("done").catch(() => undefined);
             shoppedRound.set(bot.address, view.round);
             console.log(`  ${bot.name}: done shopping (day ${view.round})`);
+            // The ask-or-pass gate: bots never gossip with fortune tellers,
+            // so they pass — else the 2-minute chat clock never starts.
+            await bot.call("pass").catch(() => undefined);
           }
 
           if (view.marketClosed) {
@@ -558,6 +561,16 @@ async function main() {
             }
             // The hunt: finish the wounded first (a shattered charm doesn't
             // grow back); otherwise never test the same door twice.
+            const pickIsDead =
+              bot.role === "werebear" &&
+              bot.pickedRound === view.round &&
+              bot.lastPick !== null &&
+              view.players.some((p) => p.name === bot.lastPick && !p.alive);
+            if (pickIsDead) {
+              // Prey banished at the trial: choose again or waste the night
+              // (game11: the bear went 0-for-5 partly from exactly this).
+              bot.pickedRound = view.round - 1;
+            }
             if (!isGhost && bot.role === "werebear" && bot.pickedRound < view.round) {
               let prey = view.players.filter((p) => p.alive && p.address !== bot.address);
               const weak = prey.filter((p) => p.recovering);

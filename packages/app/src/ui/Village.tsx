@@ -168,7 +168,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       .map((e) => ({
         ledger: e.ledger,
         txHash: e.txHash!,
-        label: `Day ${e.round} · ${e.from} paid ${e.to} — amount sealed`,
+        label: `Day ${e.round} · ${e.from} paid ${e.to} — amount confidential`,
         detail: mine.get(e.txHash!),
       })),
     ...(feedGraph?.deposits ?? []).map((d) => ({
@@ -345,7 +345,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       recordActivity(wallet.address, {
         at: new Date().toISOString(),
         label: `Paid ${shop.label} (confidential transfer)`,
-        detail: `${item.label} — amount sealed on chain`,
+        detail: `${item.label} — amount confidential on chain`,
         txHash: hash,
       });
       setJustBought(`${shop.id}:${item.id}`);

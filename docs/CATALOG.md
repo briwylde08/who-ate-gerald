@@ -34,12 +34,12 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 8 | Soup bone *(aim: player)* | The Butcher's | Pick another villager. If the werebear targets you tonight, there is a 1 in 4 chance it targets them instead. |
 | 20 | Horseshoe nail | Blacksmith | If today's vote ties on you, the nail steps you out of it. Whoever is left in the tie takes the rope — if more than one is left, nobody hangs. Single use. |
 | 22 | Cold iron key *(aim: player+shop)* | Blacksmith | Pick a villager and a store. Tomorrow that store will not sell to them. Everyone is told which store was locked. Nobody is told who bought the key or who was locked out. |
-| 23 | Pizza party | General Store | If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Works once per purchase. |
+| 23 | Pizza party | General Store | If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Each purchase saves you once. |
 | 25 | Unquiet rest | Chapel | When you die, a 50/50 chance your ghost can still vote. The result is announced either way. |
 | 28 | The butcher's knife | The Butcher's | Your vote counts twice at today's trial. Everyone is told a double vote was cast; nobody is ever told whose. |
 | 32 | Sock in mouth *(aim: player)* | General Store | Pick a villager. They can still type in the chat, but they lose their vote today. The morning report names them. |
 | 33 | Tooth sharpener | The Butcher's | Werebear: tonight's kill goes through — soup bones and offerings do not stop it. Only the barrel of beer does, and the morning report announces a sharpener was used. Villager: if the werebear targets you tonight, a 50/50 chance it takes this instead and leaves you alone. |
-| 35 | Curfew bell | Blacksmith | Ring it, and the werebear stays home tonight. No hunting. No one dies tonight. |
+| 44 | Curfew bell | Blacksmith | Ring it, and the werebear stays home tonight. No hunting. No one dies tonight. |
 | 42 | The long candle *(aim: player)* | Chapel | Pick a villager. A 50/50 chance you privately learn, on the spot, whether they are the werebear; otherwise you learn nothing. It never lies. |
 | 45 | Barrel of beer | General Store | You cannot vote today, and you cannot be killed tonight — nothing gets through, including the tooth sharpener. No effect if you are the werebear. |
 
@@ -72,7 +72,12 @@ are audited). Deadline: day SIX. The werebear may buy anything.
 - **Two nails in one tie: both excused, nobody hangs.** Both nails spent.
 - **Ghost votes are public**, dawn waits for them, and the roster shows 👻.
 
-## Watch list (updated 2026-08-05)
+## Watch list (updated 2026-08-14)
+
+- **The bell went 35 → 44** (Bri, post-game11: five days, ZERO eatings —
+  two bells and a wasted pick bought the village total peace at pocket
+  change). 45 was the barrel's, and prices are globally unique, so 44.
+
 
 - **Key/holiday traffic at 25/day**: the richer economy plus once-per-day
   rebuys produced barred doors EVERY day in the 2026-08-04 full bot game.

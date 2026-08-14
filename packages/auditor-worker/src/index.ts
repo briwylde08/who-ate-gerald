@@ -158,6 +158,8 @@ export default {
             );
           case "p/purchases":
             return json(await room.myPurchases(address));
+          case "p/pass":
+            return json(await room.passQuestion(address));
           case "p/notes":
             return json({ notes: await room.notesFor(address) });
           default:

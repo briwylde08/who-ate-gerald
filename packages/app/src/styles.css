@@ -1094,6 +1094,8 @@ th { color: var(--ink-dim); font-weight: normal; }
 
 /* Maude's door, shut to the dead — unmissably. */
 .reclaim-card { border-left: 3px solid var(--gold); }
+.chat-clock { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 1rem; color: var(--lantern); }
+.vote-nag { border-left: 2px solid var(--gold); padding-left: 10px; }
 .dead-door { border-left: 3px solid var(--blood); }
 .dead-door h2 { margin: 0 0 6px; }
 
