@@ -301,9 +301,8 @@ export function Intro({
       {!address && seatCount > 0 && onConnect && (
         <div className="panel reclaim-card">
           <p>
-            <b>Already have a seat in “{chosenGame ?? loadGameId()}”?</b> Connect Freighter
-            first — the village recognizes villagers by wallet, and until then your own face
-            shows as claimed.
+            If you're a current player in <b>{chosenGame ?? loadGameId()}</b>, connect your
+            Freighter wallet to continue. Your character is recognized by your wallet address.
           </p>
           <div className="row">
             <button className="primary" onClick={onConnect}>
