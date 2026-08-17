@@ -1095,12 +1095,14 @@ th { color: var(--ink-dim); font-weight: normal; }
 /* Maude's door, shut to the dead — unmissably. */
 .reclaim-card { border-left: 3px solid var(--gold); }
 
-/* The satchel: a backpack under the banner, top-right. */
-.satchel-wrap { position: fixed; top: 64px; right: 18px; z-index: 60; }
+/* The satchel: a backpack under the banner, top-right. Absolute, not
+   fixed (Bri): it stays put at the top of the page and scrolls away with
+   it, rather than chasing the reader down the screen. */
+.satchel-wrap { position: absolute; top: 170px; right: 18px; z-index: 60; }
 .satchel-btn {
   font-size: 1.5rem;
   padding: 8px 12px;
-  border-radius: 50%;
+  border-radius: 8px; /* square (Bri) */
   background: rgba(27, 30, 42, 0.95);
   border: 1px solid var(--gold);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);

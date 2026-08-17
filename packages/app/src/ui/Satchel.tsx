@@ -60,7 +60,7 @@ export function Satchel({ serverSpend, round, alive }: Props) {
       <button
         className="satchel-btn"
         aria-expanded={open}
-        title="Your satchel — what you're holding"
+        title="Satchel"
         onClick={() => setOpen((o) => !o)}
       >
         🎒
@@ -69,7 +69,7 @@ export function Satchel({ serverSpend, round, alive }: Props) {
       <button
         className="satchel-btn relic-btn"
         aria-expanded={relicsOpen}
-        title="Gerald's reliquary — your collected extremities"
+        title="Gerald's extremities"
         onClick={() => setRelicsOpen((o) => !o)}
       >
         ☝️
