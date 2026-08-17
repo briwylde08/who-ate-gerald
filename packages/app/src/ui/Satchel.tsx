@@ -34,7 +34,6 @@ export function Satchel({ serverSpend, round, alive }: Props) {
   const nailsHeld = Math.max(0, countEver("horseshoe_nail") - (serverSpend?.spent?.horseshoe_nail ?? 0));
   const pizzasHeld = Math.max(0, countEver("pizza_party") - (serverSpend?.spent?.pizza_party ?? 0));
   const restArmed = alive && !serverSpend?.ghostVoteDecided && countEver("unquiet_rest") > 0;
-  const fingers = countEver("geralds_finger");
 
   const todays = purchases.filter((p) => p.round === round && p.item !== null);
   const aims: Record<string, string> = (() => {
@@ -50,6 +49,12 @@ export function Satchel({ serverSpend, round, alive }: Props) {
   if (pizzasHeld > 0) held.push(`🍕 Pizza party ×${pizzasHeld} — saves you from a banishment`);
   if (restArmed) held.push("👻 Unquiet rest — armed until you die");
 
+  const fingers = countEver("geralds_finger");
+  const thumbs = countEver("geralds_thumb");
+  const toes = countEver("geralds_toe");
+  const relicTotal = fingers + thumbs + toes;
+  const [relicsOpen, setRelicsOpen] = useState(false);
+
   return (
     <div className="satchel-wrap">
       <button
@@ -60,6 +65,34 @@ export function Satchel({ serverSpend, round, alive }: Props) {
       >
         🎒
       </button>
+      {/* The reliquary: a second, holier bag. Gerald only. */}
+      <button
+        className="satchel-btn relic-btn"
+        aria-expanded={relicsOpen}
+        title="Gerald's reliquary — your collected extremities"
+        onClick={() => setRelicsOpen((o) => !o)}
+      >
+        ☝️
+      </button>
+      {relicsOpen && (
+        <div className="panel satchel-panel relic-panel">
+          <div className="role-label">Gerald's reliquary</div>
+          {relicTotal === 0 ? (
+            <p className="dim">You hold no piece of Gerald. The Chapel is open.</p>
+          ) : (
+            <>
+              {fingers > 0 && <p className="satchel-line">☝️ Finger ×{fingers}</p>}
+              {thumbs > 0 && <p className="satchel-line">👍 Thumb ×{thumbs}</p>}
+              {toes > 0 && <p className="satchel-line">🦶 Toe ×{toes}</p>}
+              <p className="dim satchel-note">
+                {relicTotal >= 20
+                  ? "All twenty. You are Gerald now."
+                  : `${relicTotal} of Gerald's twenty extremities. He appreciates your devotion.`}
+              </p>
+            </>
+          )}
+        </div>
+      )}
       {open && (
         <div className="panel satchel-panel">
           <div className="role-label">Your satchel</div>
@@ -88,11 +121,6 @@ export function Satchel({ serverSpend, round, alive }: Props) {
                 );
               })}
             </>
-          )}
-          {fingers > 0 && (
-            <p className="satchel-line dim">
-              ☝️ Gerald's finger ×{fingers} — it does nothing, devotedly
-            </p>
           )}
           <p className="dim satchel-note">Only you can see this.</p>
         </div>
