@@ -1001,7 +1001,10 @@ export class GameRoom extends DurableObject<Env> {
         const elsewhere = bone?.target ? this.playerByName(bone.target) : null;
         if (
           bone &&
-          !sharpTonight && // a sharpened tooth is not distracted by bones
+          // The bone deflects even a sharpened bear (Bri, 2026-08-17): the
+          // sharpener means the kill can't be BARGAINED away (offerings die
+          // with their owner) — not that it can't be pointed elsewhere. The
+          // redirected victim faces the same sharpened teeth.
           !drunk.has(target.name) && // nothing was going to happen anyway
           elsewhere?.alive &&
           elsewhere.address !== bearAddress &&
