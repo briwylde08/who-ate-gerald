@@ -1137,8 +1137,8 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .satchel-panel {
   position: absolute;
-  right: 0;
-  top: 52px;
+  right: 56px; /* to the left of the buttons, not on top of them (Bri) */
+  top: 0;
   width: 300px;
   max-height: 60vh;
   overflow-y: auto;
@@ -1156,7 +1156,7 @@ th { color: var(--ink-dim); font-weight: normal; }
 .satchel-note { margin: 10px 0 0; font-size: 0.7rem; }
 /* The reliquary rides beneath the satchel. */
 .relic-btn { display: block; margin-top: 8px; border-color: var(--moon); }
-.relic-panel { top: 112px; border-left: 2px solid var(--moon); }
+.relic-panel { top: 56px; border-left: 2px solid var(--moon); }
 
 /* Relic progress on the Chapel shelf. */
 .relic-note {
