@@ -394,7 +394,14 @@ export function Intro({
               disabled={isTaken || (gameDealt && seated !== null && c.id !== seated.character)}
               onClick={() => setCharacterId(c.id)}
             >
-              <img className="portrait" src={c.image} alt={c.title} loading="lazy" />
+              <span className="portrait-wrap">
+                <img className="portrait" src={c.image} alt={c.title} loading="lazy" />
+                {isTaken && (
+                  <span className="claimed-banner" aria-hidden="true">
+                    CLAIMED
+                  </span>
+                )}
+              </span>
               <span>
                 <CharEmoji c={c} /> {c.title}
                 {isTaken ? " — claimed" : ""}
