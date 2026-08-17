@@ -311,6 +311,17 @@ export function Intro({
           ("it tries to have me pick a new character..." — Bri, locked out of
           her own midwife). If seats exist and we can't see an address, offer
           the connect BEFORE the picker misleads anyone. */}
+      {/* Connected but unrecognized: say so — a vanished card read as
+          "I connected and nothing happened" (Bri). */}
+      {address && seatCount > 0 && !seated && (
+        <div className="panel reclaim-card">
+          <p>
+            This wallet doesn't hold a seat in <b>{chosenGame ?? loadGameId()}</b> — pick a
+            villager below to join.
+          </p>
+        </div>
+      )}
+
       {!address && seatCount > 0 && onConnect && (
         <div className="panel reclaim-card">
           <p>
