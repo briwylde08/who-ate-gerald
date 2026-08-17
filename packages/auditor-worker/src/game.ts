@@ -1499,6 +1499,8 @@ export class GameRoom extends DurableObject<Env> {
    */
   async myPurchases(address: string): Promise<{
     spentStroops: string;
+    spent: { horseshoe_nail: number; pizza_party: number };
+    ghostVoteDecided: boolean;
     purchases: {
       round: number;
       ledger: number;
@@ -1517,6 +1519,12 @@ export class GameRoom extends DurableObject<Env> {
     );
     return {
       spentStroops: purchases.reduce((a, x) => a + x.amountStroops, 0n).toString(),
+      // What the satchel needs: which until-spent items have already fired.
+      spent: {
+        horseshoe_nail: (this.state.nailUsed ?? {})[address] ?? 0,
+        pizza_party: (this.state.pizzaUsed ?? {})[address] ?? 0,
+      },
+      ghostVoteDecided: Boolean((this.state.ghostVote ?? {})[address]),
       purchases: purchases.map((x) => ({
         round: x.round,
         ledger: x.ledger,

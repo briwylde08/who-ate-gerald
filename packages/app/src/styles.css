@@ -1095,6 +1095,36 @@ th { color: var(--ink-dim); font-weight: normal; }
 /* Maude's door, shut to the dead — unmissably. */
 .reclaim-card { border-left: 3px solid var(--gold); }
 
+/* The satchel: a backpack under the banner, top-right. */
+.satchel-wrap { position: fixed; top: 64px; right: 18px; z-index: 60; }
+.satchel-btn {
+  font-size: 1.5rem;
+  padding: 8px 12px;
+  border-radius: 50%;
+  background: rgba(27, 30, 42, 0.95);
+  border: 1px solid var(--gold);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+.satchel-panel {
+  position: absolute;
+  right: 0;
+  top: 52px;
+  width: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+}
+.satchel-head {
+  margin: 10px 0 4px;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.satchel-line { margin: 3px 0; font-size: 0.86rem; }
+.satchel-note { margin: 10px 0 0; font-size: 0.7rem; }
+
 /* The dead wear their fate on the portrait (Bri): RIP for the eaten,
    a wave for the banished. */
 .v-fate-overlay {

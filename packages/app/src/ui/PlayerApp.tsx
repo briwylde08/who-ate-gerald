@@ -12,6 +12,7 @@ import { Village } from "./Village";
 import { Maude } from "./Maude";
 import { Town } from "./Town";
 import { ChatVote } from "./ChatVote";
+import { Satchel } from "./Satchel";
 import { SixSteps } from "./SixSteps";
 import { loadHistory, treasuryOwed } from "../lib/history";
 
@@ -655,6 +656,7 @@ export function PlayerApp() {
           below them must not render behind it. */}
       {profile && wallet && provisioned && balances && (
         <div className="app-shell">
+        <Satchel serverSpend={serverSpend} round={round} alive={meAlive} />
         <div className="app-main">
           <div className="tabs">
             <button

@@ -1,0 +1,102 @@
+import { useState } from "react";
+
+import { SHOPS } from "../lib/catalog";
+import type { ServerPurchases } from "../lib/player";
+import { loadGameId } from "../lib/player";
+
+/**
+ * The satchel (Bri's ask, 2026-08-17): a backpack under the banner that
+ * answers "what am I holding?" without a trip through the Shops.
+ *
+ * Three shelves, honestly sorted:
+ *  - HELD: until-spent items with charges remaining (nail, pizza, unquiet
+ *    rest) — the server says what's already fired, so a spent nail never
+ *    shows as luck you still have.
+ *  - TODAY: everything bought this round (expires at dawn), with aims.
+ *  - The fingers get their own line. Devotion deserves a count.
+ */
+
+interface Props {
+  serverSpend: ServerPurchases | null;
+  round: number;
+  alive: boolean;
+}
+
+const LABEL_TO_ID = new Map(SHOPS.flatMap((sh) => sh.items).map((it) => [it.label, it.id]));
+
+export function Satchel({ serverSpend, round, alive }: Props) {
+  const [open, setOpen] = useState(false);
+
+  const purchases = serverSpend?.purchases ?? [];
+  const countEver = (id: string) =>
+    purchases.filter((p) => p.item !== null && LABEL_TO_ID.get(p.item) === id).length;
+
+  const nailsHeld = Math.max(0, countEver("horseshoe_nail") - (serverSpend?.spent?.horseshoe_nail ?? 0));
+  const pizzasHeld = Math.max(0, countEver("pizza_party") - (serverSpend?.spent?.pizza_party ?? 0));
+  const restArmed = alive && !serverSpend?.ghostVoteDecided && countEver("unquiet_rest") > 0;
+  const fingers = countEver("geralds_finger");
+
+  const todays = purchases.filter((p) => p.round === round && p.item !== null);
+  const aims: Record<string, string> = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(`gerald:aims:${loadGameId()}:${round}`) ?? "{}");
+    } catch {
+      return {};
+    }
+  })();
+
+  const held: string[] = [];
+  if (nailsHeld > 0) held.push(`🍀 Horseshoe nail ×${nailsHeld} — steps you out of a tie`);
+  if (pizzasHeld > 0) held.push(`🍕 Pizza party ×${pizzasHeld} — saves you from a banishment`);
+  if (restArmed) held.push("👻 Unquiet rest — armed until you die");
+
+  return (
+    <div className="satchel-wrap">
+      <button
+        className="satchel-btn"
+        aria-expanded={open}
+        title="Your satchel — what you're holding"
+        onClick={() => setOpen((o) => !o)}
+      >
+        🎒
+      </button>
+      {open && (
+        <div className="panel satchel-panel">
+          <div className="role-label">Your satchel</div>
+          {held.length === 0 && todays.length === 0 && fingers === 0 && (
+            <p className="dim">Empty. The shops await.</p>
+          )}
+          {held.length > 0 && (
+            <>
+              <p className="satchel-head">Held (until used)</p>
+              {held.map((h, i) => (
+                <p key={i} className="satchel-line">{h}</p>
+              ))}
+            </>
+          )}
+          {todays.length > 0 && (
+            <>
+              <p className="satchel-head">Bought today (gone at dawn)</p>
+              {todays.map((p, i) => {
+                const id = p.item ? LABEL_TO_ID.get(p.item) : undefined;
+                const aimedAt = id ? aims[id] : undefined;
+                return (
+                  <p key={i} className="satchel-line">
+                    {p.item}
+                    {aimedAt ? <span className="dim"> — 🎯 {aimedAt}</span> : null}
+                  </p>
+                );
+              })}
+            </>
+          )}
+          {fingers > 0 && (
+            <p className="satchel-line dim">
+              ☝️ Gerald's finger ×{fingers} — it does nothing, devotedly
+            </p>
+          )}
+          <p className="dim satchel-note">Only you can see this.</p>
+        </div>
+      )}
+    </div>
+  );
+}
