@@ -39,7 +39,15 @@ const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.m
 // Characters with a dedicated banishment reel (Bri's films, 2026-08-17).
 // A trial is not an attack: the gets-got reels stay the bear's alone, and a
 // banished villager gets a film only once their character has one of THESE.
-const BANISHED_FILMS = new Set(["midwife", "gravedigger", "drunk", "baker", "ratcatcher", "lamplighter"]);
+const BANISHED_FILMS = new Set([
+  "midwife",
+  "gravedigger",
+  "drunk",
+  "baker",
+  "ratcatcher",
+  "lamplighter",
+  "beekeeper",
+]);
 const banishedFilmSrc = (characterId: string) =>
   BANISHED_FILMS.has(characterId) ? `/videos/${characterId}_banished.mp4` : null;
 
