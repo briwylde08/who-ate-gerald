@@ -1117,6 +1117,35 @@ th { color: var(--ink-dim); font-weight: normal; }
 .dm-thread { max-height: 180px; overflow-y: auto; margin: 8px 0; }
 .dm-line { opacity: 0.85; font-style: italic; }
 
+/* The shopkeeper's till: a real account on the public ledger. */
+.till-link {
+  display: inline-block;
+  margin: 2px 0 6px;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.68rem;
+  text-decoration: none;
+}
+.till-link:hover { text-decoration: underline; }
+
+/* The season's takings — Maude's ledger, opened at the reckoning. */
+.takings { margin-top: 14px; text-align: left; }
+.takings-head {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 6px;
+}
+.takings-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 2px 0;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.12);
+}
+.takings-note { font-size: 0.72rem; margin: 8px 0 0; }
+
 /* The satchel: a backpack under the banner, top-right. Absolute, not
    fixed (Bri): it stays put at the top of the page and scrolls away with
    it, rather than chasing the reader down the screen. */

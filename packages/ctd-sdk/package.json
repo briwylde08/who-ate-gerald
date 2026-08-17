@@ -33,6 +33,14 @@
     "./chain/indexer": {
       "types": "./dist/chain/indexer.d.ts",
       "import": "./dist/chain/indexer.js"
+    },
+    "./chain/client": {
+      "types": "./dist/chain/client.d.ts",
+      "import": "./dist/chain/client.js"
+    },
+    "./chain/contract": {
+      "types": "./dist/chain/contract.d.ts",
+      "import": "./dist/chain/contract.js"
     }
   },
   "main": "./dist/index.js",

@@ -572,6 +572,20 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
               {shop.label}
             </h3>
             {shop.subtitle && <p className="shop-sub">“{shop.subtitle}”</p>}
+            {/* The shopkeeper is a real account on the public ledger. Look
+                mid-game and the page is EMPTY — a confidential payment is the
+                buyer's transaction, not the shop's. The dawn till-count is
+                the first mark this account ever makes. */}
+            {shop.address && (
+              <a
+                className="till-link dim"
+                href={`https://stellar.expert/explorer/testnet/account/${shop.address}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                till: {shop.address.slice(0, 5)}…{shop.address.slice(-4)} ↗
+              </a>
+            )}
             {shut && (
               <p className="shut-note">
                 🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.

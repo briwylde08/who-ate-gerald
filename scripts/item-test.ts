@@ -427,6 +427,27 @@ async function main() {
     check("and it was the beast", m4.banishedRole === "werebear", m4);
     check("the village wins", m4.winner === "village", m4);
 
+    // ---- THE TILLS ---------------------------------------------------------
+    // Step 5, performed for real: dawn alarms sign a merge AS each paid
+    // shopkeeper, and the reckoning opens Maude's takings ledger. The last
+    // till count rides the ended-game alarm — give it a moment.
+    console.log("\nTHE TILLS — the shopkeepers' own step 5");
+    await new Promise((r) => setTimeout(r, 25_000));
+    const pub = (await (await fetch(`${AUDITOR_URL}/games/${GAME_ID}/public`)).json()) as {
+      takings?: { shop: string; xlm: string }[] | null;
+      mornings: { notes: string[] }[];
+    };
+    check(
+      "Maude's takings ledger opens at the reckoning",
+      (pub.takings?.length ?? 0) > 0,
+      pub.takings,
+    );
+    check(
+      "the shopkeepers counted their tills",
+      pub.mornings.some((m) => m.notes.some((n) => n.includes("counted their tills"))),
+      pub.mornings.flatMap((m) => m.notes),
+    );
+
     console.log(
       failures === 0
         ? `\n✅ CATALOG ${CATALOG_VERSION} CLEAN — every item did what it says\n   (game "${GAME_ID}" left on the ledger for inspection)`

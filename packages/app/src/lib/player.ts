@@ -184,6 +184,11 @@ export interface PublicView {
   calledOff?: boolean;
   /** Revealed only once the game has a winner; null while roles are sealed. */
   bear?: string | null;
+  /** Latest morning whose tills were actually counted — the shopkeepers'
+   *  own dawn merges (step 5 of a confidential payment, performed for real). */
+  tills?: { round: number; shops: string[]; at: string } | null;
+  /** The season's takings per shop, from Maude's audit. Ended games only. */
+  takings?: { shop: string; xlm: string }[] | null;
   players: {
     seat: number;
     name: string;

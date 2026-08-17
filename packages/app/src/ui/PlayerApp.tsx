@@ -78,6 +78,7 @@ export function PlayerApp() {
     setTabRaw(v);
   };
   const [steps, setSteps] = useState<Step[] | null>(null);
+  const [tills, setTills] = useState<{ round: number; shops: string[] } | null>(null);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
   const [round, setRound] = useState(0);
@@ -272,6 +273,7 @@ export function PlayerApp() {
         // snap the player back to their old seat the instant they switch.
         if (gameIdRef.current !== gameId) return;
         setRound((r) => (v.round !== r ? v.round : r));
+        if (v.tills) setTills((t) => (t?.round === v.tills!.round ? t : v.tills!));
         // A fresh banishment of YOU gets a personal notice before any film.
         const bm = [...v.mornings].reverse().find((x) => x.banished);
         if (bm?.banished) {
@@ -742,6 +744,7 @@ export function PlayerApp() {
         <aside className="six-aside">
           <div className="panel">
             <SixSteps
+              tills={tills}
               balances={balances}
               purchases={loadHistory(wallet.address, gameId).length}
               owedStroops={
