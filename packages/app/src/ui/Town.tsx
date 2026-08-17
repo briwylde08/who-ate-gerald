@@ -38,12 +38,14 @@ interface Props {
   onGoShops: () => void;
   /** Jump to Maude — the market-closed notice points there. */
   onGoMaude: () => void;
+  /** Replay the ending film from the reckoning card. */
+  onPlayEnding: () => void;
 }
 
 type Role = "villager" | "werebear";
 
 
-export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGoShops, onGoMaude }: Props) {
+export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGoShops, onGoMaude, onPlayEnding }: Props) {
   void setBusy;
   void refresh;
   void onPhase;
@@ -259,6 +261,13 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
               : view.winner === "werebear"
                 ? "They shopped beside you, voted beside you, and outlasted you all."
                 : "The village sleeps safe — and owes some apologies to the wrongly banished."}
+            {!view.calledOff && (
+              <div className="row">
+                <button className="primary" onClick={onPlayEnding}>
+                  🎬 Watch the ending
+                </button>
+              </div>
+            )}
           </div>
         )}
 

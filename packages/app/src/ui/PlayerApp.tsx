@@ -88,6 +88,10 @@ export function PlayerApp() {
   /** Personal banishment notice — a ghost shouldn't learn their fate from
    *  fine print (Bri). Shown once, before any film. */
   const [banishedNotice, setBanishedNotice] = useState<string | null>(null);
+  /** The ending film, replayable on demand from the reckoning card — the
+   *  auto-popup raced at least once (testing3) and the ending is too good
+   *  to lose to a race. */
+  const endingFilm = useRef<{ src: string; caption: string } | null>(null);
   /** Dead villagers collect nothing — the sidebar must not owe them. */
   const [meAlive, setMeAlive] = useState(true);
   /** Set once the game has a winner — every poll goes quiet (issue #12).
@@ -254,7 +258,15 @@ export function PlayerApp() {
       if (pageHidden() || gameOverRef.current) return;
       try {
         const v = await fetchPublicView(gameId);
-        if (v.winner) gameOverRef.current = true;
+        if (v.winner) {
+          gameOverRef.current = true;
+          endingFilm.current =
+            v.winner === "werebear" && !v.calledOff
+              ? { src: "/videos/bear_wins.mp4", caption: `${v.bear ?? "The werebear"} has won. The village belongs to the bear.` }
+              : v.bear
+                ? { src: nightFilmSrc("werebear"), caption: `${v.bear} was the werebear — and the village got them.` }
+                : null;
+        }
         // A reply for the game we just LEFT must not touch anything: it would
         // snap the player back to their old seat the instant they switch.
         if (gameIdRef.current !== gameId) return;
@@ -707,6 +719,9 @@ export function PlayerApp() {
               refresh={() => refresh(wallet)}
               onGoShops={() => goTab("village")}
               onGoMaude={() => goTab("maude")}
+              onPlayEnding={() => {
+                if (endingFilm.current) setFilm({ ...endingFilm.current, started: false });
+              }}
             />
           </div>
           <div style={{ display: tab === "chatvote" ? "block" : "none" }}>
