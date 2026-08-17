@@ -297,6 +297,7 @@ async function main() {
     await v2.buy(transferProver, "sock_in_mouth");
     await v2.aim("sock_in_mouth", v3.name);
     await v3.buy(transferProver, "butchers_knife"); // doubles a vote that won't count
+    await v5.buy(transferProver, "unquiet_rest"); // v5 hangs today: the coin flips either way, ALOUD
     await v4.buy(transferProver, "geralds_finger");
     await bear.buy(transferProver, "tooth_sharpener");
     await done(all);
@@ -319,6 +320,11 @@ async function main() {
     check("so the rope finds the other tied villager", m1.banished === v5.name, m1);
     check("the sharpened tooth is announced over the body", hasNote(m1.notes, "used a tooth sharpener"), m1.notes);
     check("and it ate the villager it aimed at", m1.eaten === v4.name, m1);
+    check(
+      "unquiet rest announces its coin flip, won or lost",
+      hasNote(m1.notes, "unquiet rest and won") || hasNote(m1.notes, "unquiet rest and lost"),
+      m1.notes,
+    );
 
     // ---- DAY 2 -------------------------------------------------------------
     console.log("\nDAY 2 — the bell, the barrel, a lock and a pizza party");
