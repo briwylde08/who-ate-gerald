@@ -36,6 +36,12 @@ type Step = { id: string; label: string; sub?: string; status: "todo" | "doing" 
 /** A villager's "gets got" reel; the werebear's plays when the village
  *  catches it. A missing file just means no film (handled by onError). */
 const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.mp4`;
+// Characters with a dedicated banishment reel (Bri's films, 2026-08-17).
+// A trial is not an attack: the gets-got reels stay the bear's alone, and a
+// banished villager gets a film only once their character has one of THESE.
+const BANISHED_FILMS = new Set(["midwife", "gravedigger"]);
+const banishedFilmSrc = (characterId: string) =>
+  BANISHED_FILMS.has(characterId) ? `/videos/${characterId}_banished.mp4` : null;
 
 /** The four steps of taking a seat, worded to teach — shown as a preview
  *  before the button is pressed and ticked live while they run. */
@@ -323,13 +329,33 @@ export function PlayerApp() {
                       : `${filmMorning.eaten} was taken in the night.`,
                 });
               }
+            } else if (
+              !filmMorning.eaten &&
+              !v.winner &&
+              filmMorning.banished &&
+              banishedFilmSrc(
+                v.players.find((p) => p.name === filmMorning.banished)?.character ?? "",
+              )
+            ) {
+              // A trial with its OWN picture: characters with a dedicated
+              // banishment reel (Bri's films, 2026-08-17) get it — the
+              // 2026-08-14 no-reel ruling was about attack films telling
+              // the wrong story, not about trials staying invisible.
+              const banishee = v.players.find((p) => p.name === filmMorning.banished);
+              localStorage.setItem(seenKey, "1");
+              setFilm({
+                src: banishedFilmSrc(banishee?.character ?? "")!,
+                caption:
+                  banishee?.address === wallet.address
+                    ? "The village voted, and the rope chose you."
+                    : `${filmMorning.banished} was banished by the village.`,
+              });
             } else if (!filmMorning.eaten && !v.winner) {
-              // Banishment gets NO reel (Bri's ruling, 2026-08-14): the
-              // gets-got films depict a werebear attack, and playing one
-              // over a village trial told the wrong story (game11 — Wick
-              // banished, bell rang, and his "attack" reel rolled against
-              // a 'nobody died tonight' note). The crier carries trials;
-              // the films are the bear's alone.
+              // Banishment (without a reel of its own) stays crier-only
+              // (Bri's ruling, 2026-08-14): the gets-got films depict a
+              // werebear attack, and playing one over a village trial told
+              // the wrong story (game11 — Wick banished, bell rang, and his
+              // "attack" reel rolled against a 'nobody died tonight' note).
               // A quiet night gets its own reel (Bri's film, 2026-08-06):
               // nobody eaten, game still on — the village exhales.
               localStorage.setItem(seenKey, "1");
