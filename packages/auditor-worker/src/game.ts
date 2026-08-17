@@ -14,7 +14,8 @@
 import { DurableObject } from "cloudflare:workers";
 
 import { answerQuestion, type AskOutcome } from "./ask";
-import { SHOP_BY_ID, stroopsFromXlm, xlmString, STARTING_BUDGET_XLM, DAILY_INCOME_XLM } from "./catalog";
+import { SHOP_BY_ID, ORDER_ADDRESS, stroopsFromXlm, xlmString, STARTING_BUDGET_XLM, DAILY_INCOME_XLM } from "./catalog";
+import { countTills } from "./tills";
 import {
   indexerLatestLedger,
   loadChain,
@@ -68,6 +69,13 @@ interface GameState {
   /** Whispers: fully private player-to-player notes (Bri: completely
    *  secret for now — no public trace that a whisper even happened). */
   dms: { round: number; from: string; to: string; text: string; at: string }[];
+  /** Rounds whose tills were counted — the shopkeepers' own dawn merges
+   *  (step 5 of a confidential payment, performed for real). */
+  tills: { round: number; shops: string[]; at: string }[];
+  /** The season's takings per shop, from Maude's audit — set once, when the
+   *  game finds its winner. Step 6 (withdraw) needs a proof this worker
+   *  cannot run, so the reckoning shows the auditor's ledger instead. */
+  takings: { shop: string; xlm: string }[] | null;
   /** Tied-vote consequence: address → round in which they must disclose. */
   /** address -> round they were found drinking, snapshotted at market close. */
   drunkards: Record<string, number>;
@@ -114,6 +122,8 @@ interface GameState {
 
 const freshState = (): GameState => ({
   players: [],
+  tills: [],
+  takings: null,
   roles: null,
   round: 0,
   rounds: [],
@@ -1261,6 +1271,18 @@ export class GameRoom extends DurableObject<Env> {
     // Where this dawn stood: everything it could see ends here (issue #20).
     this.state.lastDawnLedger = await indexerLatestLedger(this.env).catch(() => this.state.lastDawnLedger ?? 0);
 
+    // The season's takings, from the auditor's own ledger: revealed only
+    // when the game is over, when confidentiality has nothing left to guard.
+    if (this.state.winner !== null && this.state.takings === null) {
+      const sums = new Map<string, bigint>();
+      for (const x of purchases.filter((q) => q.round >= 1 && !q.isSurrender && q.shopId !== null)) {
+        sums.set(x.toLabel, (sums.get(x.toLabel) ?? 0n) + x.amountStroops);
+      }
+      this.state.takings = [...sums.entries()]
+        .sort((l, r) => (r[1] > l[1] ? 1 : -1))
+        .map(([shop, stroops]) => ({ shop, xlm: xlmString(stroops) }));
+    }
+
     const report: MorningReport = {
       round,
       banished: banished?.name ?? null,
@@ -1281,6 +1303,9 @@ export class GameRoom extends DurableObject<Env> {
       // 15s, down from 60 (Bri): films and the crier carry the morning now;
       // a full minute read as a stall.
       await this.ctx.storage.setAlarm(Date.now() + 15_000);
+    } else {
+      // The last tills still deserve counting: one more alarm, then quiet.
+      await this.ctx.storage.setAlarm(Date.now() + 15_000);
     }
     await this.persist();
     return report;
@@ -1294,14 +1319,71 @@ export class GameRoom extends DurableObject<Env> {
    * call maybeResolve again.
    */
   async alarm(): Promise<void> {
-    if (this.state.phase !== "day" || this.state.roles === null) return;
-    if (this.state.mornings.some((m) => m.round === this.state.round)) {
-      await this.startDay(); // dawn came; roll into morning
+    if (this.state.roles === null) return;
+    if (this.state.phase === "ended") {
+      await this.countLatestTills(); // the final morning's tills
       return;
     }
+    if (this.state.phase !== "day") return;
+    if (this.state.mornings.some((m) => m.round === this.state.round)) {
+      await this.startDay(); // dawn came; roll into morning
+      // The tills are counted AFTER the village's day opens: the merges are
+      // network calls and the morning must never wait on them.
+      await this.countLatestTills();
+      return;
+    }
+    // A GM who opened the day by hand beat this alarm to startDay — the
+    // tills still deserve counting (idempotent; returns fast when done).
+    await this.countLatestTills();
     // maybeResolve re-checks that dawn is actually due, and re-arms this alarm
     // if it fails again. A day still waiting on a vote simply does nothing.
     await this.maybeResolve();
+  }
+
+  /**
+   * Count the tills of every shop paid on the latest resolved morning: sign
+   * a merge AS each shopkeeper, folding its receiving balance into its
+   * spendable balance. The one confidential-token step a player never
+   * performs (step 5) becomes a real transaction on the shop's own account.
+   * A merge sweeps the whole pending balance, so a failed count self-heals
+   * at the next dawn. Never throws — dawn owes this nothing.
+   */
+  private async countLatestTills(): Promise<void> {
+    try {
+      const morning = this.state.mornings.at(-1);
+      if (!morning) return;
+      const round = morning.round;
+      if ((this.state.tills ??= []).some((t) => t.round === round)) return;
+      const purchases = await this.loadAll();
+      const todays = purchases.filter((q) => q.round === round);
+      const paid = new Map<string, string>(); // id -> address
+      for (const x of todays) {
+        if (x.shopId !== null) {
+          const address = SHOP_BY_ID.get(x.shopId)?.address;
+          if (address) paid.set(x.shopId, address);
+        } else if (x.isSurrender && ORDER_ADDRESS) {
+          paid.set("maudes_office", ORDER_ADDRESS);
+        }
+      }
+      const wanted = [...paid.entries()].map(([id, address]) => ({ id, address }));
+      const counted = await countTills(wanted, this.env.SHOP_SECRETS);
+      if (counted.failed.length > 0) {
+        console.error("till count failures", { round, failed: counted.failed });
+      }
+      // Record the round as counted even when no shop was paid — an empty
+      // market is not an error, and there is nothing to retry.
+      if (wanted.length === 0 || counted.merged.length > 0) {
+        this.state.tills.push({ round, shops: counted.merged, at: new Date().toISOString() });
+        if (counted.merged.length > 0) {
+          morning.notes.push(
+            "🧮 The shopkeepers counted their tills before sunrise. It's on the public ledger — look for yourself.",
+          );
+        }
+        await this.persist();
+      }
+    } catch (err) {
+      console.error("till count failed", String(err));
+    }
   }
 
   /** GM: close a game outright — lobby abandoned, playtest done, etc.
@@ -1328,6 +1410,10 @@ export class GameRoom extends DurableObject<Env> {
       round: this.state.round,
       phase: this.state.phase,
       dealt: this.state.roles !== null,
+      // Latest counted till round with actual merges — SixSteps' proof line.
+      tills: [...(this.state.tills ?? [])].reverse().find((t) => t.shops.length > 0) ?? null,
+      // Non-null only once the game has ended (set at the winning dawn).
+      takings: this.state.takings,
       winner: this.state.winner,
       calledOff: this.state.calledOff === true,
       // The game is over: the masks come off. Until then, roles are sealed.

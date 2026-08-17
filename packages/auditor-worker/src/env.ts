@@ -10,6 +10,9 @@ export interface Env {
   OPENAI_MODEL?: string;
   /** wrangler secrets */
   AUDITOR_K: string;
+  /** JSON { shopId: S...secret } — the shopkeepers' signing keys, for the
+   *  dawn till-count (config/local.shops.json is the source). */
+  SHOP_SECRETS?: string;
   OPENAI_API_KEY: string;
   /** CF AI Gateway compat URL (QA's gateway — same as SCF Review). */
   OPENAI_BASE_URL?: string;

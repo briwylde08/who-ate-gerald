@@ -1,5 +1,5 @@
 import type { VillagerBalances } from "../lib/wallet";
-import { xlmDisplay } from "../lib/catalog";
+import { SHOPS, xlmDisplay } from "../lib/catalog";
 
 /**
  * The six steps of a confidential-token payment, lit up by what this player
@@ -19,9 +19,11 @@ interface Props {
   purchases: number;
   /** Stroops waiting at the Town Treasury — reopens the deposit+merge cycle. */
   owedStroops?: bigint;
+  /** Latest morning whose tills were counted (the shopkeepers' own merges). */
+  tills?: { round: number; shops: string[] } | null;
 }
 
-export function SixSteps({ balances, purchases, owedStroops = 0n }: Props) {
+export function SixSteps({ balances, purchases, owedStroops = 0n, tills = null }: Props) {
   const registered = balances.registered;
   const funded = registered && (balances.spendable + balances.receiving > 0n || purchases > 0);
   const merged = registered && balances.spendable > 0n;
@@ -81,16 +83,18 @@ export function SixSteps({ balances, purchases, owedStroops = 0n }: Props) {
     {
       n: 5,
       name: "Merge",
-      what: "The receiver moves your payment from their pending balance into their spendable balance.",
-      state: "elsewhere",
-      note: "happens at the receiver",
+      what: "The shopkeeper collects your payment into their till — the same merge you do at the Treasury desk.",
+      state: tills ? "done" : "elsewhere",
+      note: tills
+        ? `the shopkeepers counted their tills at dawn on day ${tills.round} — it's on their own accounts now`
+        : "happens at the shopkeeper — pay a shop, then watch its till",
     },
     {
       n: 6,
       name: "Withdraw",
-      what: "The receiver can turn confidential claims back into ordinary XLM.",
+      what: "The receiver can turn confidential claims back into ordinary XLM — the only other moment an amount goes public.",
       state: "elsewhere",
-      note: "happens at the receiver — the final step of a confidential token transfer",
+      note: "the shopkeepers never cash out in this village — Maude's reckoning ledger will tell you what they made instead",
     },
   ];
 
@@ -125,6 +129,18 @@ export function SixSteps({ balances, purchases, owedStroops = 0n }: Props) {
       <p className="dim six-foot">
         Steps 2 and 6 are where amounts become public. Everything in between is confidential,
         which is why the village can see that you paid a shop and never what you paid.
+        {tills && SHOPS[0]?.address ? (
+          <>
+            {" "}
+            <a
+              href={`https://stellar.expert/explorer/testnet/account/${SHOPS[0].address}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              See the {SHOPS[0].label}'s account ↗
+            </a>
+          </>
+        ) : null}
       </p>
     </div>
   );

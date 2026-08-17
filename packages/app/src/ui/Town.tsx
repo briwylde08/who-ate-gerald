@@ -268,6 +268,24 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                 </button>
               </div>
             )}
+            {/* Step 6, honored in the telling: amounts stayed sealed exactly
+                as long as the game needed them sealed. Now the auditor's
+                ledger opens — revealing was always the receiver's move. */}
+            {view.takings && view.takings.length > 0 && (
+              <div className="takings">
+                <div className="takings-head">The season's takings — from Maude's audit</div>
+                {view.takings.map((t) => (
+                  <div key={t.shop} className="takings-line">
+                    <span>{t.shop}</span>
+                    <span>{t.xlm} XLM</span>
+                  </div>
+                ))}
+                <p className="dim takings-note">
+                  Sealed all game. The shopkeepers never cash out — but the game is over, and
+                  Maude was watching the whole time.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
