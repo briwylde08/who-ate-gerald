@@ -31,7 +31,7 @@
           "flavor": "DING DONG. MURDER HAS BEEN RESCHEDULED.",
           "priceXlm": 44,
           "class": "V-def",
-          "effect": "Ring it, and the werebear stays home tonight. No hunting. No one dies tonight."
+          "effect": "Ring it, and there is a 50/50 chance the werebear stays home tonight. Either way, the morning report says the bell rang."
         }
       ]
     },
@@ -44,7 +44,7 @@
           "id": "pizza_party",
           "label": "Pizza party",
           "flavor": "Hard to hang the host.",
-          "priceXlm": 23,
+          "priceXlm": 43,
           "class": "B-def",
           "effect": "If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Each purchase saves you once."
         },

@@ -235,10 +235,11 @@ function resolveShopId(shop: unknown): string | null {
   return null;
 }
 
-function roundArg(ctx: FactContext, round: unknown): number {
-  const r = typeof round === "number" ? round : Number(round);
-  if (!Number.isInteger(r) || r < 1 || r > ctx.currentRound) return ctx.currentRound;
-  return r;
+function roundArg(ctx: FactContext, _round: unknown): number {
+  // Maude answers about TODAY only (Bri, 2026-08-17): cross-round answers
+  // confused more than they informed. Whatever round the model asks for,
+  // she reads the current one.
+  return ctx.currentRound;
 }
 
 const project = (p: Purchase) => ({
@@ -286,7 +287,7 @@ export function executeFact(
       const found = findItem(String(args.item ?? ""));
       if (!found) return { error: `no ware called "${String(args.item)}" in any shop's ledger` };
       const round =
-        args.round === undefined || args.round === null ? null : roundArg(ctx, args.round);
+        roundArg(ctx, args.round); // today only — the omit-for-all-rounds path is retired (Bri)
       const price = stroopsFromXlm(found.item.priceXlm);
       // "All rounds" means game days only — purchases before day 1 (setup,
       // previous games on this token) are not part of this game's story.
@@ -300,7 +301,7 @@ export function executeFact(
         item: found.item.label,
         shop: found.shop.label,
         priceXlm: String(found.item.priceXlm),
-        round: round ?? "all rounds so far",
+        round,
         buyers: rows.map((p) => p.player ?? shortAddress(p.from)),
       };
     }

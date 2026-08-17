@@ -135,7 +135,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // Aimed items need a second, private action after the purchase.
   const [others, setOthers] = useState<string[]>([]);
   const [closedShops, setClosedShops] = useState<string[]>([]);
-  const [maxDays, setMaxDays] = useState<number | null>(null);
   const [myFate, setMyFate] = useState<string | null>(null);
   const [winner, setWinner] = useState<string | null>(null);
   /** Dawn has broken; the next day opens in ~60s. Aims are refused meanwhile. */
@@ -216,7 +215,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           v.players.filter((p) => p.alive && p.address !== wallet.address).map((p) => p.name),
         );
         setClosedShops(v.closedShops ?? []);
-        setMaxDays(v.maxDays ?? null);
         // Which death was it? "banished or eaten" told a ghost nothing (Bri).
         const myName = me?.name;
         if (myName) {
@@ -370,7 +368,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         {round >= 1 && (
           <div className="role-label">
             Day {round}
-            {maxDays ? ` of ${maxDays}` : ""}
           </div>
         )}
         <p>

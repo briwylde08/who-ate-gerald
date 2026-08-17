@@ -84,7 +84,10 @@ export function PlayerApp() {
   /** The night's film — APP-level, so it shows no matter which tab you're
    *  on. It lived in the Town Square once, where dawn breaking while you
    *  voted on Chat & Vote played it invisibly AND marked it seen. */
-  const [film, setFilm] = useState<{ src: string; caption: string } | null>(null);
+  const [film, setFilm] = useState<{ src: string; caption: string; started?: boolean } | null>(null);
+  /** Personal banishment notice — a ghost shouldn't learn their fate from
+   *  fine print (Bri). Shown once, before any film. */
+  const [banishedNotice, setBanishedNotice] = useState<string | null>(null);
   /** Dead villagers collect nothing — the sidebar must not owe them. */
   const [meAlive, setMeAlive] = useState(true);
   /** Set once the game has a winner — every poll goes quiet (issue #12).
@@ -256,6 +259,20 @@ export function PlayerApp() {
         // snap the player back to their old seat the instant they switch.
         if (gameIdRef.current !== gameId) return;
         setRound((r) => (v.round !== r ? v.round : r));
+        // A fresh banishment of YOU gets a personal notice before any film.
+        const bm = [...v.mornings].reverse().find((x) => x.banished);
+        if (bm?.banished) {
+          const seat2 = v.players.find((p) => p.name === bm.banished);
+          if (seat2?.address === wallet.address) {
+            const bKey = `gerald:banished:${gameId}:${bm.round}`;
+            if (!localStorage.getItem(bKey)) {
+              localStorage.setItem(bKey, "1");
+              setBanishedNotice(
+                `The village voted, and the rope chose you. You were banished on day ${bm.round}. You can still haunt the chat — the living can hear you.`,
+              );
+            }
+          }
+        }
         // Roll the right film for a fresh morning — once per morning per
         // browser, and only ever where it can actually be SEEN.
         const filmMorning = v.mornings.length > 0 ? v.mornings[v.mornings.length - 1] : null;
@@ -471,7 +488,21 @@ export function PlayerApp() {
         </div>
       </div>
 
-      {film && (
+      {banishedNotice && (
+        <div className="film-overlay" role="dialog" aria-label="You were banished">
+          <div className="panel dawn-modal">
+            <h2>⚖ You have been banished</h2>
+            <p className="dawn-note">{banishedNotice}</p>
+            <div className="row">
+              <button className="primary" onClick={() => setBanishedNotice(null)}>
+                So be it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {film && !banishedNotice && (
         <div
           className="film-overlay"
           role="dialog"
@@ -479,15 +510,24 @@ export function PlayerApp() {
           onClick={() => setFilm(null)}
         >
           <div className="film-frame" onClick={(e) => e.stopPropagation()}>
-            {film.src ? (
+            {film.src && film.started ? (
+              // Created AFTER the click: the user gesture lets it play WITH
+              // sound — browsers forbid unmuted autoplay (Bri chose the
+              // click over the mute).
               <video
                 src={film.src}
                 autoPlay
-                muted
                 playsInline
                 controls
-                onError={() => setFilm(null)} // no reel for this villager (yet)
+                onError={() => setFilm(null)}
               />
+            ) : film.src ? (
+              <button
+                className="primary film-play"
+                onClick={() => setFilm({ ...film, started: true })}
+              >
+                ▶ Watch the night
+              </button>
             ) : (
               <img className="film-still" src="/bg.jpg" alt="" />
             )}

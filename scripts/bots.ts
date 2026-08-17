@@ -520,9 +520,6 @@ async function main() {
             await bot.call("done").catch(() => undefined);
             shoppedRound.set(bot.address, view.round);
             console.log(`  ${bot.name}: done shopping (day ${view.round})`);
-            // The ask-or-pass gate: bots never gossip with fortune tellers,
-            // so they pass — else the 2-minute chat clock never starts.
-            await bot.call("pass").catch(() => undefined);
           }
 
           if (view.marketClosed) {
