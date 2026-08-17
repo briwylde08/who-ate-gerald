@@ -590,20 +590,65 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                 const price = stroopsFromXlm(item.priceXlm);
                 const owned = boughtItems.has(item.label);
                 const tooRich = price > balances.spendable;
-                const blocked = !marketOpen || doneToday || tooRich || owned || capped;
+                // Gerald's reliquary ladder (Bri): fingers sell out at 8,
+                // unlocking the two thumbs; thumbs sell out, unlocking the
+                // ten toes. Counts are village-wide, from the public graph.
+                const relics = feedGraph?.relics ?? { fingers: 0, thumbs: 0, toes: 0 };
+                const relicState =
+                  item.id === "geralds_finger"
+                    ? relics.fingers >= 8
+                      ? "sold-out"
+                      : "open"
+                    : item.id === "geralds_thumb"
+                      ? relics.fingers < 8
+                        ? "locked"
+                        : relics.thumbs >= 2
+                          ? "sold-out"
+                          : "open"
+                      : item.id === "geralds_toe"
+                        ? relics.thumbs < 2
+                          ? "locked"
+                          : relics.toes >= 10
+                            ? "sold-out"
+                            : "open"
+                        : "open";
+                const relicNote =
+                  item.id === "geralds_finger"
+                    ? relics.fingers >= 8
+                      ? "All eight claimed. Gerald's hands are bare."
+                      : `${relics.fingers} of 8 claimed by the village`
+                    : item.id === "geralds_thumb"
+                      ? relics.fingers < 8
+                        ? "Still attached — claim all eight fingers first"
+                        : relics.thumbs >= 2
+                          ? "Both thumbs claimed."
+                          : `${relics.thumbs} of 2 claimed by the village`
+                      : item.id === "geralds_toe"
+                        ? relics.thumbs < 2
+                          ? "Still in his boots — claim both thumbs first"
+                          : relics.toes >= 10
+                            ? "All ten claimed. Gerald has no more to give."
+                            : `${relics.toes} of 10 claimed by the village`
+                        : null;
+                const blocked =
+                  !marketOpen || doneToday || tooRich || owned || capped || relicState !== "open";
                 const label = !marketOpen
                   ? "Not open yet"
-                  : owned
-                  ? "Bought today ✓"
-                  : shut
-                    ? "Shuttered"
-                    : doneToday
-                      ? "Market closed"
-                      : tooRich
-                        ? "Can't afford this item"
-                        : isArmed
-                          ? "Confirm?"
-                          : "Buy";
+                  : relicState === "locked"
+                    ? "🔒 Not yet"
+                    : relicState === "sold-out"
+                      ? "Sold out"
+                      : owned
+                        ? "Bought today ✓"
+                        : shut
+                          ? "Shuttered"
+                          : doneToday
+                            ? "Market closed"
+                            : tooRich
+                              ? "Can't afford this item"
+                              : isArmed
+                                ? "Confirm?"
+                                : "Buy";
                 return (
                   <div
                     key={item.id}
@@ -621,6 +666,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                       {/* Effects are public knowledge — no reason to hide them
                           behind a hover that phones don't have. */}
                       <p className="effect">{item.effect}</p>
+                      {relicNote && <p className="relic-note">{relicNote}</p>}
                     </div>
                     <div className="item-buy">
                       <span className="price">{item.priceXlm} XLM</span>

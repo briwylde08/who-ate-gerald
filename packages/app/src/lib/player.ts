@@ -207,6 +207,8 @@ export interface PublicView {
 export interface GraphView {
   round: number;
   players: { seat: number; name: string; address: string; alive: boolean }[];
+  /** Gerald's reliquary: village-wide extremity counts (the unlock ladder). */
+  relics?: { fingers: number; thumbs: number; toes: number };
   /** Public deposits by seated players — the visible side of the token. */
   deposits?: { round: number; ledger: number; txHash: string; player: string; amountXlm: string }[];
   edges: { round: number; ledger: number; txHash?: string; from: string; to: string }[];

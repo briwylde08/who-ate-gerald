@@ -110,7 +110,23 @@
           "flavor": "The Mayor swears it is his. The Mayor swears a lot.",
           "priceXlm": 1,
           "class": "cover",
-          "effect": "Does nothing."
+          "effect": "Does nothing. Gerald had eight — when the village has claimed them all, his thumbs come to market."
+        },
+        {
+          "id": "geralds_thumb",
+          "label": "Gerald's thumb",
+          "flavor": "Opposable. Once.",
+          "priceXlm": 2,
+          "class": "cover",
+          "effect": "Does nothing. There are only two — and when both are claimed, the toes come to market."
+        },
+        {
+          "id": "geralds_toe",
+          "label": "Gerald's toe",
+          "flavor": "This little piggy went to market.",
+          "priceXlm": 3,
+          "class": "cover",
+          "effect": "Does nothing. There are ten. After that, Gerald has no more to give."
         },
         {
           "id": "unquiet_rest",

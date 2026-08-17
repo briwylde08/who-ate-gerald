@@ -1124,6 +1124,17 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .satchel-line { margin: 3px 0; font-size: 0.86rem; }
 .satchel-note { margin: 10px 0 0; font-size: 0.7rem; }
+/* The reliquary rides beneath the satchel. */
+.relic-btn { display: block; margin-top: 8px; border-color: var(--moon); }
+.relic-panel { top: 112px; border-left: 2px solid var(--moon); }
+
+/* Relic progress on the Chapel shelf. */
+.relic-note {
+  margin: 4px 0 0;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.68rem;
+  color: var(--lantern);
+}
 
 /* The dead wear their fate on the portrait (Bri): RIP for the eaten,
    a wave for the banished. */

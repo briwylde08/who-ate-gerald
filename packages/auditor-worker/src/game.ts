@@ -1432,6 +1432,13 @@ export class GameRoom extends DurableObject<Env> {
           from: p.player ?? `${p.from.slice(0, 4)}…${p.from.slice(-4)}`,
           to: p.toLabel,
         })),
+      // Gerald's reliquary: village-wide extremity counts drive the unlock
+      // ladder (8 fingers → 2 thumbs → 10 toes; Bri, 2026-08-17).
+      relics: {
+        fingers: purchases.filter((x) => x.round >= 1 && x.itemGuess === "Gerald's finger").length,
+        thumbs: purchases.filter((x) => x.round >= 1 && x.itemGuess === "Gerald's thumb").length,
+        toes: purchases.filter((x) => x.round >= 1 && x.itemGuess === "Gerald's toe").length,
+      },
       deposits: deposits.map((d) => ({
         round: d.round,
         ledger: d.ledger,

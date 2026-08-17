@@ -23,14 +23,19 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
    Everything else fires from the purchase alone. There is no "declare it"
    step: an item that points at nobody must never ask the player to confirm
    they meant it (the barrel did, and was unusable for it).
-7. *(Deliberate exception to law 2)* **Gerald's finger does nothing**, at
-   1 XLM — cheap noise is a feature, not a bug.
+7. *(Deliberate exception to law 2)* **Gerald's extremities do nothing** —
+   finger 1, thumb 2, toe 3 XLM. Cheap noise is a feature; the village-wide
+   unlock ladder (8 fingers → 2 thumbs → 10 toes, twenty relics total) is a
+   collective quest the players invented by loving the finger (2026-08-17).
+   Stock is UI-enforced; the chain can't refuse a devoted overbuyer.
 
 ## The shelf
 
 | XLM | Item | Store | What it does |
 |---|---|---|---|
-| 1 | Gerald's finger | Chapel | Does nothing. |
+| 1 | Gerald's finger | Chapel | Does nothing. Eight exist, village-wide; claiming all eight brings the thumbs to market. |
+| 2 | Gerald's thumb | Chapel | Does nothing. Two exist; claiming both brings the toes. |
+| 3 | Gerald's toe | Chapel | Does nothing. Ten exist. After that, Gerald has no more to give. |
 | 8 | Soup bone *(aim: player)* | The Butcher's | Pick another villager. If the werebear targets you tonight, there is a 1 in 4 chance it targets them instead. |
 | 20 | Horseshoe nail | Blacksmith | If today's vote ties on you, the nail steps you out of it. Whoever is left in the tie takes the rope — if more than one is left, nobody hangs. Single use. |
 | 22 | Cold iron key *(aim: player+shop)* | Blacksmith | Pick a villager and a store. Tomorrow that store will not sell to them. Everyone is told which store was locked. Nobody is told who bought the key or who was locked out. |
