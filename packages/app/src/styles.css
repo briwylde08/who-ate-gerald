@@ -1098,7 +1098,7 @@ th { color: var(--ink-dim); font-weight: normal; }
 /* The satchel: a backpack under the banner, top-right. Absolute, not
    fixed (Bri): it stays put at the top of the page and scrolls away with
    it, rather than chasing the reader down the screen. */
-.satchel-wrap { position: absolute; top: 128px; right: 18px; z-index: 60; }
+.satchel-wrap { position: absolute; top: 108px; right: 18px; z-index: 60; }
 .satchel-btn {
   font-size: 1.5rem;
   padding: 8px 12px;
