@@ -65,6 +65,9 @@ interface GameState {
   doneShopping: Record<string, { round: number; ledger: number }>;
   /** The town square chat — per-day threads, capped. */
   chat: { round: number; name: string; text: string; at: string; ghost?: boolean }[];
+  /** Whispers: fully private player-to-player notes (Bri: completely
+   *  secret for now — no public trace that a whisper even happened). */
+  dms: { round: number; from: string; to: string; text: string; at: string }[];
   /** Tied-vote consequence: address → round in which they must disclose. */
   /** address -> round they were found drinking, snapshotted at market close. */
   drunkards: Record<string, number>;
@@ -117,6 +120,7 @@ const freshState = (): GameState => ({
   asked: {},
   doneShopping: {},
   chat: [],
+  dms: [],
   drunkards: {},
   drunkSnapshotRound: 0,
   lastDawnLedger: 0,
@@ -1274,7 +1278,9 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.phase !== "ended") {
       this.state.phase = "day"; // stays until the next day opens
       // Dawn rolls into morning by itself: open the next day in 60s.
-      await this.ctx.storage.setAlarm(Date.now() + 60_000);
+      // 15s, down from 60 (Bri): films and the crier carry the morning now;
+      // a full minute read as a stall.
+      await this.ctx.storage.setAlarm(Date.now() + 15_000);
     }
     await this.persist();
     return report;
@@ -1542,6 +1548,40 @@ export class GameRoom extends DurableObject<Env> {
         amountStroops: x.amountStroops.toString(),
         amountXlm: x.amountXlm,
       })),
+    };
+  }
+
+  /** Send a whisper. Completely secret: no public event, no sighting —
+   *  only sender and recipient ever see it. Capped like chat. */
+  async sendDm(address: string, toName: string, text: string): Promise<{ sent: boolean }> {
+    if (this.state.phase === "ended") throw new Error(`game over — ${this.state.winner} won`);
+    const from = this.playerByAddress(address);
+    if (!from) throw new Error("that address holds no seat in this game");
+    const to = this.playerByName(String(toName));
+    if (!to) throw new Error(`no villager named "${String(toName)}"`);
+    if (to.address === address) throw new Error("whispering to yourself draws looks");
+    const clean = String(text).trim().slice(0, 280);
+    if (!clean) throw new Error("whisper something");
+    (this.state.dms ??= []).push({
+      round: this.state.round,
+      from: from.name,
+      to: to.name,
+      text: clean,
+      at: new Date().toISOString(),
+    });
+    if (this.state.dms.length > 500) this.state.dms.splice(0, this.state.dms.length - 500);
+    await this.persist();
+    return { sent: true };
+  }
+
+  /** Your whispers, both directions. Identity pre-verified. */
+  async myDms(address: string): Promise<{
+    dms: { round: number; from: string; to: string; text: string; at: string }[];
+  }> {
+    const me = this.playerByAddress(address);
+    if (!me) throw new Error("that address holds no seat in this game");
+    return {
+      dms: (this.state.dms ?? []).filter((d) => d.from === me.name || d.to === me.name),
     };
   }
 

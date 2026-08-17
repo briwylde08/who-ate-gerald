@@ -125,6 +125,18 @@ export const playerApi = {
   myPurchases: (w: VillagerWallet, game: string) =>
     playerCall<ServerPurchases>(w, game, "purchases"),
 
+  /** Whisper to one villager — completely secret. */
+  sendDm: (w: VillagerWallet, game: string, to: string, text: string) =>
+    playerCall<{ sent: boolean }>(w, game, "dm", { to, text }),
+
+  /** Your whispers, both directions. */
+  myDms: (w: VillagerWallet, game: string) =>
+    playerCall<{ dms: { round: number; from: string; to: string; text: string; at: string }[] }>(
+      w,
+      game,
+      "dms",
+    ),
+
   /** Private dawn facts — only ever your own. */
   notes: (w: VillagerWallet, game: string) =>
     playerCall<{ notes: { round: number; text: string }[] }>(w, game, "notes"),

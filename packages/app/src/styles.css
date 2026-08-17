@@ -1095,6 +1095,28 @@ th { color: var(--ink-dim); font-weight: normal; }
 /* Maude's door, shut to the dead — unmissably. */
 .reclaim-card { border-left: 3px solid var(--gold); }
 
+/* The dark-picture fix: claimed faces say so, in writing. */
+.portrait-wrap { position: relative; display: block; }
+.claimed-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  padding: 3px 12px;
+  background: rgba(179, 66, 63, 0.92);
+  color: #fff;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  border-radius: 4px;
+}
+
+/* Whispers: quieter than the square. */
+.whispers { margin-top: 12px; }
+.whispers summary { cursor: pointer; color: var(--moon); font-size: 0.9rem; }
+.dm-thread { max-height: 180px; overflow-y: auto; margin: 8px 0; }
+.dm-line { opacity: 0.85; font-style: italic; }
+
 /* The satchel: a backpack under the banner, top-right. Absolute, not
    fixed (Bri): it stays put at the top of the page and scrolls away with
    it, rather than chasing the reader down the screen. */

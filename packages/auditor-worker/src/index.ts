@@ -158,6 +158,10 @@ export default {
             );
           case "p/purchases":
             return json(await room.myPurchases(address));
+          case "p/dm":
+            return json(await room.sendDm(address, String(body.to ?? ""), String(body.text ?? "")));
+          case "p/dms":
+            return json(await room.myDms(address));
           case "p/notes":
             return json({ notes: await room.notesFor(address) });
           default:
