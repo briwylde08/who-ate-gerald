@@ -1122,17 +1122,23 @@ th { color: var(--ink-dim); font-weight: normal; }
    it, rather than chasing the reader down the screen. */
 .satchel-wrap { position: absolute; top: 108px; right: 18px; z-index: 60; }
 .satchel-btn {
-  font-size: 1.5rem;
-  padding: 8px 12px;
+  padding: 6px;
   border-radius: 8px; /* square (Bri) */
   background: rgba(27, 30, 42, 0.95);
   border: 1px solid var(--gold);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  line-height: 0;
+}
+.satchel-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
 }
 .satchel-panel {
   position: absolute;
-  right: 0;
-  top: 52px;
+  right: 56px; /* to the left of the buttons, not on top of them (Bri) */
+  top: 0;
   width: 300px;
   max-height: 60vh;
   overflow-y: auto;
@@ -1150,7 +1156,7 @@ th { color: var(--ink-dim); font-weight: normal; }
 .satchel-note { margin: 10px 0 0; font-size: 0.7rem; }
 /* The reliquary rides beneath the satchel. */
 .relic-btn { display: block; margin-top: 8px; border-color: var(--moon); }
-.relic-panel { top: 112px; border-left: 2px solid var(--moon); }
+.relic-panel { top: 56px; border-left: 2px solid var(--moon); }
 
 /* Relic progress on the Chapel shelf. */
 .relic-note {
