@@ -345,10 +345,7 @@ export function PlayerApp() {
               localStorage.setItem(seenKey, "1");
               setFilm({
                 src: banishedFilmSrc(banishee?.character ?? "")!,
-                caption:
-                  banishee?.address === wallet.address
-                    ? "The village voted, and the rope chose you."
-                    : `${filmMorning.banished} was banished by the village.`,
+                caption: `${filmMorning.banished} was banished.`,
               });
             } else if (!filmMorning.eaten && !v.winner) {
               // Banishment (without a reel of its own) stays crier-only
