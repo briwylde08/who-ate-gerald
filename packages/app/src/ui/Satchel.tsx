@@ -63,7 +63,7 @@ export function Satchel({ serverSpend, round, alive }: Props) {
         title="Satchel"
         onClick={() => setOpen((o) => !o)}
       >
-        🎒
+        <img className="satchel-icon" src="/characters/satchel.png" alt="Satchel" />
       </button>
       {/* The reliquary: a second, holier bag. Gerald only. */}
       <button
@@ -72,7 +72,7 @@ export function Satchel({ serverSpend, round, alive }: Props) {
         title="Gerald's extremities"
         onClick={() => setRelicsOpen((o) => !o)}
       >
-        ☝️
+        <img className="satchel-icon" src="/characters/geralds-hand.png" alt="Gerald's extremities" />
       </button>
       {relicsOpen && (
         <div className="panel satchel-panel relic-panel">
