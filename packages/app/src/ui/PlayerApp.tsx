@@ -47,6 +47,7 @@ const BANISHED_FILMS = new Set([
   "ratcatcher",
   "lamplighter",
   "beekeeper",
+  "poacher",
 ]);
 const banishedFilmSrc = (characterId: string) =>
   BANISHED_FILMS.has(characterId) ? `/videos/${characterId}_banished.mp4` : null;
