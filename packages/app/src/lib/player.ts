@@ -125,10 +125,6 @@ export const playerApi = {
   myPurchases: (w: VillagerWallet, game: string) =>
     playerCall<ServerPurchases>(w, game, "purchases"),
 
-  /** Spend today's Maude question on silence (the ask-or-pass gate). */
-  passQuestion: (w: VillagerWallet, game: string) =>
-    playerCall<{ passed: true }>(w, game, "pass"),
-
   /** Private dawn facts — only ever your own. */
   notes: (w: VillagerWallet, game: string) =>
     playerCall<{ notes: { round: number; text: string }[] }>(w, game, "notes"),
@@ -193,18 +189,12 @@ export interface PublicView {
   }[];
   readyCount?: number;
   minPlayers?: number;
-  /** If the werebear survives the dusk of this day, it wins. */
-  maxDays?: number;
   /** Stores shut for everyone today (Shopkeeper's holiday). */
   closedShops?: string[];
   /** Who the trial is still waiting on. */
   awaitingVotes?: string[];
   /** Whether the night has been decided (never says by whom). */
   nightDecided?: boolean;
-  /** Chat clock: 0 until everyone has asked/passed; then epoch ms start. */
-  chatClockStart?: number;
-  /** Who the ask-or-pass gate still waits on. */
-  awaitingAsk?: string[];
   /** True when every living villager has finished shopping — Maude opens. */
   marketClosed?: boolean;
   stillShopping?: string[];

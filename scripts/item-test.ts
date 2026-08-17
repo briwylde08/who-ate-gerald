@@ -351,10 +351,14 @@ async function main() {
     await v1.call("vote", { target: v3.name });
     await v3.call("vote", { target: v1.name });
     await bear.call("vote", { target: v3.name });
-    await bear.call("night-pick", { target: v3.name }); // the bell must stop this
+    await bear.call("night-pick", { target: v2.name }); // the barrel-drunk: attack fails EITHER way (the bell is a coin flip now)
     const m2 = await finishDay(2);
     console.log(`  morning: ${JSON.stringify(m2.notes)}`);
-    check("the curfew bell tolls", hasNote(m2.notes, "rang the curfew bell"), m2.notes);
+    check(
+      "the bell announces itself, worked or not",
+      hasNote(m2.notes, "curfew bell") || hasNote(m2.notes, "bell rang"),
+      m2.notes,
+    );
     check("and nobody dies in the night", m2.eaten === null, m2);
     check("a lock is fitted, unattributed", hasNote(m2.notes, "cold iron key"), m2.notes);
     check(

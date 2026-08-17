@@ -1094,8 +1094,32 @@ th { color: var(--ink-dim); font-weight: normal; }
 
 /* Maude's door, shut to the dead — unmissably. */
 .reclaim-card { border-left: 3px solid var(--gold); }
-.chat-clock { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 1rem; color: var(--lantern); }
-.vote-nag { border-left: 2px solid var(--gold); padding-left: 10px; }
+
+/* The dead wear their fate on the portrait (Bri): RIP for the eaten,
+   a wave for the banished. */
+.v-fate-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(244, 238, 226, 0.92);
+  background: rgba(18, 20, 28, 0.45);
+  border-radius: 5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+.v-fate-overlay.waved { font-size: 2.6rem; }
+
+/* Lobby chat: the wait, with yelling. */
+.lobby-chat { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.lobby-chat h3 { margin: 0 0 8px; color: var(--moon); font-size: 0.95rem; }
+
+/* The film's play button — the click buys the sound. */
+.film-play { font-size: 1.1rem; padding: 14px 26px; margin: 30px auto; display: block; }
 .dead-door { border-left: 3px solid var(--blood); }
 .dead-door h2 { margin: 0 0 6px; }
 

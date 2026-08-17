@@ -72,10 +72,10 @@ const FACT_TOOLS: FunctionTool[] = [
   ),
   tool(
     "who_bought_item",
-    "Which players paid exactly one catalog item's price at its shop — in one round, or across all rounds if omitted. Use for 'did anyone buy the tooth sharpener'.",
+    "Which players paid exactly one catalog item's price at its shop, today. Use for 'did anyone buy the tooth sharpener'.",
     {
       item: { type: "string", description: "Item id or label from the catalog" },
-      round: { type: "integer", description: "Optional round number; omit for all rounds" },
+      round: { type: "integer", description: "Ignored — Maude reads today only" },
     },
     ["item"],
   ),

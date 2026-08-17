@@ -61,9 +61,6 @@ interface GameState {
   rounds: RoundWindow[];
   /** address → last round in which they spent their Maude seal. */
   asked: Record<string, number>;
-  /** Epoch ms when the 2-minute chat clock started this round (0 = not
-   *  yet). Starts when every living player has asked Maude or passed. */
-  chatClockStart: number;
   /** address → {round, ledger} of their "done shopping" declaration. */
   doneShopping: Record<string, { round: number; ledger: number }>;
   /** The town square chat — per-day threads, capped. */
@@ -118,7 +115,6 @@ const freshState = (): GameState => ({
   round: 0,
   rounds: [],
   asked: {},
-  chatClockStart: 0,
   doneShopping: {},
   chat: [],
   drunkards: {},
@@ -171,7 +167,6 @@ function randomIndex(n: number): number {
 }
 
 /** The clock: if the werebear survives the dusk of this day, it wins. */
-const MAX_DAYS = 6;
 
 /** itemId → { shopId, price, aim, label } (prices are globally unique). */
 const ITEM_INDEX = new Map<
@@ -413,7 +408,6 @@ export class GameRoom extends DurableObject<Env> {
     const prev = this.state.rounds.find((w) => w.round === this.state.round);
     if (prev && prev.endLedger === null) prev.endLedger = latest;
     this.state.round += 1;
-    this.state.chatClockStart = 0; // a new day, a new gate, a fresh two minutes
     this.state.rounds.push({ round: this.state.round, startLedger, endLedger: null });
     this.state.votes = {};
     this.state.nightPick = null;
@@ -437,7 +431,6 @@ export class GameRoom extends DurableObject<Env> {
     delete this.state.votes[p.address];
     // A death can be what shuts the market — don't let the barrel slip through.
     await this.closeMarketIfDone();
-    this.maybeStartChatClock(); // ...or what completes the ask-or-pass gate
     await this.persist();
     // Eliminating the last player who owed a vote must not hang the day.
     await this.maybeResolve();
@@ -509,7 +502,6 @@ export class GameRoom extends DurableObject<Env> {
 
     // Spend the seal BEFORE returning — a crash must not grant a free retry.
     this.state.asked[askerAddress] = this.state.round;
-    this.maybeStartChatClock();
     this.state.askLog.push({
       round: this.state.round,
       asker: player.name,
@@ -577,6 +569,11 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.recovering[voterAddress] === this.state.round) {
       throw new Error("you are in critical condition — too weak to raise a hand at today's trial");
     }
+    // Locked in (Bri, 2026-08-17): one vote, no take-backs. The bear's
+    // night pick stays changeable; the rope does not.
+    if (this.state.votes[voterAddress] !== undefined) {
+      throw new Error("your vote is cast — the rope remembers");
+    }
     const target = this.playerByName(targetName);
     if (!target || !target.alive) throw new Error(`no living player named "${targetName}"`);
     this.state.votes[voterAddress] = target.name;
@@ -611,20 +608,10 @@ export class GameRoom extends DurableObject<Env> {
    * counterweighted on the werebear's shelf.)
    */
   async chat(address: string, text: string): Promise<{ posted: boolean }> {
-    this.requireDay();
-    this.requireUnresolved();
-    if (!this.marketClosed()) {
-      throw new Error("the square is empty until the market closes — finish shopping first");
-    }
-    // The argument is TWO MINUTES, and it starts when the last living player
-    // has asked Maude or passed (Bri's phase design). Before the clock: chat
-    // waits. After it: the square is closed; go vote.
-    if (!this.state.chatClockStart) {
-      throw new Error("the square opens once everyone has asked Maude or passed");
-    }
-    if (Date.now() - this.state.chatClockStart > 120_000) {
-      throw new Error("the square has gone quiet — cast your vote");
-    }
+    // ALWAYS open (Bri, 2026-08-17, reversing the 2-minute clock after one
+    // playtest): the square chats in the lobby, through the market, and all
+    // the way to dawn. Timed argument added ceremony, not tension.
+    if (this.state.phase === "ended") throw new Error(`game over — ${this.state.winner} won`);
     const player = this.playerByAddress(address);
     if (!player) throw new Error("that address holds no seat in this game");
     const clean = String(text).trim().slice(0, 280);
@@ -987,10 +974,17 @@ export class GameRoom extends DurableObject<Env> {
     const bellTonight = this.state.players.some((p) =>
       this.bought(effective, p.address, "curfew_bell", { round }),
     );
-    if (this.state.winner === null && bear?.alive && bearAddress && bellTonight) {
+    // The bell is a coin flip now (Bri, 2026-08-17 — a guaranteed bell was
+    // still too strong even at 44). Both outcomes are announced: a failed
+    // ring must be distinguishable from no bell at all.
+    const bellWorked = bellTonight && randomIndex(2) === 0;
+    if (this.state.winner === null && bear?.alive && bearAddress && bellTonight && bellWorked) {
       notes.push("🔔 Someone rang the curfew bell: the werebear had to stay home. Nobody died tonight.");
     }
-    if (this.state.winner === null && bear?.alive && bearAddress && !bellTonight) {
+    if (this.state.winner === null && bear?.alive && bearAddress && bellTonight && !bellWorked) {
+      notes.push("🔔 The curfew bell rang — but something ignored it.");
+    }
+    if (this.state.winner === null && bear?.alive && bearAddress && !bellWorked) {
       let target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
       // A sharpened tooth in the beast's mouth: only the barrel is beyond it.
       const sharpTonight = boughtThisRound(bearAddress, "tooth_sharpener");
@@ -1240,14 +1234,10 @@ export class GameRoom extends DurableObject<Env> {
           if (last.length === 0) {
             notes.push("The werebear stands alone in an empty village. It has won.");
           }
-        } else if (round >= MAX_DAYS) {
-          // The clock: outlast the village and the moon keeps its secret.
-          this.state.winner = "werebear";
-          this.state.phase = "ended";
-          notes.push(
-            `${MAX_DAYS} days, and the village never found it. The whispers were right all along — and they will stay whispers. The werebear has won.`,
-          );
         }
+        // The six-day clock is gone (Bri, 2026-08-17): the game runs until
+        // it ends naturally — the rope finds the bear, or parity finds the
+        // village.
       }
     }
 
@@ -1358,17 +1348,7 @@ export class GameRoom extends DurableObject<Env> {
       })),
       readyCount: this.state.players.filter((p) => p.ready).length,
       minPlayers: MIN_PLAYERS,
-      maxDays: MAX_DAYS,
       /** Maude's office opens only when every living villager is done shopping. */
-      // The chat clock: 0 = gate not yet complete; otherwise epoch ms start.
-      chatClockStart: this.state.chatClockStart,
-      // Who the ask-or-pass gate still waits on (living, unasked, unpassed).
-      awaitingAsk:
-        this.state.round >= 1 && !this.state.chatClockStart
-          ? this.state.players
-              .filter((p) => p.alive && (this.state.asked[p.address] ?? 0) < this.state.round)
-              .map((p) => p.name)
-          : [],
       marketClosed:
         this.state.round >= 1 &&
         this.state.players
@@ -1548,33 +1528,6 @@ export class GameRoom extends DurableObject<Env> {
         amountXlm: x.amountXlm,
       })),
     };
-  }
-
-  /** Chat clock (Bri's phase design, 2026-08-14): the 2-minute argument
-   *  begins only once every living villager has consulted Maude or passed.
-   *  Asking and passing both mark `asked`; this checks the gate and starts
-   *  the clock the moment the last seal is spent. */
-  private maybeStartChatClock(): void {
-    if (this.state.round < 1 || this.state.chatClockStart) return;
-    if (!this.marketClosed()) return;
-    const living = this.state.players.filter((p) => p.alive);
-    const allAsked = living.every((p) => (this.state.asked[p.address] ?? 0) >= this.state.round);
-    if (living.length > 0 && allAsked) this.state.chatClockStart = Date.now();
-  }
-
-  /** Spend the day's question on silence — the ask-or-pass gate's "or". */
-  async passQuestion(address: string): Promise<{ passed: true }> {
-    this.requireDay();
-    const player = this.playerByAddress(address);
-    if (!player) throw new Error("that address holds no seat in this game");
-    if (!player.alive) throw new Error("the dead ask no questions — nor pass on them");
-    if ((this.state.asked[address] ?? 0) >= this.state.round) {
-      return { passed: true }; // already asked or passed — idempotent
-    }
-    this.state.asked[address] = this.state.round;
-    this.maybeStartChatClock();
-    await this.persist();
-    return { passed: true };
   }
 
   /** Private dawn facts (the dogs) for ONE player — identity pre-verified. */

@@ -54,6 +54,18 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   const [roleShown, setRoleShown] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [readying, setReadying] = useState(false);
+  const [lobbyChatText, setLobbyChatText] = useState("");
+  const sendLobbyChat = async () => {
+    const text = lobbyChatText.trim();
+    if (!text) return;
+    setLobbyChatText("");
+    try {
+      await playerApi.chat(wallet, gameId, text);
+      await loadView();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
   /** The notice-board: other games seating players right now. */
   const [lobbies, setLobbies] = useState<OpenLobby[]>([]);
   useEffect(() => {
@@ -142,6 +154,10 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
     }
   };
 
+  /** Banished vs eaten, for the portrait overlays (Bri: 👋 vs RIP). */
+  const wasBanished = (name: string): boolean =>
+    (view?.mornings ?? []).some((m) => m.banished === name);
+
   const noticeBoard = (heading: string) =>
     lobbies.filter((l) => l.id !== gameId).length > 0 && (
       <div className="panel">
@@ -182,7 +198,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
   const seats = Math.max(minPlayers, view.players.length);
   const seatsNeeded = Math.max(0, minPlayers - view.players.length);
   const phaseLabel =
-    view.round >= 1 && view.maxDays ? `Day ${view.round} of ${view.maxDays}` : `Day ${view.round}`;
+    `Day ${view.round}`;
   const phaseTitle = view.winner
     ? "The Reckoning"
     : !view.dealt
@@ -196,11 +212,6 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
       <div className="panel lobby">
         <div className="phase-head">
           <div className="phase-label">{phaseLabel}</div>
-          {view.round >= 1 && view.maxDays && !view.winner && (
-            <span className="deadline-note">
-              If the werebear survives to day {view.maxDays}, it wins.
-            </span>
-          )}
         </div>
         <h2 className="phase-title">{phaseTitle}</h2>
 
@@ -391,6 +402,40 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           </div>
         )}
 
+        {/* Lobby chat (Bri): the wait is friendlier with yelling. Same
+            p/chat thread — the server accepts chat in any phase now. */}
+        {!view.dealt && me && (
+          <div className="lobby-chat">
+            <h3>Chat! Feel free to yell at your fellow villagers.</h3>
+            <div className="chat">
+              {(view.chat ?? []).length === 0 ? (
+                <p className="dim">Nobody has said anything yet.</p>
+              ) : (
+                (view.chat ?? []).slice(-30).map((m, i) => (
+                  <p key={i} className="chat-line">
+                    <b>{m.name}:</b> {m.text}
+                  </p>
+                ))
+              )}
+            </div>
+            <div className="row">
+              <input
+                type="text"
+                maxLength={280}
+                placeholder="yell here…"
+                value={lobbyChatText}
+                onChange={(e) => setLobbyChatText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && lobbyChatText.trim()) void sendLobbyChat();
+                }}
+              />
+              <button disabled={!lobbyChatText.trim()} onClick={() => void sendLobbyChat()}>
+                Say it
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* The headcount belongs with the faces it is counting. */}
         {view.dealt && (
           <p className="dim headcount">
@@ -469,8 +514,11 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                     </span>
                   )}
                   {!p.alive && (
-                    <span className="v-tomb" aria-hidden="true">
-                      🪦
+                    <span
+                      className={`v-fate-overlay${wasBanished(p.name) ? " waved" : ""}`}
+                      aria-hidden="true"
+                    >
+                      {wasBanished(p.name) ? "👋" : "RIP"}
                     </span>
                   )}
                   {isYou && <span className="you-badge">You</span>}

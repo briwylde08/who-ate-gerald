@@ -182,7 +182,7 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
             )}
             <p className="state-note">
               {seal === "available" ? (
-                "You have one question today — ask it or pass. The village argues once everyone has."
+                "You have one question remaining today."
               ) : seal === "spent" ? (
                 "You get a new question when the next day begins."
               ) : round < 1 ? (
@@ -318,16 +318,7 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
             <span className="dim">Pick a villager above, or type a name yourself.</span>
           )}
           {seal === "available" && (
-            <button
-              onClick={() => {
-                playerApi
-                  .passQuestion(wallet, gameId)
-                  .then(() => void fetchPublicView(gameId).then(setView).catch(() => undefined))
-                  .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-              }}
-            >
-              No question today
-            </button>
+            <button onClick={onGoChatVote}>I don't have a question — Chat &amp; Vote →</button>
           )}
         </div>
       </div>
