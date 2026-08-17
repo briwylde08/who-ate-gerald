@@ -101,7 +101,13 @@ export function PlayerApp() {
   /** The night's film — APP-level, so it shows no matter which tab you're
    *  on. It lived in the Town Square once, where dawn breaking while you
    *  voted on Chat & Vote played it invisibly AND marked it seen. */
-  const [film, setFilm] = useState<{ src: string; caption: string; started?: boolean } | null>(null);
+  const [film, setFilm] = useState<{
+    src: string;
+    caption: string;
+    started?: boolean;
+    /** A second feature (Bri: eaten first, then "Who got banished?"). */
+    next?: { src: string; caption: string };
+  } | null>(null);
   /** Personal banishment notice — a ghost shouldn't learn their fate from
    *  fine print (Bri). Shown once, before any film. */
   const [banishedNotice, setBanishedNotice] = useState<string | null>(null);
@@ -328,6 +334,15 @@ export function PlayerApp() {
               const victim = v.players.find((p) => p.name === filmMorning.eaten);
               if (victim?.character) {
                 localStorage.setItem(seenKey, "1");
+                // A banished-AND-eaten morning is a double feature (Bri):
+                // the night's kill first, then "Who got banished?" swaps to
+                // the trial reel. Skip it when the bear ate the same corpse
+                // the rope left — one person, one reel.
+                const banishee =
+                  filmMorning.banished && filmMorning.banished !== filmMorning.eaten
+                    ? v.players.find((p) => p.name === filmMorning.banished)
+                    : undefined;
+                const trialReel = banishee ? banishedFilmSrc(banishee.character ?? "") : null;
                 setFilm({
                   src: nightFilmSrc(victim.character),
                   // When it's YOU, say so — the most personal beat in the game
@@ -336,6 +351,9 @@ export function PlayerApp() {
                     victim.address === wallet.address
                       ? "You were taken in the night."
                       : `${filmMorning.eaten} was taken in the night.`,
+                  next: trialReel
+                    ? { src: trialReel, caption: `${filmMorning.banished} was banished.` }
+                    : undefined,
                 });
               }
             } else if (
@@ -579,6 +597,16 @@ export function PlayerApp() {
               <img className="film-still" src="/bg.jpg" alt="" />
             )}
             <p className="film-caption">{film.caption}</p>
+            {film.next && (
+              // The click is a user gesture, so the trial reel may start
+              // with sound at once — no second poster needed.
+              <button
+                className="primary"
+                onClick={() => setFilm({ ...film.next!, started: true })}
+              >
+                ⚖ Who got banished?
+              </button>
+            )}
             <button className="primary" onClick={() => setFilm(null)}>
               Close the curtains
             </button>
