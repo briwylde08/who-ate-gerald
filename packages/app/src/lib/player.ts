@@ -224,6 +224,10 @@ export interface ServerPurchase {
 }
 export interface ServerPurchases {
   spentStroops: string;
+  /** Until-spent items already consumed (nail on a tie, pizza on a vote). */
+  spent?: { horseshoe_nail: number; pizza_party: number };
+  /** The unquiet-rest coin has already flipped (you died once). */
+  ghostVoteDecided?: boolean;
   purchases: ServerPurchase[];
 }
 
