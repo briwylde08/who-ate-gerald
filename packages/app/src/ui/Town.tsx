@@ -230,14 +230,14 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           </div>
         )}
         {me && !me.alive && me.ghostVoter && !view.winner && (
-          <div className="answer-card">
+          <div className="house-card">
             👻 <b>The Order honoured your coin.</b> You are dead, but your ghost keeps its vote —
             scroll down to <b>The trial</b> and cast it. The living can hear you in the square,
             too.
           </div>
         )}
         {view.marketClosed && view.round >= 1 && !view.winner && me?.alive && (
-          <div className="answer-card">
+          <div className="house-card">
             <b>The market has closed.</b>{" "}
             {me.askedToday
               ? "Say your piece in the square below, then cast your vote."
@@ -245,7 +245,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
           </div>
         )}
         {view.winner && view.bear && (
-          <div className="answer-card" style={{ fontSize: "1.1rem" }}>
+          <div className="house-card" style={{ fontSize: "1.1rem" }}>
             {(() => {
               const bearSeat = view.players.find((p) => p.name === view.bear);
               const bearChar = bearSeat?.character ? CHAR_BY_ID.get(bearSeat.character) : null;
@@ -354,7 +354,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
         )}
 
         {me && view.dealt && !roleShown && (
-          <div className="answer-card">
+          <div className="house-card">
             <b>📜 Your fate has been dealt.</b>{" "}
             {role
               ? "It waits, sealed. Open it when nobody is looking over your shoulder."

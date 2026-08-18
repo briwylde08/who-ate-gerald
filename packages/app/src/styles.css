@@ -1497,6 +1497,12 @@ div.character { border: 1px solid var(--line); border-radius: 6px; background: v
   font-style: italic;
 }
 
+/* The house's voice (Bri): plain — the border and italics are Maude's. */
+.house-card {
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+
 /* The one instruction at the top of the square. Deliberately NOT an
    answer-card: that styling is Maude's voice, and this is the house telling
    you where to go. */
