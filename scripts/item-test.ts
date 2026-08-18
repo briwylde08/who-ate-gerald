@@ -329,6 +329,22 @@ async function main() {
     // ---- DAY 2 -------------------------------------------------------------
     console.log("\nDAY 2 — the bell, the barrel, a lock and a pizza party");
     await gmCall("round/start", {});
+
+    // ---- WHISPERS: fully secret, or they are nothing. ----------------------
+    await v1.call("dm", { to: v2.name, text: "I KNOW YOU'RE THE WEREBEAR." });
+    const heard = await v2.call<{ dms: { from: string; text: string }[] }>("dms");
+    check(
+      "a whisper reaches its recipient",
+      heard.dms.some((d) => d.from === v1.name && d.text.includes("WEREBEAR")),
+      heard,
+    );
+    const overheard = await v3.call<{ dms: unknown[] }>("dms");
+    check("nobody else hears a whisper", overheard.dms.length === 0, overheard);
+    const selfWhisper = await v1
+      .call("dm", { to: v1.name, text: "talking to myself" })
+      .then(() => false)
+      .catch(() => true);
+    check("whispering to yourself is refused", selfWhisper, "expected an error");
     await v1.buy(transferProver, "curfew_bell");
     await v2.buy(transferProver, "barrel_of_beer"); // no declaration: buying IS drinking
     await v3.buy(transferProver, "pizza_party"); // general_store — hard to hang the host
