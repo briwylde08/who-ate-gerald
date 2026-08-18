@@ -247,6 +247,8 @@ export interface ServerPurchases {
   spent?: { horseshoe_nail: number; pizza_party: number };
   /** The unquiet-rest coin has already flipped (you died once). */
   ghostVoteDecided?: boolean;
+  /** Shops a cold iron key barred for this player today. */
+  lockedShops?: string[];
   purchases: ServerPurchase[];
 }
 

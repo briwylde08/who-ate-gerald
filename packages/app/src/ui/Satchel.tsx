@@ -78,7 +78,7 @@ export function Satchel({ serverSpend, round, alive }: Props) {
         <div className="panel satchel-panel relic-panel">
           <div className="role-label">Gerald's reliquary</div>
           {relicTotal === 0 ? (
-            <p className="dim">You hold no piece of Gerald. The Chapel is open.</p>
+            <p className="dim">You hold no piece of Gerald.</p>
           ) : (
             <>
               {fingers > 0 && <p className="satchel-line">☝️ Finger ×{fingers}</p>}

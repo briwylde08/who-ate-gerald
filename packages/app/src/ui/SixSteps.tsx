@@ -83,18 +83,18 @@ export function SixSteps({ balances, purchases, owedStroops = 0n, tills = null }
     {
       n: 5,
       name: "Merge",
-      what: "The shopkeeper collects your payment into their till — the same merge you do at the Treasury desk.",
+      what: "Your payment sits in the shop's pending balance until the shop signs a merge transaction moving it into its spendable balance — the same operation as step 3, done by the receiver. No proof needed.",
       state: tills ? "done" : "elsewhere",
       note: tills
-        ? `the shopkeepers counted their tills at dawn on day ${tills.round} — it's on their own accounts now`
-        : "happens at the shopkeeper — pay a shop, then watch its till",
+        ? `ran at dawn on day ${tills.round} — a real transaction, signed by each shop's own account`
+        : "runs at dawn, automatically, for every shop that was paid that day",
     },
     {
       n: 6,
       name: "Withdraw",
-      what: "The receiver can turn confidential claims back into ordinary XLM — the only other moment an amount goes public.",
+      what: "The reverse of step 2: a withdraw transaction converts spendable confidential balance back into ordinary XLM. The amount is a public argument of the call, so this is the other place an amount becomes visible on chain. Withdrawing requires a zero-knowledge proof that the account holds what it claims.",
       state: "elsewhere",
-      note: "the shopkeepers never cash out in this village — Maude's reckoning ledger will tell you what they made instead",
+      note: "never happens in this game — the shops' balances stay confidential; the reckoning shows their totals from the auditor's records instead",
     },
   ];
 

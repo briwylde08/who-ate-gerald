@@ -22,7 +22,7 @@
           "flavor": "Fits more doors than it should.",
           "priceXlm": 22,
           "class": "B-off",
-          "effect": "Pick a villager and a store. Tomorrow that store will not sell to them. Everyone is told which store was locked. Nobody is told who bought the key or who was locked out.",
+          "effect": "Pick a villager and a store. Tomorrow that store will not sell to them — they will find its door crossed out. Everyone is told which store was locked; only the victim sees it was for them. Nobody is told who bought the key.",
           "aim": "player+shop"
         },
         {
