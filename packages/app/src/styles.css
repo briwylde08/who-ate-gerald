@@ -1174,31 +1174,33 @@ th { color: var(--ink-dim); font-weight: normal; }
   z-index: 2;
 }
 
-/* The Claim bar follows the picker so nobody scroll-hunts the button. */
-.claim-bar {
-  position: sticky;
-  bottom: 14px;
-  display: flex;
-  justify-content: center;
-  z-index: 40;
-  pointer-events: none;
-}
-.claim-bar button {
-  pointer-events: auto;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+/* The Claim chip rides the chosen character card. */
+.char-wrap { position: relative; display: flex; }
+.char-wrap > .character { flex: 1; }
+.claim-chip {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 3;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
-/* Whispers, floated from the top bar. */
+/* Whispers: front and center (Bri) — a proper conversation, not a corner. */
 .whisper-pop {
   position: fixed;
-  top: 72px;
-  right: 16px;
-  width: min(360px, calc(100vw - 32px));
-  max-height: 70vh;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(640px, calc(100vw - 32px));
+  max-height: 80vh;
   overflow-y: auto;
   z-index: 80;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
 }
+.whisper-pop .dm-thread { max-height: 46vh; min-height: 180px; }
+.whisper-pop input[type="text"] { flex: 1; }
 
 /* The square, two-up on wide screens: argument left, decisions right. */
 .square-grid { display: grid; grid-template-columns: 1fr; gap: 0 16px; align-items: start; }
