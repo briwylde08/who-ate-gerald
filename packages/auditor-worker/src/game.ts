@@ -1271,6 +1271,25 @@ export class GameRoom extends DurableObject<Env> {
     // Where this dawn stood: everything it could see ends here (issue #20).
     this.state.lastDawnLedger = await indexerLatestLedger(this.env).catch(() => this.state.lastDawnLedger ?? 0);
 
+    // Uncredited relic buys get told at dawn (like a barred door): the
+    // ladder replay is the law, and coin that bought no relic says so.
+    {
+      const credits = this.relicCredits(purchases);
+      const relicGuesses = new Set(["Gerald's finger", "Gerald's thumb", "Gerald's toe"]);
+      for (const p of purchases.filter(
+        (x) =>
+          x.round === round &&
+          x.itemGuess !== null &&
+          relicGuesses.has(x.itemGuess) &&
+          !credits.credited.has(x.txHash),
+      )) {
+        ((this.state.privateNotes ??= {})[p.from] ??= []).push({
+          round: round + 1,
+          text: `☝️ Gerald had nothing more to give: the ${p.itemGuess} was not his to sell yet. The Chapel kept your coin.`,
+        });
+      }
+    }
+
     // The season's takings, from the auditor's own ledger: revealed only
     // when the game is over, when confidentiality has nothing left to guard.
     if (this.state.winner !== null && this.state.takings === null) {
@@ -1402,6 +1421,40 @@ export class GameRoom extends DurableObject<Env> {
     return { ended: true };
   }
 
+  /**
+   * The reliquary ladder, enforced at the ledger (Bri, 2026-08-18: bots were
+   * buying thumbs before the fingers sold out — the ladder lived only in the
+   * human UI). Replay every purchase in ledger order and credit a relic only
+   * if it was legal AT THAT MOMENT: fingers up to 8 always; a thumb only once
+   * all 8 fingers are claimed, up to 2; a toe only once both thumbs are, up
+   * to 10. Anything else is coin the Chapel keeps — no relic.
+   */
+  private relicCredits(purchases: Purchase[]): {
+    fingers: number;
+    thumbs: number;
+    toes: number;
+    credited: Set<string>;
+  } {
+    const c = { fingers: 0, thumbs: 0, toes: 0 };
+    const credited = new Set<string>();
+    const relicBuys = purchases
+      .filter((p) => p.round >= 1)
+      .sort((a, b) => a.ledger - b.ledger || (a.txHash < b.txHash ? -1 : 1));
+    for (const p of relicBuys) {
+      if (p.itemGuess === "Gerald's finger" && c.fingers < 8) {
+        c.fingers += 1;
+        credited.add(p.txHash);
+      } else if (p.itemGuess === "Gerald's thumb" && c.fingers >= 8 && c.thumbs < 2) {
+        c.thumbs += 1;
+        credited.add(p.txHash);
+      } else if (p.itemGuess === "Gerald's toe" && c.thumbs >= 2 && c.toes < 10) {
+        c.toes += 1;
+        credited.add(p.txHash);
+      }
+    }
+    return { ...c, credited };
+  }
+
   // -------------------------------------------------------------- public --
 
   /** Public game view — safe for every player and spectator. */
@@ -1526,11 +1579,9 @@ export class GameRoom extends DurableObject<Env> {
         })),
       // Gerald's reliquary: village-wide extremity counts drive the unlock
       // ladder (8 fingers → 2 thumbs → 10 toes; Bri, 2026-08-17).
-      relics: {
-        fingers: purchases.filter((x) => x.round >= 1 && x.itemGuess === "Gerald's finger").length,
-        thumbs: purchases.filter((x) => x.round >= 1 && x.itemGuess === "Gerald's thumb").length,
-        toes: purchases.filter((x) => x.round >= 1 && x.itemGuess === "Gerald's toe").length,
-      },
+      relics: (({ fingers, thumbs, toes }) => ({ fingers, thumbs, toes }))(
+        this.relicCredits(purchases),
+      ),
       deposits: deposits.map((d) => ({
         round: d.round,
         ledger: d.ledger,
@@ -1603,6 +1654,8 @@ export class GameRoom extends DurableObject<Env> {
     /** Shops a cold iron key barred for THIS player today (Bri, 2026-08-18:
      *  the victim sees big X's — no more blind coin into a locked door). */
     lockedShops: string[];
+    /** This player's ladder-legal relic credits — the reliquary's truth. */
+    relics: { fingers: number; thumbs: number; toes: number };
     purchases: {
       round: number;
       ledger: number;
@@ -1616,10 +1669,19 @@ export class GameRoom extends DurableObject<Env> {
   }> {
     const player = this.playerByAddress(address);
     if (!player) throw new Error("that address holds no seat in this game");
-    const purchases = (await this.loadAll()).filter(
-      (x) => x.from === address && x.round >= 1 && !x.isSurrender,
-    );
+    const all = await this.loadAll();
+    const purchases = all.filter((x) => x.from === address && x.round >= 1 && !x.isSurrender);
+    // Ladder legality is a village-wide replay: my thumb counts only if the
+    // village's fingers were sold out when I bought it.
+    const credits = this.relicCredits(all);
+    const mine = (guess: string) =>
+      purchases.filter((x) => x.itemGuess === guess && credits.credited.has(x.txHash)).length;
     return {
+      relics: {
+        fingers: mine("Gerald's finger"),
+        thumbs: mine("Gerald's thumb"),
+        toes: mine("Gerald's toe"),
+      },
       spentStroops: purchases.reduce((a, x) => a + x.amountStroops, 0n).toString(),
       // What the satchel needs: which until-spent items have already fired.
       spent: {

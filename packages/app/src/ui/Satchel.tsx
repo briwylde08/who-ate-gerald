@@ -49,9 +49,11 @@ export function Satchel({ serverSpend, round, alive }: Props) {
   if (pizzasHeld > 0) held.push(`🍕 Pizza party ×${pizzasHeld} — saves you from a banishment`);
   if (restArmed) held.push("👻 Unquiet rest — armed until you die");
 
-  const fingers = countEver("geralds_finger");
-  const thumbs = countEver("geralds_thumb");
-  const toes = countEver("geralds_toe");
+  // The server replays the ladder and credits only legal relics; raw local
+  // counts are the fallback for a stale serverSpend.
+  const fingers = serverSpend?.relics?.fingers ?? countEver("geralds_finger");
+  const thumbs = serverSpend?.relics?.thumbs ?? countEver("geralds_thumb");
+  const toes = serverSpend?.relics?.toes ?? countEver("geralds_toe");
   const relicTotal = fingers + thumbs + toes;
   const [relicsOpen, setRelicsOpen] = useState(false);
 

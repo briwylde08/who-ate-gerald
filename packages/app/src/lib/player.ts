@@ -249,6 +249,8 @@ export interface ServerPurchases {
   ghostVoteDecided?: boolean;
   /** Shops a cold iron key barred for this player today. */
   lockedShops?: string[];
+  /** Ladder-legal relic credits — the reliquary's truth. */
+  relics?: { fingers: number; thumbs: number; toes: number };
   purchases: ServerPurchase[];
 }
 
