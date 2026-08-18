@@ -213,10 +213,30 @@ class BotVillager {
   async shop(transferProver: CircuitProver, round: number, others: string[]): Promise<void> {
     const state = await this.engine.sync();
     let budget = state.spendable.v;
+    // The reliquary ladder (the graph's relic counts are the credited ones):
+    // no thumb before the fingers sell out, no toe before the thumbs, and
+    // nothing that is already sold out. Bots obey the same shelf as humans.
+    let relics = { fingers: 0, thumbs: 0, toes: 0 };
+    try {
+      const g = (await (await fetch(`${AUDITOR_URL}/games/${gameId}/graph`)).json()) as {
+        relics?: { fingers: number; thumbs: number; toes: number };
+      };
+      if (g.relics) relics = g.relics;
+    } catch {
+      /* a missing graph just means the bot shops conservatively */
+    }
+    const relicOpen = (id: string): boolean =>
+      id === "geralds_finger"
+        ? relics.fingers < 8
+        : id === "geralds_thumb"
+          ? relics.fingers >= 8 && relics.thumbs < 2
+          : id === "geralds_toe"
+            ? relics.thumbs >= 2 && relics.toes < 10
+            : true;
     const storeCount = 1 + Math.floor(Math.random() * 2);
     const chosen = [...STORES].sort(() => Math.random() - 0.5).slice(0, storeCount);
     for (const s of chosen) {
-      let affordable = s.items.filter((it) => it.price <= budget);
+      let affordable = s.items.filter((it) => it.price <= budget && relicOpen(it.id));
       if (affordable.length === 0) continue;
       if (affordable.length > 1) {
         const cheapest = affordable.reduce((a, b) => (a.price < b.price ? a : b));
