@@ -1600,6 +1600,9 @@ export class GameRoom extends DurableObject<Env> {
     spentStroops: string;
     spent: { horseshoe_nail: number; pizza_party: number };
     ghostVoteDecided: boolean;
+    /** Shops a cold iron key barred for THIS player today (Bri, 2026-08-18:
+     *  the victim sees big X's — no more blind coin into a locked door). */
+    lockedShops: string[];
     purchases: {
       round: number;
       ledger: number;
@@ -1624,6 +1627,9 @@ export class GameRoom extends DurableObject<Env> {
         pizza_party: (this.state.pizzaUsed ?? {})[address] ?? 0,
       },
       ghostVoteDecided: Boolean((this.state.ghostVote ?? {})[address]),
+      lockedShops: this.state.closures
+        .filter((c) => c.round === this.state.round && c.player === player.name)
+        .map((c) => c.shop),
       purchases: purchases.map((x) => ({
         round: x.round,
         ledger: x.ledger,

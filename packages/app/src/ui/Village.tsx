@@ -557,12 +557,20 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       >
         {SHOPS.map((shop) => {
           const shut = closedShops.includes(shop.id);
+          // A key pointed at YOU is no longer a blind trap (Bri, 2026-08-18):
+          // the barred door wears a big X, and your coin stays in your purse.
+          const barred = serverSpend?.lockedShops?.includes(shop.id) ?? false;
           // The two-stores custom, visible BEFORE the till refuses you: a
           // third store's card shutters instead of taking your confirm and
           // then scolding you (issue #13).
           const capped = !shut && visitedToday.length >= 2 && !visitedToday.includes(shop.label);
           return (
-          <div key={shop.id} className={`panel shop-card${shut || capped ? " shut" : ""}`}>
+          <div key={shop.id} className={`panel shop-card${shut || capped ? " shut" : ""}${barred ? " barred" : ""}`}>
+            {barred && (
+              <div className="shop-x" aria-hidden="true">
+                ✕
+              </div>
+            )}
             <h3>
               {shop.icon && (
                 <span className="shop-icon" aria-hidden="true">
@@ -589,6 +597,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
             {shut && (
               <p className="shut-note">
                 🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
+              </p>
+            )}
+            {barred && (
+              <p className="shut-note">
+                🔑 Someone's cold iron key barred this door for you today. It will not sell to
+                you, and it will not take your coin.
               </p>
             )}
             {capped && (
@@ -645,7 +659,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                             : `${relics.toes} of 10 claimed by the village`
                         : null;
                 const blocked =
-                  !marketOpen || doneToday || tooRich || owned || capped || relicState !== "open";
+                  !marketOpen || doneToday || tooRich || owned || capped || barred || relicState !== "open";
                 const label = !marketOpen
                   ? "Not open yet"
                   : relicState === "locked"
@@ -654,7 +668,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                       ? "Sold out"
                       : owned
                         ? "Bought today ✓"
-                        : shut
+                        : barred
+                          ? "🔑 Locked out"
+                          : shut
                           ? "Shuttered"
                           : doneToday
                             ? "Market closed"
