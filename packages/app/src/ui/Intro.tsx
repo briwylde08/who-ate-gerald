@@ -412,6 +412,31 @@ export function Intro({
         })}
       </div>
 
+      {/* The Claim bar (Bri, 2026-08-18): picking a face shouldn't require a
+          scroll to the bottom — the button follows you. Same logic as the
+          row below; the row stays for keyboard/screen-reader flow. */}
+      {characterId !== null && !taken.has(characterId) && (ready || needsName) && (
+        <div className="claim-bar">
+          <button
+            className="primary"
+            onClick={() => {
+              if (needsName) {
+                nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                nameRef.current?.focus();
+                return;
+              }
+              const p = { name: name.trim(), characterId: characterId! };
+              saveProfile(p);
+              onDone(p);
+            }}
+          >
+            {needsName
+              ? "Claim — pick a name first"
+              : `Claim ${CHARACTERS.find((c) => c.id === characterId)?.title ?? "this villager"} →`}
+          </button>
+        </div>
+      )}
+
       <div className="row">
         <button
           className="primary"

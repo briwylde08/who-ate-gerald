@@ -1162,6 +1162,51 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .takings-note { font-size: 0.72rem; margin: 8px 0 0; }
 
+/* X out of any floating panel. */
+.panel-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  border-radius: 6px;
+  z-index: 2;
+}
+
+/* The Claim bar follows the picker so nobody scroll-hunts the button. */
+.claim-bar {
+  position: sticky;
+  bottom: 14px;
+  display: flex;
+  justify-content: center;
+  z-index: 40;
+  pointer-events: none;
+}
+.claim-bar button {
+  pointer-events: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+}
+
+/* Whispers, floated from the top bar. */
+.whisper-pop {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  width: min(360px, calc(100vw - 32px));
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 80;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+
+/* "You already have one" — said before the coin moves, not after. */
+.held-warning {
+  margin: 4px 0;
+  font-size: 0.8rem;
+  color: var(--lantern, #e0b352);
+}
+
 /* The satchel: a backpack under the banner, top-right. Absolute, not
    fixed (Bri): it stays put at the top of the page and scrolls away with
    it, rather than chasing the reader down the screen. */

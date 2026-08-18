@@ -149,7 +149,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         .catch(() => undefined);
     };
     pull();
-    const t = setInterval(pull, 30_000);
+    // 12s, down from 30 (Bri, 2026-08-18): the reliquary ladder ("x of 8
+    // claimed") read stale for most of a shopping phase.
+    const t = setInterval(pull, 12_000);
     return () => clearInterval(t);
   }, [round, active]);
 
@@ -658,6 +660,18 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                             ? "All ten claimed. Gerald has no more to give."
                             : `${relics.toes} of 10 claimed by the village`
                         : null;
+                // Until-spent items you still HOLD from an earlier day
+                // (Bri, 2026-08-18): warn before buying another. Relics are
+                // exempt — collecting Gerald is the point.
+                const heldAlready =
+                  item.id === "horseshoe_nail" || item.id === "pizza_party"
+                    ? (serverSpend?.purchases ?? []).filter((p) => p.item === item.label).length -
+                        (serverSpend?.spent?.[item.id as "horseshoe_nail" | "pizza_party"] ?? 0) >
+                      0
+                    : item.id === "unquiet_rest"
+                      ? (serverSpend?.purchases ?? []).some((p) => p.item === item.label) &&
+                        !serverSpend?.ghostVoteDecided
+                      : false;
                 const blocked =
                   !marketOpen || doneToday || tooRich || owned || capped || barred || relicState !== "open";
                 const label = !marketOpen
@@ -677,7 +691,9 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                             : tooRich
                               ? "Can't afford this item"
                               : isArmed
-                                ? "Confirm?"
+                                ? heldAlready
+                                  ? "Buy another?"
+                                  : "Confirm?"
                                 : "Buy";
                 return (
                   <div
@@ -693,6 +709,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                         {owned && <span className="badge">✓ Bought</span>}
                       </div>
                       {item.flavor && <p className="item-flavor">“{item.flavor}”</p>}
+                      {isArmed && heldAlready && (
+                        <p className="held-warning">
+                          You already have one of these in your satchel, unused. Are you sure
+                          you want another?
+                        </p>
+                      )}
                       {/* Effects are public knowledge — no reason to hide them
                           behind a hover that phones don't have. */}
                       <p className="effect">{item.effect}</p>
