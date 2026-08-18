@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 import type { VillagerWallet, VillagerBalances, TxPhase } from "../lib/wallet";
 import {
@@ -94,6 +94,20 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   // so the whole village can verify the top-up stays within the schedule.
   const deficit =
     remainingAllowance > balances.spendable ? remainingAllowance - balances.spendable : 0n;
+
+  // THE SETTLED-INPUTS GATE (Bri, 2026-08-18 — third sighting of this bug
+  // family: aim race, Treasury carousel, now the Treasury panels). The
+  // surrender/owes verdict mixes three reads that warm up at different
+  // speeds (engine balance, server spend, live round). Demand agreement
+  // between two consecutive balance reads — and the server record once the
+  // game is on — before accusing anyone of owing anything.
+  const prevSpendable = useRef<bigint | null>(null);
+  const [balanceSettled, setBalanceSettled] = useState(false);
+  useEffect(() => {
+    setBalanceSettled(prevSpendable.current === balances.spendable);
+    prevSpendable.current = balances.spendable;
+  }, [balances]);
+  const treasuryReady = balanceSettled && (round < 1 || serverSpend !== null);
 
   const topUp = async () => {
     setError(null);
@@ -388,7 +402,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           is shopping too. DUN DUN DUN.
         </p>
       </div>
-      {!dead && deficit > 0n && excess === 0n && (
+      {!dead && !treasuryReady && (deficit > 0n || excess > 0n) && (
+        <div className="panel">
+          <p className="dim">⚖ The Town Treasury is checking its books…</p>
+        </div>
+      )}
+      {!dead && treasuryReady && deficit > 0n && excess === 0n && (
         <div className="panel">
           <h3>⚖ The Town Treasury owes you</h3>
           <p className="dim">
@@ -463,7 +482,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
 
-      {!dead && excess > 0n && (
+      {!dead && treasuryReady && excess > 0n && (
         <div className="panel">
           <h3>⚖ The Town Treasury requires a word</h3>
           <p className="dim">
