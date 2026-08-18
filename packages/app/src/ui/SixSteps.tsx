@@ -94,7 +94,7 @@ export function SixSteps({ balances, purchases, owedStroops = 0n, tills = null }
       name: "Withdraw",
       what: "The reverse of step 2: a withdraw transaction converts spendable confidential balance back into ordinary XLM. The amount is a public argument of the call, so this is the other place an amount becomes visible on chain. Withdrawing requires a zero-knowledge proof that the account holds what it claims.",
       state: "elsewhere",
-      note: "never happens in this game — the shops' balances stay confidential; the reckoning shows their totals from the auditor's records instead",
+      note: "never happens in this game — the shops' balances stay confidential, and only Maude's audit knows what they hold",
     },
   ];
 
