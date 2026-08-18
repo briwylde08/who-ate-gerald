@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
-import { loadHistory } from "../lib/history";
-import { SHOPS, xlmDisplay } from "../lib/catalog";
 import {
   fetchPublicView,
   pageHidden,
   hasCachedAuth,
   playerApi,
   type PublicView,
-  type ServerPurchases,
 } from "../lib/player";
 import { BearIcon, ToteIcon } from "./CharIcon";
 
@@ -30,19 +27,11 @@ interface Props {
   setError: (e: string | null) => void;
   /** Jump to the Shops — the crier's "Start new day" button. */
   onGoShops: () => void;
-  /** Server-decrypted own purchases; fills the kit on a fresh device. */
-  serverSpend: ServerPurchases | null;
 }
 
 type Role = "villager" | "werebear";
 
-/** Catalog effect text by item label — the kit list explains what you hold. */
-const EFFECT_BY_LABEL = new Map(
-  SHOPS.flatMap((sh) => sh.items).map((it) => [it.label, it.effect]),
-);
-const effectOf = (label: string) => EFFECT_BY_LABEL.get(label);
-
-export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: Props) {
+export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   const [view, setView] = useState<PublicView | null>(null);
   const viewRef = useRef<PublicView | null>(null);
   viewRef.current = view;
@@ -59,6 +48,14 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
   const [privateNotes, setPrivateNotes] = useState<{ round: number; text: string }[]>([]);
   /** Fresh dawn results, shown as a modal once per round per browser. */
   const [dawnNotes, setDawnNotes] = useState<string[] | null>(null);
+  /** The how-it-works blurb opens itself exactly once per browser (Bri:
+   *  the square was cluttered — coaching collapses after the first read). */
+  const [helpSeen] = useState<boolean>(() =>
+    Boolean(localStorage.getItem("gerald:square-help-seen")),
+  );
+  useEffect(() => {
+    localStorage.setItem("gerald:square-help-seen", "1");
+  }, []);
 
   const loadView = useCallback(async () => {
     try {
@@ -90,47 +87,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
 
   const me = view?.players.find((p) => p.address === wallet.address);
   const round = view?.round;
-  /** What this browser bought TODAY — the kit in hand while deciding. */
-  const todaysItems = round
-    ? [
-        ...loadHistory(wallet.address, gameId).filter((r) => r.round === round),
-        // The server's record fills a fresh device's empty kit (issue #16);
-        // dedupe by txHash against the local rows.
-        ...(serverSpend?.purchases ?? [])
-          .filter(
-            (r) =>
-              r.round === round &&
-              r.item !== null &&
-              !loadHistory(wallet.address, gameId).some((l) => l.txHash === r.txHash),
-          )
-          .map((r) => ({
-            round: r.round,
-            shopId: r.shopId ?? "",
-            shopLabel: r.shopLabel,
-            item: r.item!,
-            amountStroops: r.amountStroops,
-            txHash: r.txHash,
-            at: "",
-            gameId,
-          })),
-      ]
-    : [];
-  /** Where each aimed item was pointed (written by the Shops' aim flow),
-   *  keyed by item id — shown beside the kit. */
-  const myAims: Record<string, string> = (() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem(`gerald:aims:${gameId}:${round}`) ?? "{}",
-      ) as Record<string, string>;
-    } catch {
-      return {};
-    }
-  })();
-  const AIM_ID_BY_LABEL = new Map(SHOPS.flatMap((sh) => sh.items).map((it) => [it.label, it.id]));
-  /** The candle's instant answer, if this round produced one. */
-  const candleNote = privateNotes.find(
-    (n) => n.round === round && n.text.includes("candle"),
-  )?.text;
   const living = (view?.players ?? []).filter((p) => p.alive && p.address !== wallet.address);
 
   // A new day voids yesterday's ballot and pick.
@@ -252,21 +208,49 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
 
   return (
     <div>
-      {/* Who's who, at a glance, where the arguing happens (Bri's note). */}
+      {/* Who's who — and the ballot itself (Bri, 2026-08-18): one list for
+          talking about people and voting for them. Banish arms, Confirm
+          casts, and a cast vote is locked for the day. */}
       <div className="panel roster-strip">
-        {view.players.map((p) => (
-          <span key={p.seat} className={`roster-chip${p.alive ? "" : " dead"}`}>
-            <b>{p.name}</b>
-            <span className="dim">
-              {" "}
-              {p.alive
-                ? p.drunkToday
-                  ? "🍺 dead drunk"
-                  : "alive"
-                : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
+        {view.players.map((p) => {
+          const canVote =
+            (me?.alive === true || me?.ghostVoter === true) &&
+            view.phase === "day" &&
+            !view.winner &&
+            view.marketClosed === true &&
+            !dayResetting &&
+            me?.drunkToday !== true &&
+            voted === null &&
+            p.alive &&
+            p.address !== wallet.address;
+          const armed = voteTarget === p.name;
+          return (
+            <span
+              key={p.seat}
+              className={`roster-chip${p.alive ? "" : " dead"}${voted === p.name ? " voted-chip" : ""}`}
+            >
+              <b>{p.name}</b>
+              <span className="dim">
+                {" "}
+                {p.alive
+                  ? p.drunkToday
+                    ? "🍺 dead drunk"
+                    : "alive"
+                  : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
+              </span>
+              {voted === p.name && <span className="vote-badge">⚖ your vote</span>}
+              {canVote && (
+                <button
+                  className={`banish-btn${armed ? " armed" : ""}`}
+                  disabled={acting}
+                  onClick={() => (armed ? void castVote() : setVoteTarget(p.name))}
+                >
+                  {armed ? (acting ? "…" : "Confirm ⚖") : "Banish"}
+                </button>
+              )}
             </span>
-          </span>
-        ))}
+          );
+        })}
       </div>
 
       {!view.marketClosed && !view.winner && (
@@ -278,13 +262,23 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
         </div>
       )}
 
+      <div className="square-grid">
+      <div className="square-left">
       {view.marketClosed && view.phase === "day" && !view.winner && (
         <div className="panel">
           <h2>The square</h2>
-          <p className="dim">
-            Accuse, defend, bluff — the square is always open.
-            {me && !me.alive ? " You are a ghost now: whisper wisely, certified innocent." : ""}
-          </p>
+          {/* (d) Coaching collapses after the first read. */}
+          <details className="square-help" open={!helpSeen}>
+            <summary>ⓘ How the square works</summary>
+            <p className="dim">
+              Accuse, defend, bluff — the square is always open. Ask Maude before you vote:
+              dawn comes the moment the last vote lands, and it doesn't wait for unspent
+              questions. Vote from the villager list above — Banish, then Confirm.
+            </p>
+          </details>
+          {me && !me.alive && (
+            <p className="dim">You are a ghost now: whisper wisely, certified innocent.</p>
+          )}
           <div className="chat">
             {(view.chat ?? []).length === 0 ? (
               <p className="dim">Nobody has said anything yet. Suspicious, honestly.</p>
@@ -347,40 +341,10 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
         </div>
       )}
 
-      {me?.alive && view.phase === "day" && !view.winner && (
-        <div className="panel">
-          <h2>🧺 Your items today</h2>
-          {todaysItems.length === 0 ? (
-            <p className="dim">You bought nothing today.</p>
-          ) : (
-            <ul className="kit-list">
-              {todaysItems.map((r) => (
-                <li key={r.txHash}>
-                  <b>{r.item}</b>
-                  <span className="dim">
-                    {" "}
-                    — {xlmDisplay(BigInt(r.amountStroops))} XLM, {r.shopLabel}
-                  </span>
-                  {effectOf(r.item) && <span className="kit-effect">{effectOf(r.item)}</span>}
-                  {(() => {
-                    const id = AIM_ID_BY_LABEL.get(r.item);
-                    const at = id ? myAims[id] : undefined;
-                    if (!at) return null;
-                    return (
-                      <span className="kit-aim">
-                        🎯 Aimed at {at}
-                        {r.item === "The long candle" && candleNote ? ` — ${candleNote}` : ""}
-                      </span>
-                    );
-                  })()}
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="dim kit-note">Only you can see this list.</p>
-        </div>
-      )}
-
+      {/* "Your items today" folded into the satchel (Bri, 2026-08-18) —
+          the 🎒 top-right already answers "what am I holding?". */}
+      </div>
+      <div className="square-right">
       {(me?.alive || me?.ghostVoter) && view.phase === "day" && !view.winner && (
         <div className="panel">
           <h2>The trial</h2>
@@ -391,17 +355,20 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
                 `Maude waits for: ${(view.stillShopping ?? []).join(", ")}.`}
             </p>
           )}
-          <p className="dim">
-            Who is the werebear? Ask Maude before you vote — <b>
-              dawn comes the moment the last vote lands
-            </b>, and it doesn't wait for unspent questions.
-            {voted && (
-              <>
-                {" "}
-                Your vote: <b>{voted}</b> — locked in.
-              </>
-            )}
-          </p>
+          {voted ? (
+            <p className="dim">
+              Your vote: <b>{voted}</b> — locked in.
+            </p>
+          ) : me?.drunkToday ? (
+            <p className="dim">🍺 Dead drunk — no vote for you today.</p>
+          ) : dayResetting ? (
+            <p className="dim">Dawn has broken — the next trial opens with the new day.</p>
+          ) : view.marketClosed ? (
+            <p className="dim">
+              Pick your accused from the villager list above — <b>Banish</b>, then{" "}
+              <b>Confirm</b>. Votes lock when cast.
+            </p>
+          ) : null}
           {view.marketClosed && (
             <p className="dim">
               {(view.awaitingVotes ?? []).length > 0
@@ -410,29 +377,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
               {view.nightDecided === false && " The night has not been decided yet."}
             </p>
           )}
-          <div className="row">
-            <select value={voteTarget} onChange={(e) => setVoteTarget(e.target.value)}>
-              <option value="">accuse whom?</option>
-              {living.map((p) => (
-                <option key={p.seat} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <button
-              className="primary"
-              disabled={acting || voted !== null || !voteTarget || !view.marketClosed || me?.drunkToday || dayResetting}
-              onClick={() => void castVote()}
-            >
-              {acting
-                ? "Casting… (the last vote of the day brings the dawn)"
-                : me?.drunkToday
-                  ? "🍺 Dead drunk — no vote today"
-                  : dayResetting
-                    ? "Dawn has broken"
-                    : "Cast vote"}
-            </button>
-          </div>
         </div>
       )}
 
@@ -520,6 +464,8 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
           <p className="dim">The game is over — the reckoning is in the Town Square.</p>
         </div>
       )}
+      </div>
+      </div>
 
       {/* Dawn results: what your aimed items did overnight, shown once. */}
       {dawnNotes && (
