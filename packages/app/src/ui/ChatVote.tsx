@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { VillagerWallet } from "../lib/wallet";
+import { CHARACTERS } from "../lib/profile";
 import {
   fetchPublicView,
   pageHidden,
@@ -30,6 +31,13 @@ interface Props {
 }
 
 type Role = "villager" | "werebear";
+
+const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
+/** "Bri the Drunk" — a name you can put a face to (Bri's note). */
+const fullName = (p: { name: string; character?: string | null }) => {
+  const t = p.character ? CHAR_BY_ID.get(p.character)?.title : null;
+  return t ? `${p.name} ${t}` : p.name;
+};
 
 export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
   const [view, setView] = useState<PublicView | null>(null);
@@ -208,49 +216,22 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
 
   return (
     <div>
-      {/* Who's who — and the ballot itself (Bri, 2026-08-18): one list for
-          talking about people and voting for them. Banish arms, Confirm
-          casts, and a cast vote is locked for the day. */}
+      {/* Who's who, at a glance. Voting moved to the trial's portrait grid
+          (Bri, 2026-08-18): you banish a FACE, not a name in a bar. */}
       <div className="panel roster-strip">
-        {view.players.map((p) => {
-          const canVote =
-            (me?.alive === true || me?.ghostVoter === true) &&
-            view.phase === "day" &&
-            !view.winner &&
-            view.marketClosed === true &&
-            !dayResetting &&
-            me?.drunkToday !== true &&
-            voted === null &&
-            p.alive &&
-            p.address !== wallet.address;
-          const armed = voteTarget === p.name;
-          return (
-            <span
-              key={p.seat}
-              className={`roster-chip${p.alive ? "" : " dead"}${voted === p.name ? " voted-chip" : ""}`}
-            >
-              <b>{p.name}</b>
-              <span className="dim">
-                {" "}
-                {p.alive
-                  ? p.drunkToday
-                    ? "🍺 dead drunk"
-                    : "alive"
-                  : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
-              </span>
-              {voted === p.name && <span className="vote-badge">⚖ your vote</span>}
-              {canVote && (
-                <button
-                  className={`banish-btn${armed ? " armed" : ""}`}
-                  disabled={acting}
-                  onClick={() => (armed ? void castVote() : setVoteTarget(p.name))}
-                >
-                  {armed ? (acting ? "…" : "Confirm ⚖") : "Banish"}
-                </button>
-              )}
+        {view.players.map((p) => (
+          <span key={p.seat} className={`roster-chip${p.alive ? "" : " dead"}`}>
+            <b>{p.name}</b>
+            <span className="dim">
+              {" "}
+              {p.alive
+                ? p.drunkToday
+                  ? "🍺 dead drunk"
+                  : "alive"
+                : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
             </span>
-          );
-        })}
+          </span>
+        ))}
       </div>
 
       {!view.marketClosed && !view.winner && (
@@ -357,7 +338,9 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
           )}
           {voted ? (
             <p className="dim">
-              Your vote: <b>{voted}</b> — locked in.
+              Your vote:{" "}
+              <b>{fullName(view.players.find((p) => p.name === voted) ?? { name: voted })}</b> —
+              locked in.
             </p>
           ) : me?.drunkToday ? (
             <p className="dim">🍺 Dead drunk — no vote for you today.</p>
@@ -365,10 +348,43 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             <p className="dim">Dawn has broken — the next trial opens with the new day.</p>
           ) : view.marketClosed ? (
             <p className="dim">
-              Pick your accused from the villager list above — <b>Banish</b>, then{" "}
-              <b>Confirm</b>. Votes lock when cast.
+              Pick a face. <b>Banish</b> arms it, <b>Confirm</b> casts it — and votes lock when
+              cast.
             </p>
           ) : null}
+          {(me?.alive === true || me?.ghostVoter === true) &&
+            view.marketClosed === true &&
+            !dayResetting &&
+            me?.drunkToday !== true &&
+            voted === null && (
+              <div className="trial-grid">
+                {view.players
+                  .filter((p) => p.alive && p.address !== wallet.address)
+                  .map((p) => {
+                    const c = p.character ? CHAR_BY_ID.get(p.character) : null;
+                    const armed = voteTarget === p.name;
+                    return (
+                      <div key={p.seat} className={`trial-card${armed ? " armed" : ""}`}>
+                        {c?.image ? (
+                          <img className="trial-portrait" src={c.image} alt="" />
+                        ) : (
+                          <span className="trial-portrait trial-noface" aria-hidden="true">
+                            🌑
+                          </span>
+                        )}
+                        <span className="trial-name">{fullName(p)}</span>
+                        <button
+                          className={`banish-btn${armed ? " armed" : ""}`}
+                          disabled={acting}
+                          onClick={() => (armed ? void castVote() : setVoteTarget(p.name))}
+                        >
+                          {armed ? (acting ? "…" : "Confirm ⚖") : "Banish"}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           {view.marketClosed && (
             <p className="dim">
               {(view.awaitingVotes ?? []).length > 0
@@ -414,9 +430,11 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
         </div>
       )}
 
-      {/* The freshest results, HERE — this is the tab everyone is on when
-          dawn breaks, so the outcome must not hide in the Town Square. */}
-      {lastMorning && (
+      {/* The crier speaks at dawn and is GONE once the new day opens (Bri,
+          2026-08-18): yesterday's news read as today's and confused the
+          table. The films and the dawn modal carry the story; the crier is
+          the readable recap in the reset window (and at game end). */}
+      {lastMorning && dayResetting && (
         <div className="panel">
           <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
           {lastMorning.banished && (
@@ -458,6 +476,25 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             )}
         </div>
       )}
+
+      {/* The crier is gone but the day is young: one obvious thing to press. */}
+      {lastMorning &&
+        !dayResetting &&
+        !view.winner &&
+        me?.alive &&
+        lastMorning.round + 1 === view.round &&
+        !view.marketClosed &&
+        me?.doneToday !== true && (
+          <div className="panel">
+            <h2>🌅 Day {view.round}</h2>
+            <p className="dim">The morning's news has been cried. The shops are open.</p>
+            <div className="row">
+              <button className="primary" onClick={onGoShops}>
+                Start new day →
+              </button>
+            </div>
+          </div>
+        )}
 
       {view.winner && (
         <div className="panel">

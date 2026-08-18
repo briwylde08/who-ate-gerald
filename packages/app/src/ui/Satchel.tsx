@@ -37,7 +37,12 @@ export function Satchel({ serverSpend, round, alive, refresh }: Props) {
   const pizzasHeld = Math.max(0, countEver("pizza_party") - (serverSpend?.spent?.pizza_party ?? 0));
   const restArmed = alive && !serverSpend?.ghostVoteDecided && countEver("unquiet_rest") > 0;
 
-  const todays = purchases.filter((p) => p.round === round && p.item !== null);
+  // Gerald's pieces live ONLY in the reliquary (Bri, 2026-08-18) — the
+  // everyday satchel doesn't repeat them.
+  const RELIC_LABELS = new Set(["Gerald's finger", "Gerald's thumb", "Gerald's toe"]);
+  const todays = purchases.filter(
+    (p) => p.round === round && p.item !== null && !RELIC_LABELS.has(p.item),
+  );
   const aims: Record<string, string> = (() => {
     try {
       return JSON.parse(localStorage.getItem(`gerald:aims:${loadGameId()}:${round}`) ?? "{}");
@@ -116,7 +121,7 @@ export function Satchel({ serverSpend, round, alive, refresh }: Props) {
             ✕
           </button>
           <div className="role-label">Your satchel</div>
-          {held.length === 0 && todays.length === 0 && fingers === 0 && (
+          {held.length === 0 && todays.length === 0 && (
             <p className="dim">Empty. The shops await.</p>
           )}
           {held.length > 0 && (

@@ -4,7 +4,7 @@ import { VillagerWallet, type VillagerBalances, type TxPhase } from "../lib/wall
 import { DEPLOYMENT } from "../lib/deployment";
 import { STARTING_BUDGET_XLM, stroopsFromXlm } from "../lib/catalog";
 import { loadProfile, clearProfile, characterOf, saveProfile, type Profile } from "../lib/profile";
-import { fetchGraph, fetchPublicView, loadGameId, pageHidden, playerApi, saveGameId, type ServerPurchases } from "../lib/player";
+import { fetchGraph, fetchPublicView, hasCachedAuth, loadGameId, pageHidden, playerApi, saveGameId, type ServerPurchases } from "../lib/player";
 import { CharEmoji } from "./CharIcon";
 import { Intro } from "./Intro";
 import { GeraldStory } from "./Story";
@@ -96,6 +96,7 @@ export function PlayerApp() {
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [tills, setTills] = useState<{ round: number; shops: string[] } | null>(null);
   const [dmOpen, setDmOpen] = useState(false);
+  const [dmUnread, setDmUnread] = useState(false);
   const [pubPlayers, setPubPlayers] = useState<{ name: string; address: string; alive: boolean }[]>([]);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
@@ -143,6 +144,28 @@ export function PlayerApp() {
   const [introAt, setIntroAt] = useState<"story" | "game" | "identity">("story");
   const refreshing = useRef(false);
   /** Always the game we are CURRENTLY in, for discarding stale poll replies. */
+  // The red dot: quietly watch for whispers addressed to me while the box is
+  // closed. "Seen" is a timestamp stamped whenever the box opens or closes.
+  useEffect(() => {
+    if (!wallet) return;
+    const seenKey = () => `gerald:dm-seen:${gameId}:${wallet.address}`;
+    const check = () => {
+      if (pageHidden() || dmOpen || !hasCachedAuth(wallet, gameId)) return;
+      const myName = pubPlayers.find((p) => p.address === wallet.address)?.name;
+      if (!myName) return;
+      void playerApi
+        .myDms(wallet, gameId)
+        .then((r) => {
+          const newest = r.dms.filter((d) => d.to === myName).at(-1)?.at;
+          if (newest && newest > (localStorage.getItem(seenKey()) ?? "")) setDmUnread(true);
+        })
+        .catch(() => undefined);
+    };
+    check();
+    const t = setInterval(check, 12_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet, gameId, dmOpen, pubPlayers.length]);
   const gameIdRef = useRef(gameId);
   gameIdRef.current = gameId;
   useEffect(() => {
@@ -537,9 +560,14 @@ export function PlayerApp() {
           {/* Whispers ride the top bar (Bri): open a private line any time. */}
           {profile && wallet && (
             <button
+              className={`dm-btn${dmUnread ? " has-unread" : ""}`}
               title="Whispers — completely private"
               aria-expanded={dmOpen}
-              onClick={() => setDmOpen((o) => !o)}
+              onClick={() => {
+                localStorage.setItem(`gerald:dm-seen:${gameId}:${wallet?.address}`, new Date().toISOString());
+                setDmUnread(false);
+                setDmOpen((o) => !o);
+              }}
             >
               💬
             </button>
@@ -596,9 +624,18 @@ export function PlayerApp() {
           className="film-overlay"
           role="dialog"
           aria-label={film.caption}
-          onClick={() => setFilm(null)}
+          onClick={() => {
+            if (!film.next) setFilm(null);
+          }}
         >
           <div className="film-frame" onClick={(e) => e.stopPropagation()}>
+            {/* No exit between the two features (Bri): the ✕ only exists
+                when there's nothing left that must be watched. */}
+            {!film.next && (
+              <button className="panel-x film-x" aria-label="Close" onClick={() => setFilm(null)}>
+                ✕
+              </button>
+            )}
             {film.src && film.started ? (
               // Created AFTER the click: the user gesture lets it play WITH
               // sound — browsers forbid unmuted autoplay (Bri chose the
@@ -631,9 +668,6 @@ export function PlayerApp() {
                 ⚖ Who got banished?
               </button>
             )}
-            <button className="primary" onClick={() => setFilm(null)}>
-              Close the curtains
-            </button>
           </div>
         </div>
       )}
