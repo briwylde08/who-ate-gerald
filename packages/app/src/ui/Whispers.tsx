@@ -56,7 +56,7 @@ export function Whispers({ wallet, gameId, players, open, onClose }: Props) {
       <button className="panel-x" aria-label="Close whispers" onClick={onClose}>
         ✕
       </button>
-      <div className="role-label">🤫 Whispers — completely private</div>
+      <div className="role-label">🤫 Slide into someone's DMs</div>
       <div className="dm-thread">
         {dms.length === 0 ? (
           <p className="dim">No whispers yet. What happens here, stays here.</p>
