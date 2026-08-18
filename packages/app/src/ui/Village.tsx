@@ -108,6 +108,14 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
     prevSpendable.current = balances.spendable;
   }, [balances]);
   const treasuryReady = balanceSettled && (round < 1 || serverSpend !== null);
+  // The gate needs a SECOND read to agree with the first, and the app only
+  // refreshes balances on actions — so while unsettled, ask for one.
+  useEffect(() => {
+    if (balanceSettled || !active) return;
+    const t = setTimeout(() => refresh(), 1_200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balanceSettled, balances, active]);
 
   const topUp = async () => {
     setError(null);
