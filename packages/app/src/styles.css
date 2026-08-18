@@ -1179,9 +1179,12 @@ th { color: var(--ink-dim); font-weight: normal; }
 .char-wrap > .character { flex: 1; }
 .claim-chip {
   position: absolute;
-  bottom: 10px;
+  /* Dead center of the PORTRAIT (Bri) — measured against the live card:
+     square portrait + caption + blurb puts the picture's middle at ~41%
+     of card height. */
+  top: 41%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   white-space: nowrap;
   z-index: 3;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
