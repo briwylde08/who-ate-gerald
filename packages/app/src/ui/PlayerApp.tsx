@@ -14,6 +14,7 @@ import { Town } from "./Town";
 import { ChatVote } from "./ChatVote";
 import { Satchel } from "./Satchel";
 import { SixSteps } from "./SixSteps";
+import { Whispers } from "./Whispers";
 import { loadHistory, treasuryOwed } from "../lib/history";
 
 /**
@@ -94,6 +95,8 @@ export function PlayerApp() {
   };
   const [steps, setSteps] = useState<Step[] | null>(null);
   const [tills, setTills] = useState<{ round: number; shops: string[] } | null>(null);
+  const [dmOpen, setDmOpen] = useState(false);
+  const [pubPlayers, setPubPlayers] = useState<{ name: string; address: string; alive: boolean }[]>([]);
   const [gameId, setGameId] = useState(loadGameId);
   const [visitedShops, setVisitedShops] = useState<string[]>([]);
   const [round, setRound] = useState(0);
@@ -295,6 +298,7 @@ export function PlayerApp() {
         if (gameIdRef.current !== gameId) return;
         setRound((r) => (v.round !== r ? v.round : r));
         if (v.tills) setTills((t) => (t?.round === v.tills!.round ? t : v.tills!));
+        setPubPlayers(v.players.map((p) => ({ name: p.name, address: p.address, alive: p.alive })));
         // A fresh banishment of YOU gets a personal notice before any film.
         const bm = [...v.mornings].reverse().find((x) => x.banished);
         if (bm?.banished) {
@@ -530,6 +534,16 @@ export function PlayerApp() {
             banner on its own. Available from the moment there's an identity to
             shed — the picker and connect screens are where people start over. */}
         <div className="topbar-actions">
+          {/* Whispers ride the top bar (Bri): open a private line any time. */}
+          {profile && wallet && (
+            <button
+              title="Whispers — completely private"
+              aria-expanded={dmOpen}
+              onClick={() => setDmOpen((o) => !o)}
+            >
+              💬
+            </button>
+          )}
           {profile && (
             <button
               title="Pick a different villager or name"
@@ -552,6 +566,16 @@ export function PlayerApp() {
           {(wallet || profile) && <button onClick={() => void logout()}>Log out</button>}
         </div>
       </div>
+
+      {wallet && (
+        <Whispers
+          wallet={wallet}
+          gameId={gameId}
+          players={pubPlayers}
+          open={dmOpen}
+          onClose={() => setDmOpen(false)}
+        />
+      )}
 
       {banishedNotice && (
         <div className="film-overlay" role="dialog" aria-label="You were banished">
@@ -718,7 +742,14 @@ export function PlayerApp() {
           below them must not render behind it. */}
       {profile && wallet && provisioned && balances && (
         <div className="app-shell">
-        <Satchel serverSpend={serverSpend} round={round} alive={meAlive} />
+        <Satchel
+          serverSpend={serverSpend}
+          round={round}
+          alive={meAlive}
+          refresh={() =>
+            void playerApi.myPurchases(wallet, gameId).then(setServerSpend).catch(() => undefined)
+          }
+        />
         <div className="app-main">
           <div className="tabs">
             <button

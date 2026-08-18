@@ -52,10 +52,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
   const [pickTarget, setPickTarget] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
   const [chatText, setChatText] = useState("");
-  const [dmTo, setDmTo] = useState("");
-  const [dmText, setDmText] = useState("");
-  const [dms, setDms] = useState<{ round: number; from: string; to: string; text: string; at: string }[]>([]);
-  const [dmOpen, setDmOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [chatBusy, setChatBusy] = useState(false);
   /** Vote/pick in flight — the LAST vote of a day runs the entire dawn. */
@@ -91,19 +87,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ block: "nearest" });
   }, [chatLen]);
-
-  // Whispers: poll alongside the view when the panel's open.
-  useEffect(() => {
-    if (!dmOpen || !hasCachedAuth(wallet, gameId)) return;
-    const pull = () =>
-      void playerApi.myDms(wallet, gameId).then((r) => setDms(r.dms)).catch(() => undefined);
-    pull();
-    const t = setInterval(() => {
-      if (!pageHidden()) pull();
-    }, 5_000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dmOpen, gameId]);
 
   const me = view?.players.find((p) => p.address === wallet.address);
   const round = view?.round;
@@ -191,19 +174,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
       .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.address, round]);
-
-  const sendDm = async () => {
-    const text = dmText.trim();
-    if (!text || !dmTo) return;
-    setDmText("");
-    try {
-      await playerApi.sendDm(wallet, gameId, dmTo, text);
-      const r = await playerApi.myDms(wallet, gameId);
-      setDms(r.dms);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
 
   const sendChat = async () => {
     setChatBusy(true);
@@ -372,57 +342,8 @@ export function ChatVote({ wallet, gameId, setError, onGoShops, serverSpend }: P
             </div>
           )}
 
-          {/* Whispers (Bri): completely secret for now — no public trace
-              that a whisper even happened. Only sender and recipient see. */}
-          {me && (
-            <details
-              className="whispers"
-              open={dmOpen}
-              onToggle={(e) => setDmOpen((e.target as HTMLDetailsElement).open)}
-            >
-              <summary>🤫 Whisper to one villager (completely private)</summary>
-              <div className="dm-thread">
-                {dms.length === 0 ? (
-                  <p className="dim">No whispers yet. What happens here, stays here.</p>
-                ) : (
-                  dms.slice(-40).map((d, i) => (
-                    <p key={i} className="chat-line dm-line">
-                      <b>
-                        {d.from === me.name ? `→ ${d.to}` : `${d.from} →`}:
-                      </b>{" "}
-                      {d.text}
-                    </p>
-                  ))
-                )}
-              </div>
-              <div className="row">
-                <select value={dmTo} onChange={(e) => setDmTo(e.target.value)}>
-                  <option value="">whisper to whom?</option>
-                  {view.players
-                    .filter((p) => p.address !== wallet.address)
-                    .map((p) => (
-                      <option key={p.seat} value={p.name}>
-                        {p.name}
-                        {p.alive ? "" : " 🪦"}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  type="text"
-                  maxLength={280}
-                  placeholder="I KNOW YOU'RE THE WEREBEAR! Let's work together."
-                  value={dmText}
-                  onChange={(e) => setDmText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && dmText.trim() && dmTo) void sendDm();
-                  }}
-                />
-                <button disabled={!dmText.trim() || !dmTo} onClick={() => void sendDm()}>
-                  Whisper
-                </button>
-              </div>
-            </details>
-          )}
+          {/* Whispers moved to the top bar (Bri, 2026-08-18) — the square
+              keeps only the public argument. */}
         </div>
       )}
 

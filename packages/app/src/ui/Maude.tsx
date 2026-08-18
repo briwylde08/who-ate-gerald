@@ -241,7 +241,31 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
       )}
 
       <div className="panel">
-
+        {/* Once today's question is asked, this box becomes the conversation
+            (Bri, 2026-08-18): your words, then hers, right where you spoke.
+            Earlier readings stay archived below. */}
+        {spent && answers[0] && answers[0].round === round ? (
+          <div className="maude-chat">
+            <h3 className="composer-head">Your audience with Maude</h3>
+            <p className="chat-line">
+              <b>You:</b> “{answers[0].question}”
+            </p>
+            <div className="answer-card">“{answers[0].answer}”</div>
+            <p className="answer-source">
+              Read with the Auditor's key — the one key that can open every confidential amount.
+            </p>
+            <p className="whats-next">
+              Now that you've gotten your insight, discuss your findings with your fellow
+              villagers, then pick someone to accuse.
+            </p>
+            <div className="row">
+              <button className="primary" onClick={onGoChatVote}>
+                Chat &amp; Vote →
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
         <h3 className="composer-head">Choose a question, or write your own</h3>
         <div className="ask-about">
           <label htmlFor="maude-target">Ask about</label>
@@ -320,13 +344,18 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
             <button onClick={onGoChatVote}>I don't have a question — Chat &amp; Vote →</button>
           )}
         </div>
+          </>
+        )}
       </div>
 
       <div className="panel answer-area">
-        {answers.length === 0 ? (
-          <p className="quiet-crystal">The crystal is quiet.</p>
-        ) : (
-          answers.map((a, i) => (
+        {(() => {
+          const shownAbove = spent && answers[0]?.round === round ? 1 : 0;
+          const archive = answers.slice(shownAbove);
+          if (answers.length === 0) return <p className="quiet-crystal">The crystal is quiet.</p>;
+          if (archive.length === 0)
+            return <p className="quiet-crystal">Earlier readings will gather here.</p>;
+          return archive.map((a, i) => (
             <div key={i} className="maude-answer">
               <div className="role-label">
                 Maude's answer · day {a.round}
@@ -338,8 +367,9 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
               <p className="answer-source">
                 Read with the Auditor's key — the one key that can open every confidential amount.
               </p>
-              {/* Only after the newest answer: what to do with it. */}
-              {i === 0 && (
+              {/* The what-next pointer rides the newest answer only when the
+                  conversation box above isn't already carrying it. */}
+              {i === 0 && shownAbove === 0 && (
                 <>
                   <p className="whats-next">
                     Now that you've gotten your insight, discuss your findings with your
@@ -353,8 +383,8 @@ export function Maude({ wallet, gameId, setError, onGoChatVote, active }: Props)
                 </>
               )}
             </div>
-          ))
-        )}
+          ));
+        })()}
       </div>
     </div>
   );

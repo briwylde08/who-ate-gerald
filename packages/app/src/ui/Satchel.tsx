@@ -20,11 +20,13 @@ interface Props {
   serverSpend: ServerPurchases | null;
   round: number;
   alive: boolean;
+  /** Re-pull serverSpend when a panel opens, so the counts are fresh. */
+  refresh?: () => void;
 }
 
 const LABEL_TO_ID = new Map(SHOPS.flatMap((sh) => sh.items).map((it) => [it.label, it.id]));
 
-export function Satchel({ serverSpend, round, alive }: Props) {
+export function Satchel({ serverSpend, round, alive, refresh }: Props) {
   const [open, setOpen] = useState(false);
 
   const purchases = serverSpend?.purchases ?? [];
@@ -63,7 +65,12 @@ export function Satchel({ serverSpend, round, alive }: Props) {
         className="satchel-btn"
         aria-expanded={open}
         title="Satchel"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setOpen((o) => {
+            if (!o) refresh?.();
+            return !o;
+          });
+        }}
       >
         <img className="satchel-icon" src="/characters/satchel.png" alt="Satchel" />
       </button>
@@ -72,12 +79,20 @@ export function Satchel({ serverSpend, round, alive }: Props) {
         className="satchel-btn relic-btn"
         aria-expanded={relicsOpen}
         title="Gerald's extremities"
-        onClick={() => setRelicsOpen((o) => !o)}
+        onClick={() => {
+          setRelicsOpen((o) => {
+            if (!o) refresh?.();
+            return !o;
+          });
+        }}
       >
         <img className="satchel-icon" src="/characters/geralds-hand.png" alt="Gerald's extremities" />
       </button>
       {relicsOpen && (
         <div className="panel satchel-panel relic-panel">
+          <button className="panel-x" aria-label="Close" onClick={() => setRelicsOpen(false)}>
+            ✕
+          </button>
           <div className="role-label">Gerald's reliquary</div>
           {relicTotal === 0 ? (
             <p className="dim">You hold no piece of Gerald.</p>
@@ -97,6 +112,9 @@ export function Satchel({ serverSpend, round, alive }: Props) {
       )}
       {open && (
         <div className="panel satchel-panel">
+          <button className="panel-x" aria-label="Close" onClick={() => setOpen(false)}>
+            ✕
+          </button>
           <div className="role-label">Your satchel</div>
           {held.length === 0 && todays.length === 0 && fingers === 0 && (
             <p className="dim">Empty. The shops await.</p>
