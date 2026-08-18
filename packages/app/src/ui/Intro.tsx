@@ -162,8 +162,9 @@ export function Intro({
   // eight big portraits, so it scrolls out of sight and the button gave no
   // clue which half was missing. Now it says so, and takes you there.
   const needsName = !named && characterId !== null;
+  const chosenTitle = CHARACTERS.find((c) => c.id === characterId)?.title ?? null;
   const cta = ready
-    ? `Enter the village as ${name.trim()}`
+    ? `Claim the ${chosenTitle}`
     : needsName
       ? "Type your name to continue"
       : characterId === null && named
