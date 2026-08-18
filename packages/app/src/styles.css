@@ -1231,6 +1231,49 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .voted-chip { outline: 1px solid var(--gold); border-radius: 6px; }
 
+/* The trial: banish a face, not a name. */
+.trial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.trial-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+.trial-card.armed { border-color: rgba(179, 66, 63, 0.9); }
+.trial-portrait {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.trial-noface { display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+.trial-name { font-size: 0.78rem; text-align: center; }
+
+/* The whisper bubble's red dot. */
+.dm-btn { position: relative; }
+.dm-btn.has-unread::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #d9433f;
+}
+
+/* The film frame hosts its own ✕. */
+.film-frame { position: relative; }
+.film-x { z-index: 4; }
+
 /* Coaching folds away after the first read. */
 .square-help { margin-bottom: 10px; }
 .square-help summary { cursor: pointer; color: var(--moon); font-size: 0.85rem; }
