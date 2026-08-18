@@ -388,8 +388,8 @@ export function Intro({
         {CHARACTERS.map((c) => {
           const isTaken = taken.has(c.id);
           return (
+            <div key={c.id} className="char-wrap">
             <button
-              key={c.id}
               className={`character ${characterId === c.id ? "selected" : ""}`}
               disabled={isTaken || (gameDealt && seated !== null && c.id !== seated.character)}
               onClick={() => setCharacterId(c.id)}
@@ -408,34 +408,28 @@ export function Intro({
               </span>
               <span className="dim blurb">{isTaken ? "Somebody already wears this face." : c.blurb}</span>
             </button>
+            {/* The Claim chip rides the chosen card itself (Bri, 2026-08-18). */}
+            {characterId === c.id && !isTaken && (ready || needsName) && (
+              <button
+                className="primary claim-chip"
+                onClick={() => {
+                  if (needsName) {
+                    nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    nameRef.current?.focus();
+                    return;
+                  }
+                  const p = { name: name.trim(), characterId: c.id };
+                  saveProfile(p);
+                  onDone(p);
+                }}
+              >
+                {needsName ? "Claim — pick a name first" : `Claim the ${c.title} →`}
+              </button>
+            )}
+            </div>
           );
         })}
       </div>
-
-      {/* The Claim bar (Bri, 2026-08-18): picking a face shouldn't require a
-          scroll to the bottom — the button follows you. Same logic as the
-          row below; the row stays for keyboard/screen-reader flow. */}
-      {characterId !== null && !taken.has(characterId) && (ready || needsName) && (
-        <div className="claim-bar">
-          <button
-            className="primary"
-            onClick={() => {
-              if (needsName) {
-                nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                nameRef.current?.focus();
-                return;
-              }
-              const p = { name: name.trim(), characterId: characterId! };
-              saveProfile(p);
-              onDone(p);
-            }}
-          >
-            {needsName
-              ? "Claim — pick a name first"
-              : `Claim ${CHARACTERS.find((c) => c.id === characterId)?.title ?? "this villager"} →`}
-          </button>
-        </div>
-      )}
 
       <div className="row">
         <button
