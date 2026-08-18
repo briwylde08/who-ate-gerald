@@ -825,7 +825,6 @@ export function PlayerApp() {
               gameId={gameId}
               setError={setError}
               onGoShops={() => goTab("village")}
-              serverSpend={serverSpend}
             />
           </div>
         </div>
