@@ -112,11 +112,13 @@ function synthetic() {
   const silver = executeFact(ctx, "who_bought_item", { item: "barrel of beer", round: 2 });
   check("who_bought_item: Ron bought the barrel in r2", JSON.stringify(silver.buyers) === '["Ron"]', silver);
 
+  // Maude answers TODAY only (Bri, 2026-08-17): an omitted round clamps to
+  // the current round — the all-rounds path is retired, and Tyler's round-1
+  // barrel is yesterday's news she won't repeat.
   const silverEver = executeFact(ctx, "who_bought_item", { item: "barrel of beer" });
   check(
-    "who_bought_item (all rounds): Ron + Tyler",
-    JSON.stringify(silverEver.buyers) === '["Tyler","Ron"]' ||
-      JSON.stringify(silverEver.buyers) === '["Ron","Tyler"]',
+    "who_bought_item (no round): clamps to today, Ron only",
+    JSON.stringify(silverEver.buyers) === '["Ron"]',
     silverEver,
   );
 
