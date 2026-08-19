@@ -425,11 +425,12 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
         </div>
       )}
 
-      {/* The crier speaks at dawn and is GONE once the new day opens (Bri,
-          2026-08-18): yesterday's news read as today's and confused the
-          table. The films and the dawn modal carry the story; the crier is
-          the readable recap in the reset window (and at game end). */}
-      {lastMorning && dayResetting && (
+      {/* The crier lingers through the next morning's SHOPPING (Bri,
+          2026-08-19): from dawn until everyone has declared done buying.
+          Once the new day's market closes, yesterday's news leaves the
+          square until the next dawn. */}
+      {lastMorning &&
+        (dayResetting || (lastMorning.round + 1 === view.round && !view.marketClosed)) && (
         <div className="panel">
           <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
           {lastMorning.banished && (
@@ -471,25 +472,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             )}
         </div>
       )}
-
-      {/* The crier is gone but the day is young: one obvious thing to press. */}
-      {lastMorning &&
-        !dayResetting &&
-        !view.winner &&
-        me?.alive &&
-        lastMorning.round + 1 === view.round &&
-        !view.marketClosed &&
-        me?.doneToday !== true && (
-          <div className="panel">
-            <h2>🌅 Day {view.round}</h2>
-            <p className="dim">The morning's news has been cried. The shops are open.</p>
-            <div className="row">
-              <button className="primary" onClick={onGoShops}>
-                Start new day →
-              </button>
-            </div>
-          </div>
-        )}
 
       {view.winner && (
         <div className="panel">
