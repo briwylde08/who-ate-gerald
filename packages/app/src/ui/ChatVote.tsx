@@ -346,11 +346,6 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             <p className="dim">🍺 Dead drunk — no vote for you today.</p>
           ) : dayResetting ? (
             <p className="dim">Dawn has broken — the next trial opens with the new day.</p>
-          ) : view.marketClosed ? (
-            <p className="dim">
-              Pick a face. <b>Banish</b> arms it, <b>Confirm</b> casts it — and votes lock when
-              cast.
-            </p>
           ) : null}
           {(me?.alive === true || me?.ghostVoter === true) &&
             view.marketClosed === true &&
