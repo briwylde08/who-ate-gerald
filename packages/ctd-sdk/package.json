@@ -2,6 +2,7 @@
   "name": "@ctd/sdk",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Client SDK for the confidential token demo: Grumpkin/Poseidon2 crypto, UltraHonk proving, RPC-only chain + state sync.",
   "exports": {
