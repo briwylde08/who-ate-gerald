@@ -24,6 +24,6 @@ Lamplighter (torch)
 - Portraits: square sources crop best (the Lamplighter portrait is
   portrait-ratio and gets center-cropped). Poacher uses the
   moonlit-with-deer variant — full-body, so he reads smaller than the
-  close-up portraits; Patrick to weigh in.
+  close-up portraits; a second opinion is pending.
 - Icons: keep the subject large and centered in frame. Thin diagonal
   subjects (the bow) need a tight crop or they turn to mush at 20px.

@@ -37,6 +37,11 @@ grep -rn "VENDORED" packages/ctd-sdk/src              # every touched file
   decode indexer rows without bundling `@stellar/stellar-sdk`. `events.ts`
   re-exports everything, so the SDK's public API is unchanged; the split adds
   the `./chain/event-shapes` and `./chain/indexer` export subpaths.
+- **2026-08-06 — `auditor/decrypt.ts`**: `auditTransfer` derives both auditor
+  channels from ONE ECDH instead of calling the two per-channel helpers, which
+  each recomputed `ecdh(k, ev.rE)` on the same ephemeral point. Same
+  arithmetic, ~3.67 ms → 1.95 ms per audited transfer — and the auditor
+  decrypts every transfer on every chain read.
 
 Note the vendored `README.md` still documents upstream's pnpm workspace
 (`pnpm build:sdk`, `pnpm test:sdk`). In this repo those are `npm run build:sdk`

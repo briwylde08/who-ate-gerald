@@ -14,7 +14,7 @@ export interface Env {
    *  dawn till-count (config/local.shops.json is the source). */
   SHOP_SECRETS?: string;
   OPENAI_API_KEY: string;
-  /** CF AI Gateway compat URL (QA's gateway — same as SCF Review). */
+  /** Cloudflare AI Gateway OpenAI-compat URL. */
   OPENAI_BASE_URL?: string;
   /** Optional gateway auth (cf-aig-authorization). */
   CF_AIG_TOKEN?: string;
