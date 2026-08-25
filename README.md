@@ -13,6 +13,20 @@ private question per villager per day.
 
 Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
 
+## About this repository
+
+This repo is published as a **reference example** to accompany a written
+explanation of confidential-token transfers on Stellar — a real application you
+can read, not a template to fork. You're welcome to read any of it; the game's
+own code (everything outside `packages/ctd-sdk` and `packages/ctd-disclosure`)
+is shared for reading and is not licensed for reuse or redistribution.
+
+The two `ctd-*` packages are **not this project's code**. They are the
+confidential-token SDK and disclosure circuits from
+[`brozorec/stellar-confidential-token-demo`](https://github.com/brozorec/stellar-confidential-token-demo),
+vendored at a pinned commit and licensed separately by their author — see each
+package's `VENDORED.md`.
+
 ## How the tech IS the game
 
 | Game mechanic | Protocol reality |

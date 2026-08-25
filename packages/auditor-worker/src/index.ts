@@ -19,20 +19,39 @@ import type { Env } from "./env";
 
 export { GameRoom, LobbyRegistry };
 
-const CORS = {
-  "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET, POST, OPTIONS",
-  "access-control-allow-headers": "authorization, content-type",
-  "access-control-max-age": "86400",
-};
+// The seat signature is a bearer credential (see auth.ts + issue #10), so the
+// worker must NOT answer arbitrary websites: a lookalike page that phishes one
+// Freighter signature could otherwise call these endpoints directly as the
+// player. CORS is browser-enforced, so echoing the Origin only for the real
+// game (and localhost dev) closes the one realistic attack — a malicious page.
+// Scripts ignore CORS entirely; that's the deferred nonce-auth problem, not
+// this one. Preview deploys live under *.who-ate-gerald.pages.dev, which only
+// this project can create, so a suffix match is safe.
+function allowedOrigin(origin: string | null): string | null {
+  if (!origin) return null;
+  if (origin === "http://localhost:5173" || origin === "http://127.0.0.1:5173") return origin;
+  try {
+    const host = new URL(origin).hostname;
+    if (host === "who-ate-gerald.pages.dev" || host.endsWith(".who-ate-gerald.pages.dev")) {
+      return origin;
+    }
+  } catch {
+    /* malformed Origin — deny */
+  }
+  return null;
+}
 
-const json = (body: unknown, status = 200): Response =>
-  new Response(JSON.stringify(body, null, 2), {
-    status,
-    // no-store: every response here is live game state — a heuristically
-    // cached lobby board once showed a game that had been ended for minutes.
-    headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS },
-  });
+function corsFor(req: Request): Record<string, string> {
+  const h: Record<string, string> = {
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-allow-headers": "authorization, content-type",
+    "access-control-max-age": "86400",
+    vary: "Origin",
+  };
+  const ok = allowedOrigin(req.headers.get("origin"));
+  if (ok) h["access-control-allow-origin"] = ok;
+  return h;
+}
 
 function gmAuthorized(req: Request, env: Env): boolean {
   const header = req.headers.get("authorization") ?? "";
@@ -51,9 +70,21 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
 
-    // CORS preflight for the app's authenticated browser requests.
+    // Local closure over `req` so every json() below carries the right,
+    // origin-checked CORS headers without threading `req` through each call.
+    const json = (body: unknown, status = 200): Response =>
+      new Response(JSON.stringify(body, null, 2), {
+        status,
+        // no-store: every response here is live game state — a heuristically
+        // cached lobby board once showed a game ended minutes earlier.
+        headers: { "content-type": "application/json", "cache-control": "no-store", ...corsFor(req) },
+      });
+
+    // CORS preflight for the app's authenticated browser requests. A denied
+    // origin gets the preflight without an allow-origin header, so the browser
+    // blocks the real request (issue #10).
     if (req.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS });
+      return new Response(null, { status: 204, headers: corsFor(req) });
     }
 
     if (url.pathname === "/" || url.pathname === "") {
