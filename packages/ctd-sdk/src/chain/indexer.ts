@@ -1,8 +1,14 @@
 /**
+ * VENDORED SPLIT (2026-07-28, Who Ate Gerald?): part of the event-shapes
+ * split — this file imports from `event-shapes.ts` (not `events.ts`) and is
+ * exported as the `./chain/indexer` subpath, so a Cloudflare Worker can decode
+ * indexer rows without bundling `@stellar/stellar-sdk`. See VENDORED.md.
+ *
  * Goldsky indexer client — the durable, full-history event source that
  * complements the RPC `getEvents` API (which only retains ~7 days).
  *
- * The indexer is a Cloudflare Worker (see `packages/indexer/`) backed by a
+ * The indexer is a Cloudflare Worker (a separate deployment, not part of
+ * this repo — `INDEXER_URL` in the game's config points at it) backed by a
  * Goldsky "turbo" pipeline that mirrors Stellar events into Postgres. The
  * Worker is a thin pass-through: it returns the raw Goldsky-decoded `topic`
  * (JSON array of ScVal topics) and `value` (JSON ScVal map) for each row, and

@@ -72,3 +72,24 @@ parity, or by surviving to the end of day six.
 |---|---|
 | [docs/CATALOG.md](docs/CATALOG.md) | The shelf: every item, the design laws, standing rulings, balance watch list |
 | [docs/CONFIDENTIAL-TOKENS.md](docs/CONFIDENTIAL-TOKENS.md) | How a confidential token transfer works on Stellar — the full explanation |
+
+## Security notes
+
+This is a testnet game played for nothing, and some auth choices are
+deliberately simpler than anything holding value could accept. Read these
+before borrowing a pattern:
+
+- **The seat credential is a static signature.** Proving your seat means
+  signing one fixed per-(game, address) message
+  ([`auth.ts`](packages/auditor-worker/src/auth.ts)) — no nonce, no expiry —
+  so the signature is a bearer credential for that game's duration and is
+  replayable if it ever leaks. The worker's CORS allowlist is the compensating
+  control against a hostile page; a challenge–response scheme is the real fix
+  (tracked in issue #10).
+- **The confidential spending key is cached in localStorage.** It's derived
+  from a deterministic Freighter signature so any device can re-derive it —
+  that determinism is the feature — and the browser keeps it in plain text.
+  Fine for testnet play money; never reuse this where a key guards value.
+- **The GM is a shared bearer token** (a wrangler secret), typed into the
+  dashboard and kept in localStorage. One token, all power — the god view,
+  every role, every whisper. Rotate it freely.

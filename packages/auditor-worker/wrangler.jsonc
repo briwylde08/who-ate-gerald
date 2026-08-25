@@ -7,7 +7,7 @@
 
   // Public, non-secret configuration. The secrets live in wrangler secrets:
   //   AUDITOR_K        — the auditor scalar k (hex) from config/local.auditor.json
-  //   OPENAI_API_KEY   — Maude's voice (via QA's CF AI Gateway, like SCF Review)
+  //   OPENAI_API_KEY   — Maude's voice (via a Cloudflare AI Gateway)
   //   OPENAI_BASE_URL  — the gateway's OpenAI compat URL
   //   CF_AIG_TOKEN     — optional gateway auth
   //   GM_TOKEN         — bearer token for the GM endpoints

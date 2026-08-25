@@ -10,10 +10,9 @@
  * The model can neither choose what to reveal beyond one tool's scope nor
  * invent a number: step 1 sees no amounts, step 3 sees only the one fact.
  *
- * Runs on OpenAI through QA's CF AI Gateway (same setup as the SCF Review
- * worker — Bri's work Claude license is OAuth-only, no Anthropic API keys).
- * The compat endpoint doesn't proxy /v1/responses; the provider passthrough
- * at …/openai does, so we derive it from OPENAI_BASE_URL like SCF does.
+ * Runs on OpenAI through a Cloudflare AI Gateway. The gateway's OpenAI-compat
+ * endpoint doesn't proxy /v1/responses; the provider passthrough at …/openai
+ * does, so we derive it from OPENAI_BASE_URL.
  */
 import OpenAI from "openai";
 
