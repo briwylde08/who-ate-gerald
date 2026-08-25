@@ -1216,18 +1216,19 @@ export class GameRoom extends DurableObject<Env> {
         this.state.winner = "village";
         this.state.phase = "ended";
       } else {
-        // Count hands that can be raised, not heartbeats. A ghost the Order
-        // granted a vote is counted with the living everywhere else — dawn
-        // waits for it (:692), the vote gate admits it (:529), the roster
-        // shows 👻 — so ending the game on the living alone conceded a trial
-        // the village could still have won two votes to one.
-        const villageVotes = this.state.players.filter(
-          (p) =>
-            roles[p.address] !== "werebear" &&
-            (p.alive || this.state.ghostVote?.[p.address] === "granted"),
+        // Parity counts the LIVING, not the dead (Bri, 2026-08-25): a granted
+        // ghost vote lets a dead villager still speak at a trial, but a ghost
+        // is not a living person for the win check. Counting ghosts here
+        // deadlocked "anothergame" — the bear had eaten every living villager,
+        // but two dead bot-ghosts (who never cast a vote) held the count above
+        // parity, so the werebear win never fired and no trial could ever
+        // resolve it. Ghosts still vote in trials that happen; they no longer
+        // keep a village that has no living members from losing.
+        const livingVillagers = this.state.players.filter(
+          (p) => p.alive && roles[p.address] !== "werebear",
         ).length;
-        if (villageVotes <= 1) {
-          // Parity: one villager cannot win a vote against one bear. The
+        if (livingVillagers <= 1) {
+          // Parity: one living villager cannot win a vote against one bear. The
           // game is decided — and the bear doesn't leave leftovers.
           this.state.winner = "werebear";
           this.state.phase = "ended";
