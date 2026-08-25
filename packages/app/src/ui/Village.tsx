@@ -64,8 +64,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   );
   const serverSpent = serverSpend !== null ? BigInt(serverSpend.spentStroops) : null;
   const spentThisGame = serverSpent !== null && serverSpent > localSpent ? serverSpent : localSpent;
-  // In the lobby (round 0) the day-1 allowance already applies — settle your
-  // business with the Treasury BEFORE the market opens, not during it.
+  // The lobby (round 0) uses the day-1 allowance for this math, but the
+  // Treasury panels themselves are gated on `marketOpen` below (Bri,
+  // 2026-08-xx): a surrender/top-up demand in the lobby — while every other
+  // shop action reads "stores shut" — was a contradiction. Normalization now
+  // surfaces when day 1 opens, still before any purchase (buying stays blocked
+  // on excess), just not before the game has begun.
   const remainingAllowance = allowance > spentThisGame ? allowance - spentThisGame : 0n;
   const excess =
     balances.spendable > remainingAllowance ? balances.spendable - remainingAllowance : 0n;
@@ -410,12 +414,12 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           is shopping too. DUN DUN DUN.
         </p>
       </div>
-      {!dead && !treasuryReady && (deficit > 0n || excess > 0n) && (
+      {marketOpen && !dead && !treasuryReady && (deficit > 0n || excess > 0n) && (
         <div className="panel">
           <p className="dim">⚖ The Town Treasury is checking its books…</p>
         </div>
       )}
-      {!dead && treasuryReady && deficit > 0n && excess === 0n && (
+      {marketOpen && !dead && treasuryReady && deficit > 0n && excess === 0n && (
         <div className="panel">
           <h3>⚖ The Town Treasury owes you</h3>
           <p className="dim">
@@ -490,7 +494,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
 
-      {!dead && treasuryReady && excess > 0n && (
+      {marketOpen && !dead && treasuryReady && excess > 0n && (
         <div className="panel">
           <h3>⚖ The Town Treasury requires a word</h3>
           <p className="dim">
