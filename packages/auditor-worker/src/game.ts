@@ -98,7 +98,6 @@ interface GameState {
   nightPick: string | null;
   /** address → round they spend in critical condition (no vote) after a save. */
   recovering: Record<string, number>;
-  /** Pierces spent — each venison purchase grants exactly one. (v3 — retired.) */
   /** address → horseshoe nails spent (each purchase = one tie won). */
   nailUsed: Record<string, number>;
   /** address → pizza parties already thrown (each purchase = one save). */

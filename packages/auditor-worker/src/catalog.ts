@@ -92,7 +92,7 @@ export function findItem(query: string): { shop: ShopInfo; item: CatalogItem } |
       if (item.id === q || item.label.toLowerCase() === qLabel) return { shop, item };
     }
   }
-  // Loose fallback: substring match on the label ("silver" → silver charm).
+  // Loose fallback: substring match on the label ("barrel" → barrel of beer).
   for (const shop of SHOPS) {
     for (const item of shop.items) {
       if (item.label.toLowerCase().includes(qLabel) && qLabel.length >= 4) return { shop, item };
