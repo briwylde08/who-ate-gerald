@@ -14,7 +14,12 @@
   "vars": {
     "INDEXER_URL": "https://ember-indexer.briana-761.workers.dev",
     "TOKEN_CONTRACT": "CCLDBRA5UVX6RMXSN44FMLK6RK4XMQ3XELL4TZC6XPL4D2JPPQNI4VSK",
-    "OPENAI_MODEL": "gpt-5.5"
+    "OPENAI_MODEL": "gpt-5.5",
+    // Freeze-proofing deadlines (ms): the market auto-closes on a straggler
+    // after MARKET_DEADLINE_MS, and dawn auto-resolves on a missing vote/pick
+    // MARKET-close + VOTE_DEADLINE_MS. Tune here for demo pacing.
+    "MARKET_DEADLINE_MS": "300000",
+    "VOTE_DEADLINE_MS": "120000"
   },
 
   "durable_objects": {

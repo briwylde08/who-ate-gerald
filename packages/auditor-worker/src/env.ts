@@ -10,6 +10,10 @@ export interface Env {
   OPENAI_MODEL?: string;
   /** wrangler secrets */
   AUDITOR_K: string;
+  /** Freeze-proofing deadlines in ms (optional). Defaults: market 5 min,
+   *  vote 2 min. Set as wrangler vars to tune demo pacing without a redeploy. */
+  MARKET_DEADLINE_MS?: string;
+  VOTE_DEADLINE_MS?: string;
   /** JSON { shopId: S...secret } — the shopkeepers' signing keys, for the
    *  dawn till-count (config/local.shops.json is the source). */
   SHOP_SECRETS?: string;
