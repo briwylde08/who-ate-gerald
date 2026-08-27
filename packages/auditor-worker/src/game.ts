@@ -416,6 +416,16 @@ export class GameRoom extends DurableObject<Env> {
     this.requireGame();
     if (!this.state.roles) throw new Error("deal roles first (POST /deal)");
     if (this.state.phase === "ended") throw new Error(`game over — ${this.state.winner} won`);
+    // Never skip a day's resolution: opening the next day before the current
+    // one has a morning would silently drop its trial and night (audit
+    // footgun). Resolve the day first (dawn, or GM resolve-day / the vote
+    // deadline) — only then may the next day open.
+    if (
+      this.state.round >= 1 &&
+      !this.state.mornings.some((m) => m.round === this.state.round)
+    ) {
+      throw new Error("resolve the current day before opening the next");
+    }
     await this.sync();
     const latest = await indexerLatestLedger(this.env);
     // Open the new day exactly where the last dawn stopped seeing: anything
