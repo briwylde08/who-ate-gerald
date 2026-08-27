@@ -167,6 +167,20 @@ export async function loadChain(
     const player = byAddress.get(t.from) ?? null;
     if (!player && !opts.allSenders) continue;
     const audit = auditTransfer(k, t);
+    // Defense-in-depth (security audit): a confidential transfer carries the
+    // amount encrypted to BOTH the sender's and the recipient's auditor
+    // channel, and the ZK circuit forces them equal. A mismatch is therefore
+    // corrupted or adversarial data we cannot vouch for — fail closed and drop
+    // it entirely (from facts, audits, and sightings) rather than trust a wrong
+    // amount. With a working circuit this never fires.
+    if (!audit.channelsAgree) {
+      console.error("dropped a transfer: auditor channels disagree on the amount", {
+        txHash: t.txHash,
+        from: t.from,
+        to: t.to,
+      });
+      continue;
+    }
     const shop = SHOP_BY_ADDRESS.get(t.to) ?? null;
     const isSurrender = ORDER_ADDRESS !== "" && t.to === ORDER_ADDRESS;
     purchases.push({

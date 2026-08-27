@@ -1794,6 +1794,10 @@ export class GameRoom extends DurableObject<Env> {
     if (this.state.phase === "ended") throw new Error(`game over — ${this.state.winner} won`);
     const from = this.playerByAddress(address);
     if (!from) throw new Error("that address holds no seat in this game");
+    // No liveness check by design (Bri, 2026-08-27): the dead already speak in
+    // the public square as ghosts, so they may whisper too. A security-audit
+    // note flagged the missing alive-check — this comment records that it is
+    // intentional, not an oversight.
     const to = this.playerByName(String(toName));
     if (!to) throw new Error(`no villager named "${String(toName)}"`);
     if (to.address === address) throw new Error("whispering to yourself draws looks");
