@@ -96,6 +96,10 @@ interface GameState {
   votes: Record<string, string>;
   /** This round's werebear pick: target player name, or null. */
   nightPick: string | null;
+  /** Freeze-proofing: wall-clock ms when the day opened, and when its market
+   *  first closed — so a straggler can never stall the game forever. */
+  dayOpenedAt: number;
+  marketClosedAt: number | null;
   /** address → round they spend in critical condition (no vote) after a save. */
   recovering: Record<string, number>;
   /** address → horseshoe nails spent (each purchase = one tie won). */
@@ -138,6 +142,8 @@ const freshState = (): GameState => ({
   askLog: [],
   votes: {},
   nightPick: null,
+  dayOpenedAt: 0,
+  marketClosedAt: null,
   recovering: {},
   nailUsed: {},
   pizzaUsed: {},
@@ -425,7 +431,17 @@ export class GameRoom extends DurableObject<Env> {
     this.state.votes = {};
     this.state.nightPick = null;
     this.state.phase = "day";
+    // Freeze-proofing: arm the market deadline so the day can never stall on a
+    // straggler who never clicks Done.
+    this.state.dayOpenedAt = Date.now();
+    this.state.marketClosedAt = null;
+    await this.ctx.storage.setAlarm(this.state.dayOpenedAt + this.marketDeadlineMs());
     await this.persist();
+    // Count the just-closed day's tills here — deterministically at every roll,
+    // rather than via a near-term alarm the market deadline would clobber. A
+    // no-op on the first day (no morning yet) and idempotent per round; never
+    // throws (see countLatestTills).
+    await this.countLatestTills();
     return {
       round: this.state.round,
       startLedger,
@@ -1345,18 +1361,52 @@ export class GameRoom extends DurableObject<Env> {
     }
     if (this.state.phase !== "day") return;
     if (this.state.mornings.some((m) => m.round === this.state.round)) {
-      await this.startDay(); // dawn came; roll into morning
-      // The tills are counted AFTER the village's day opens: the merges are
-      // network calls and the morning must never wait on them.
-      await this.countLatestTills();
+      // Roll into the next day. startDay arms the next deadline AND counts this
+      // day's tills, so nothing else is needed here.
+      await this.startDay();
       return;
     }
-    // A GM who opened the day by hand beat this alarm to startDay — the
-    // tills still deserve counting (idempotent; returns fast when done).
-    await this.countLatestTills();
-    // maybeResolve re-checks that dawn is actually due, and re-arms this alarm
-    // if it fails again. A day still waiting on a vote simply does nothing.
-    await this.maybeResolve();
+
+    const now = Date.now();
+
+    // FREEZE-PROOFING 1 — the market cannot stay open forever on a straggler
+    // who never clicks Done. Past the deadline, close it for everyone and
+    // start the vote clock; before it, just wait.
+    if (!this.marketClosed()) {
+      const marketDeadline = (this.state.dayOpenedAt || now) + this.marketDeadlineMs();
+      if (now >= marketDeadline) {
+        this.forceCloseMarket();
+        await this.closeMarketIfDone(); // snapshots drunkards + arms the vote clock
+        await this.persist();
+        await this.maybeResolve(); // bots/players may already have voted
+      } else {
+        await this.ctx.storage.setAlarm(marketDeadline);
+      }
+      return;
+    }
+
+    // FREEZE-PROOFING 2 — dawn cannot stall forever on a vote or the bear's
+    // pick that never comes. Past the deadline, resolve with whatever votes
+    // are in (the same path GM resolve uses; a null pick simply eats no one).
+    const voteDeadline = (this.state.marketClosedAt || now) + this.voteDeadlineMs();
+    if (now >= voteDeadline) {
+      try {
+        await this.resolveDay();
+      } catch {
+        /* already breaking, or a transient failure — the retry below covers it */
+      }
+      if (!this.state.mornings.some((m) => m.round === this.state.round)) {
+        await this.ctx.storage.setAlarm(now + 15_000);
+      }
+      return;
+    }
+
+    // Before the deadline: everyone may already have voted — try to resolve;
+    // otherwise wait for the deadline to force it.
+    const resolved = await this.maybeResolve();
+    if (!resolved && !this.state.mornings.some((m) => m.round === this.state.round)) {
+      await this.ctx.storage.setAlarm(voteDeadline);
+    }
   }
 
   /**
@@ -1625,6 +1675,29 @@ export class GameRoom extends DurableObject<Env> {
     if (!this.marketClosed()) return;
     await this.snapshotDrunkards();
     this.state.drunkSnapshotRound = this.state.round;
+    // The market just closed → start the vote clock so dawn can never stall on
+    // a vote (or the bear's pick) that never comes.
+    this.state.marketClosedAt = Date.now();
+    await this.ctx.storage.setAlarm(this.state.marketClosedAt + this.voteDeadlineMs());
+  }
+
+  /** Freeze-proofing: end shopping for every living straggler so the day can
+   *  proceed. A forced-done player is pinned at a sentinel ledger, so the
+   *  "bought after Done" audit never falsely accuses them. */
+  private forceCloseMarket(): void {
+    const round = this.state.round;
+    for (const p of this.state.players) {
+      if (p.alive && this.state.doneShopping[p.address]?.round !== round) {
+        this.state.doneShopping[p.address] = { round, ledger: Number.MAX_SAFE_INTEGER };
+      }
+    }
+  }
+
+  private marketDeadlineMs(): number {
+    return Number(this.env.MARKET_DEADLINE_MS ?? "") || 300_000;
+  }
+  private voteDeadlineMs(): number {
+    return Number(this.env.VOTE_DEADLINE_MS ?? "") || 120_000;
   }
 
   /** `known` lets a caller that has already loaded the day's purchases reuse
