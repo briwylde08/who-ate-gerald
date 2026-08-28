@@ -36,7 +36,7 @@ of truth the game actually reads; this doc explains the *why*. Old shelves
 | 1 | Gerald's finger | Chapel | Does nothing. Eight exist, village-wide; claiming all eight brings the thumbs to market. |
 | 2 | Gerald's thumb | Chapel | Does nothing. Two exist; claiming both brings the toes. |
 | 3 | Gerald's toe | Chapel | Does nothing. Ten exist. After that, Gerald has no more to give. |
-| 8 | Soup bone *(aim: player)* | The Butcher's | Pick another villager. If the werebear targets you tonight, there is a 1 in 4 chance it targets them instead. |
+| 8 | Soup bone *(aim: player)* | The Butcher's | Pick another villager. If the werebear targets you tonight, there is a 1 in 2 chance it targets them instead. |
 | 20 | Horseshoe nail | Blacksmith | If today's vote ties on you, the nail steps you out of it. Whoever is left in the tie takes the rope — if more than one is left, nobody hangs. Single use. |
 | 22 | Cold iron key *(aim: player+shop)* | Blacksmith | Pick a villager and a store. Tomorrow that store will not sell to them. Everyone is told which store was locked. Nobody is told who bought the key or who was locked out. |
 | 43 | Pizza party | General Store | If the village votes to banish you, the party saves you: nobody is banished today. The morning report names whose party it was. Each purchase saves you once. |
