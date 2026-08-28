@@ -78,7 +78,7 @@
           "flavor": "Somebody else's dog will love you for it.",
           "priceXlm": 8,
           "class": "V-def",
-          "effect": "Pick another villager. If the werebear targets you tonight, there is a 1 in 4 chance it targets them instead.",
+          "effect": "Pick another villager. If the werebear targets you tonight, there is a 1 in 2 chance it targets them instead.",
           "aim": "player"
         },
         {

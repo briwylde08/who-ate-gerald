@@ -1027,7 +1027,7 @@ export class GameRoom extends DurableObject<Env> {
       let target = this.state.nightPick ? this.playerByName(this.state.nightPick) : null;
       // A sharpened tooth in the beast's mouth: only the barrel is beyond it.
       const sharpTonight = boughtThisRound(bearAddress, "tooth_sharpener");
-      // A bone at somebody else's gate: one chance in four the beast is
+      // A bone at somebody else's gate: one chance in two the beast is
       // distracted on its way. Never onto the beast itself, never onto a corpse.
       if (target) {
         const bone = aimedToday("soup_bone").find((a) => a.by === target!.address);
@@ -1041,7 +1041,7 @@ export class GameRoom extends DurableObject<Env> {
           !drunk.has(target.name) && // nothing was going to happen anyway
           elsewhere?.alive &&
           elsewhere.address !== bearAddress &&
-          randomIndex(4) === 0
+          randomIndex(2) === 0
         ) {
           ((this.state.privateNotes ??= {})[target.address] ??= []).push({
             round: round + 1,
