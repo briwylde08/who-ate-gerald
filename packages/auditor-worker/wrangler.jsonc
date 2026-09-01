@@ -15,11 +15,16 @@
     "INDEXER_URL": "https://ember-indexer.briana-761.workers.dev",
     "TOKEN_CONTRACT": "CCLDBRA5UVX6RMXSN44FMLK6RK4XMQ3XELL4TZC6XPL4D2JPPQNI4VSK",
     "OPENAI_MODEL": "gpt-5.5",
-    // Freeze-proofing deadlines (ms): the market auto-closes on a straggler
-    // after MARKET_DEADLINE_MS, and dawn auto-resolves on a missing vote/pick
-    // MARKET-close + VOTE_DEADLINE_MS. Tune here for demo pacing.
-    "MARKET_DEADLINE_MS": "300000",
-    "VOTE_DEADLINE_MS": "120000"
+    // Freeze-proofing deadlines (ms). These are BACKSTOPS, not a game clock:
+    // a day still resolves the instant everyone acts. They only bound how long
+    // the game waits on someone who has genuinely gone away.
+    //   MARKET_DEADLINE_MS  — after a day opens, force-close the market.
+    //   VOTE_DEADLINE_MS    — after market close, force dawn with votes in hand.
+    // Raised 5min/2min -> 10min/10min (Bri, 2026-09-01): 2 minutes guillotined
+    // the trial mid-argument in a human game (testing-with-patricio ran a day
+    // every ~5 min on rails). Deliberation IS the game — give it room.
+    "MARKET_DEADLINE_MS": "600000",
+    "VOTE_DEADLINE_MS": "600000"
   },
 
   "durable_objects": {
