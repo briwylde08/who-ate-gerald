@@ -456,6 +456,28 @@ export function Intro({
           </span>
         )}
       </div>
+
+      {/* The spectator entrance (Bri, 2026-09-01): a full or dealt game has no
+          free face to claim, which locked observers out of the town entirely —
+          the picker was the only door. This saves a LOCAL profile and opens the
+          view; it takes no seat and touches no server. Watching is free; a seat
+          only ever comes from the explicit "Join as…" button in the square. */}
+      <div className="row">
+        <button
+          className="link"
+          onClick={() => {
+            const p = { name: "Observer", characterId: CHARACTERS[0]!.id };
+            saveProfile(p);
+            onDone(p);
+          }}
+        >
+          Just watching? Skip the picker →
+        </button>
+        <span className="dim">
+          Spectators don't need a face. You'll see the town, the mornings, and the films —
+          you won't hold a seat unless you click Join.
+        </span>
+      </div>
     </div>
   );
 }
