@@ -2,19 +2,22 @@ import { useEffect, useRef, useState } from "react";
 
 import { fetchGraph, fetchPublicView, pageHidden, type GraphView, type PublicView } from "../lib/player";
 import { CHARACTERS } from "../lib/profile";
+import { SHOPS } from "../lib/catalog";
+import { BearIcon, CharEmoji } from "./CharIcon";
 
 /**
  * #/watch — the wallet-free spectator page (Bri, 2026-09-01).
  *
- * Built for the live demo's projected screen and for anyone in an audience:
- * open the URL, type a game id, watch. Reads ONLY the unauthenticated public
- * endpoints (/public and /graph), so there is no wallet, no Freighter, no
- * seat, and nothing on the page that can join, buy, or vote. The player app
- * is untouched — this is an additive route, like #/gm.
+ * Mirrors the player app — same masthead, same four tabs, same cards — so an
+ * audience sees the game the players see (Bri: "exactly like the player
+ * page"). Everything here reads ONLY the unauthenticated public endpoints
+ * (/public and /graph): no wallet, no Freighter, no seat, and nothing on the
+ * page that can join, buy, or vote. Additive route, like #/gm; the player
+ * app is untouched.
  *
- * The films play here too, third-person always, with the same finale chain
- * as the player app (trial → kill → victory dance). Once per morning per
- * browser, keyed separately from the player app's film keys.
+ * Films play here too — third person always, same finale chain as the app
+ * (trial → kill → victory dance), once per morning per browser under
+ * watch-scoped keys.
  */
 
 const CHAR_BY_ID = new Map(CHARACTERS.map((c) => [c.id, c]));
@@ -41,6 +44,7 @@ interface FilmSpec {
 }
 
 const GAME_KEY = "gerald:watch-game";
+type Tab = "town" | "village" | "maude" | "chatvote";
 
 /** Build the film (or chain) for the latest morning — third person, no seat. */
 function filmForMorning(v: PublicView): FilmSpec | null {
@@ -50,7 +54,6 @@ function filmForMorning(v: PublicView): FilmSpec | null {
     name ? (v.players.find((p) => p.name === name)?.character ?? null) : null;
 
   if (v.winner === "werebear" && !v.calledOff) {
-    // The finale chain: trial → kill → victory dance (same order as the app).
     const victory: FilmSpec = {
       src: "/videos/bear_wins.mp4",
       caption: `${v.bear ?? "The werebear"} has won. The village belongs to the bear.`,
@@ -98,7 +101,7 @@ function filmForMorning(v: PublicView): FilmSpec | null {
     const banisheeChar = charOf(m.banished);
     const trialReel = banisheeChar ? banishedFilmSrc(banisheeChar) : null;
     if (trialReel) return { src: trialReel, caption: `${m.banished} was banished.` };
-    return null; // banishment without a reel stays crier-only
+    return null;
   }
   if (!v.winner) {
     return { src: "/videos/no_one_eaten.mp4", caption: "Nobody was eaten in the night." };
@@ -112,13 +115,13 @@ export function Watch() {
     return fromHash ?? localStorage.getItem(GAME_KEY) ?? "";
   });
   const [entry, setEntry] = useState(gameId);
+  const [tab, setTab] = useState<Tab>("town");
   const [view, setView] = useState<PublicView | null>(null);
   const [graph, setGraph] = useState<GraphView | null>(null);
   const [film, setFilm] = useState<FilmSpec | null>(null);
   const viewRef = useRef<PublicView | null>(null);
   viewRef.current = view;
 
-  // Poll the public view (fast) and the graph (slower) — no auth anywhere.
   useEffect(() => {
     if (!gameId) return;
     localStorage.setItem(GAME_KEY, gameId);
@@ -161,11 +164,13 @@ export function Watch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view?.mornings.length, gameId]);
 
+  const wasBanished = (name: string): boolean =>
+    !!view?.mornings.some((m) => m.banished === name);
   const fateOf = (name: string): string | null => {
     if (!view) return null;
-    const b = view.mornings.find((mm) => mm.banished === name);
+    const b = view.mornings.find((m) => m.banished === name);
     if (b) return `⚖ banished day ${b.round}`;
-    const e = view.mornings.find((mm) => mm.eaten === name);
+    const e = view.mornings.find((m) => m.eaten === name);
     if (e) return `🍽 eaten day ${e.round}`;
     return null;
   };
@@ -174,26 +179,23 @@ export function Watch() {
     view && view.mornings.length > 0 ? view.mornings[view.mornings.length - 1] : null;
   const round = view?.round ?? 0;
   const sightings = (graph?.edges ?? []).filter((e) => e.round === round);
+  const seatsNeeded = view ? Math.max(0, (view.minPlayers ?? 8) - view.players.length) : 0;
 
-  return (
-    <div className="app-shell watch-page">
-      <div className="topbar">
-        <h1>Who Ate Gerald? — 👁 watching</h1>
-        <span className="spacer" />
-        {view && (
-          <span className="dim">
-            {gameId} · {view.phase === "ended" ? "ended" : `day ${view.round}`} · live
-          </span>
-        )}
-      </div>
-
-      {!gameId && (
+  // ---------------------------------------------------------------- entry --
+  if (!gameId) {
+    return (
+      <div className="app-shell watch-page">
+        <div className="masthead">
+          <h1 className="title">
+            Who Ate <span className="title-accent">Gerald?</span>
+          </h1>
+          <p className="subtitle">Trust is scarce. Gerald is dead.</p>
+        </div>
         <div className="panel">
-          <h2>Watch a game</h2>
+          <h2>👁 Watch a game</h2>
           <p className="dim">
-            No wallet needed. Type the game's id — everything on this page is the public view:
-            who's alive, who shopped where, the mornings, and the films. Amounts stay sealed,
-            here and everywhere.
+            No wallet needed. Everything here is the public view: who's alive, who shopped
+            where, the mornings, and the films. Amounts stay sealed, here and everywhere.
           </p>
           <div className="row">
             <input
@@ -210,38 +212,52 @@ export function Watch() {
             </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {gameId && !view && (
+  return (
+    <div className="app-shell watch-page">
+      <div className="topbar">
+        <h1>👁 watching “{gameId}”</h1>
+        <span className="spacer" />
+        <span className="dim">{view ? (view.phase === "ended" ? "ended" : `day ${view.round}`) : "…"} · live</span>
+        <div className="topbar-actions">
+          <button onClick={() => { setGameId(""); setEntry(""); setView(null); }}>Change game</button>
+        </div>
+      </div>
+
+      <div className="masthead">
+        <h1 className="title">
+          Who Ate <span className="title-accent">Gerald?</span>
+        </h1>
+        <p className="subtitle">Trust is scarce. Gerald is dead.</p>
+      </div>
+
+      <div className="tabs">
+        <button className={tab === "town" ? "active" : ""} aria-current={tab === "town" ? "page" : undefined} onClick={() => setTab("town")}>
+          Town Square
+        </button>
+        <button className={tab === "village" ? "active" : ""} aria-current={tab === "village" ? "page" : undefined} onClick={() => setTab("village")}>
+          The Shops
+        </button>
+        <button className={tab === "maude" ? "active" : ""} aria-current={tab === "maude" ? "page" : undefined} onClick={() => setTab("maude")}>
+          Maude
+        </button>
+        <button className={tab === "chatvote" ? "active" : ""} aria-current={tab === "chatvote" ? "page" : undefined} onClick={() => setTab("chatvote")}>
+          Chat &amp; Vote
+        </button>
+      </div>
+
+      {!view && (
         <div className="panel">
           <p className="dim">Looking for “{gameId}”…</p>
-          <div className="row">
-            <button onClick={() => { setGameId(""); setView(null); }}>Watch a different game</button>
-          </div>
         </div>
       )}
 
-      {view && (
+      {/* ------------------------------------------------ TOWN SQUARE ----- */}
+      {view && tab === "town" && (
         <>
-          {/* Who's who */}
-          <div className="panel roster-strip">
-            {view.players.map((p) => (
-              <span key={p.seat} className={`roster-chip${p.alive ? "" : " dead"}`}>
-                <b>{p.name}</b>
-                <span className="dim">
-                  {" "}
-                  {p.alive
-                    ? p.drunkToday
-                      ? "🍺 dead drunk"
-                      : "alive"
-                    : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
-                </span>
-              </span>
-            ))}
-            {view.players.length === 0 && <span className="dim">Nobody seated yet.</span>}
-          </div>
-
-          {/* Reckoning */}
           {view.winner && (
             <div className="panel">
               <h2>{view.winner === "village" ? "🌻 The village won" : "🐻 The werebear won"}</h2>
@@ -271,19 +287,25 @@ export function Watch() {
             </div>
           )}
 
-          {/* The town crier — latest morning */}
-          {lastMorning && !view.winner && (
+          {lastMorning && (
             <div className="panel">
               <h2>📯 The Town Crier — morning of day {lastMorning.round + 1}</h2>
               {lastMorning.banished && (
                 <p>
                   The village banished <b>{lastMorning.banished}</b>
-                  {lastMorning.banishedRole === "werebear" ? " — THE WEREBEAR!" : " — a villager."}
+                  {lastMorning.banishedRole === "werebear" ? (
+                    <>
+                      {" "}
+                      — <BearIcon /> THE WEREBEAR!
+                    </>
+                  ) : (
+                    " — a villager."
+                  )}
                 </p>
               )}
               {lastMorning.eaten && (
                 <p>
-                  <b>{lastMorning.eaten}</b> was eaten in the night.
+                  <b>{lastMorning.eaten}</b> was eaten in the night, like Gerald before them.
                 </p>
               )}
               {!lastMorning.banished && !lastMorning.eaten && <p>Nobody died. A rare morning.</p>}
@@ -295,7 +317,212 @@ export function Watch() {
             </div>
           )}
 
-          {/* Day status */}
+          <div className="v-grid">
+            {view.players.map((p) => {
+              const c = p.character ? CHAR_BY_ID.get(p.character) : null;
+              const isBear = !!view.winner && view.bear === p.name;
+              const isWinner =
+                !!view.winner &&
+                ((view.winner === "werebear" && isBear) ||
+                  (view.winner === "village" && !isBear && p.alive));
+              return (
+                <div
+                  key={p.seat}
+                  className={`villager-card${p.alive ? "" : " dead"}${isBear ? " bear-seat" : ""}${isWinner ? " winner-seat" : ""}`}
+                >
+                  <div className="v-portrait">
+                    {c?.image ? (
+                      <img src={c.image} alt="" loading="lazy" />
+                    ) : (
+                      <span className="v-fallback" aria-hidden="true">
+                        <CharEmoji c={c} />
+                      </span>
+                    )}
+                    {!p.alive && (
+                      <span
+                        className={`v-fate-overlay${wasBanished(p.name) ? " waved" : ""}`}
+                        aria-hidden="true"
+                      >
+                        {wasBanished(p.name) ? "👋" : "RIP"}
+                      </span>
+                    )}
+                    {isBear && (
+                      <span className="verdict-badge bear-badge">
+                        <BearIcon /> the werebear
+                      </span>
+                    )}
+                    {isWinner && !isBear && (
+                      <span className="verdict-badge winner-badge">👑 winner</span>
+                    )}
+                  </div>
+                  <div className="v-name">{p.name}</div>
+                  <div className="v-role">{c?.title ?? "new in town"}</div>
+                  <div className="v-status">
+                    {p.alive
+                      ? p.drunkToday
+                        ? "🍺 dead drunk"
+                        : view.dealt
+                          ? "in the village"
+                          : p.ready
+                            ? "ready"
+                            : "not ready"
+                      : (fateOf(p.name) ?? "dead")}
+                  </div>
+                </div>
+              );
+            })}
+            {!view.dealt &&
+              Array.from({ length: seatsNeeded }).map((_, i) => (
+                <div key={`seat-${i}`} className="villager-card empty">
+                  <div className="v-portrait empty-frame" aria-hidden="true" />
+                  <div className="v-name">Empty seat</div>
+                </div>
+              ))}
+          </div>
+        </>
+      )}
+
+      {/* ------------------------------------------------- THE SHOPS ------ */}
+      {view && tab === "village" && (
+        <div className="shop-page">
+          <div className="panel shop-howto">
+            {round >= 1 ? (
+              <div className="role-label">Day {round}</div>
+            ) : (
+              <p className="shut-note">🔒 The stores are shut until the game begins.</p>
+            )}
+            <p className="dim">
+              Every purchase is a confidential transfer: the ledger shows <i>who paid which
+              shop</i>, never the amount — and since every price is unique, the amount IS the
+              item. What each item does is public knowledge; who bought which one is not.
+            </p>
+            {round >= 1 && (
+              <p className="dim">
+                {view.marketClosed
+                  ? "The market has closed for the day."
+                  : `Still shopping: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
+              </p>
+            )}
+          </div>
+
+          {round >= 1 && (
+            <div className="panel">
+              <h3 className="composer-head">Seen at the stores today</h3>
+              {sightings.length > 0 ? (
+                <div className="sightings">
+                  {sightings.map((e, i) => (
+                    <span key={i} className="sighting">
+                      {e.from} <span className="dim">→</span> {e.to}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="dim">Nobody has been seen at a store yet today.</p>
+              )}
+            </div>
+          )}
+
+          {SHOPS.map((shop) => {
+            const shut = (view.closedShops ?? []).includes(shop.id);
+            return (
+              <div key={shop.id} className={`panel shop-card${shut ? " shut" : ""}`}>
+                <h3>
+                  {shop.icon && (
+                    <span className="shop-icon" aria-hidden="true">
+                      {shop.icon}
+                    </span>
+                  )}
+                  {shop.label}
+                </h3>
+                {shop.subtitle && <p className="shop-sub">“{shop.subtitle}”</p>}
+                {shut && (
+                  <p className="shut-note">
+                    🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
+                  </p>
+                )}
+                <div className="items">
+                  {shop.items.map((item) => (
+                    <div key={item.id} className="item">
+                      <div className="item-main">
+                        <div className="item-name">{item.label}</div>
+                        {item.flavor && <p className="item-flavor">“{item.flavor}”</p>}
+                        <p className="item-effect">{item.effect}</p>
+                      </div>
+                      <div className="item-price">{item.priceXlm} XLM</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* --------------------------------------------------- MAUDE -------- */}
+      {view && tab === "maude" && (
+        <div className="maude-page">
+          <div className="panel maude-intro">
+            <img
+              className="maude-portrait"
+              src="/characters/maude.jpg"
+              alt="Maude McLedger at her table, one hand on a crystal ball, a ledger open beside her"
+            />
+            <div className="maude-words">
+              <div className="role-label">The Auditor</div>
+              <h2>Maude McLedger</h2>
+              <p className="dim">
+                As the Auditor, Maude holds the one key that can read every confidential amount
+                on the ledger — her answers come straight from the chain.
+              </p>
+              <p className="dim">
+                An auditor isn't a contract; it's a keypair. A confidential token contract can
+                be deployed with an auditor's public key baked in, and every transfer must
+                include its amount encrypted to that key or the network rejects it. Whoever
+                holds the matching secret key can read every amount. Here, that's Maude.
+              </p>
+              <p className="dim">
+                One question per villager per day, and no other villager sees her answer —
+                which is why this page can't show you what she said.
+              </p>
+            </div>
+          </div>
+          {round >= 1 && (
+            <div className="panel">
+              <h3 className="composer-head">Who has asked today</h3>
+              <div className="roster-strip">
+                {view.players
+                  .filter((p) => p.alive)
+                  .map((p) => (
+                    <span key={p.seat} className="roster-chip">
+                      <b>{p.name}</b>
+                      <span className="dim"> {p.askedToday ? "🔮 asked" : "— not yet"}</span>
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ------------------------------------------------ CHAT & VOTE ----- */}
+      {view && tab === "chatvote" && (
+        <>
+          <div className="panel roster-strip">
+            {view.players.map((p) => (
+              <span key={p.seat} className={`roster-chip${p.alive ? "" : " dead"}`}>
+                <b>{p.name}</b>
+                <span className="dim">
+                  {" "}
+                  {p.alive
+                    ? p.drunkToday
+                      ? "🍺 dead drunk"
+                      : "alive"
+                    : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
+                </span>
+              </span>
+            ))}
+          </div>
+
           {!view.winner && view.round >= 1 && (
             <div className="panel">
               <p className="dim">
@@ -303,40 +530,18 @@ export function Watch() {
                   ? (view.awaitingVotes ?? []).length > 0
                     ? `🗳 The trial is on. Still to vote: ${(view.awaitingVotes ?? []).join(", ")}.`
                     : "🗳 Every vote is in — dawn is close."
-                  : `🧺 The market is open. Still shopping: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
+                  : `🧺 The square fills when the market closes. Still shopping: ${(view.stillShopping ?? []).join(", ") || "—"}.`}
               </p>
             </div>
           )}
 
-          {/* Sightings */}
-          {round >= 1 && (
-            <div className="panel">
-              <h3 className="composer-head">Seen at the stores today</h3>
-              {sightings.length > 0 ? (
-                <>
-                  <div className="sightings">
-                    {sightings.map((e, i) => (
-                      <span key={i} className="sighting">
-                        {e.from} <span className="dim">→</span> {e.to}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="dim">
-                    Who went where is public. What they bought — and what they paid — is not.
-                  </p>
-                </>
-              ) : (
-                <p className="dim">Nobody has been seen at a store yet today.</p>
-              )}
-            </div>
-          )}
-
-          {/* The square */}
-          {(view.chat ?? []).length > 0 && (
-            <div className="panel">
-              <h2>The square</h2>
+          <div className="panel">
+            <h2>The square</h2>
+            {(view.chat ?? []).length === 0 ? (
+              <p className="dim">Nobody has said anything yet. Suspicious, honestly.</p>
+            ) : (
               <div className="chat">
-                {(view.chat ?? []).slice(-40).map((m, i) => (
+                {(view.chat ?? []).slice(-60).map((m, i) => (
                   <p
                     key={i}
                     className="chat-line"
@@ -350,18 +555,18 @@ export function Watch() {
                   </p>
                 ))}
               </div>
+            )}
+          </div>
+
+          {view.winner && (
+            <div className="panel">
+              <p className="dim">The game is over — the reckoning is in the Town Square tab.</p>
             </div>
           )}
-
-          <div className="row">
-            <button onClick={() => { setGameId(""); setEntry(""); setView(null); }}>
-              Watch a different game
-            </button>
-          </div>
         </>
       )}
 
-      {/* Films — same overlay pattern as the app, chain and all. */}
+      {/* Films — same overlay as the app, chain and all. */}
       {film && (
         <div
           className="film-overlay"
