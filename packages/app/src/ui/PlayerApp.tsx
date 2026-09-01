@@ -40,6 +40,16 @@ const nightFilmSrc = (characterId: string) => `/videos/${characterId}_gets_got.m
 // Characters with a dedicated banishment reel (Bri's films, 2026-08-17).
 // A trial is not an attack: the gets-got reels stay the bear's alone, and a
 // banished villager gets a film only once their character has one of THESE.
+interface FilmSpec {
+  src: string;
+  caption: string;
+  started?: boolean;
+  /** The reel that follows this one; the viewer must watch through. */
+  next?: FilmSpec;
+  /** Label for the button that advances to `next`. */
+  nextLabel?: string;
+}
+
 const BANISHED_FILMS = new Set([
   "midwife",
   "gravedigger",
@@ -105,13 +115,9 @@ export function PlayerApp() {
   /** The night's film — APP-level, so it shows no matter which tab you're
    *  on. It lived in the Town Square once, where dawn breaking while you
    *  voted on Chat & Vote played it invisibly AND marked it seen. */
-  const [film, setFilm] = useState<{
-    src: string;
-    caption: string;
-    started?: boolean;
-    /** A second feature (Bri: eaten first, then "Who got banished?"). */
-    next?: { src: string; caption: string };
-  } | null>(null);
+  /** A reel, optionally chained to the next one. The finale runs three deep:
+   *  the kill, the trial, then the bear's victory dance (Bri, 2026-09-01). */
+  const [film, setFilm] = useState<FilmSpec | null>(null);
   /** Personal banishment notice — a ghost shouldn't learn their fate from
    *  fine print (Bri). Shown once, before any film. */
   const [banishedNotice, setBanishedNotice] = useState<string | null>(null);
@@ -309,12 +315,41 @@ export function PlayerApp() {
         const v = await fetchPublicView(gameId);
         if (v.winner) {
           gameOverRef.current = true;
-          endingFilm.current =
-            v.winner === "werebear" && !v.calledOff
-              ? { src: "/videos/bear_wins.mp4", caption: `${v.bear ?? "The werebear"} has won. The village belongs to the bear.` }
-              : v.bear
-                ? { src: nightFilmSrc("werebear"), caption: `${v.bear} was the werebear — and the village got them.` }
-                : null;
+          // The replay button gets the SAME chain the finale played, so
+          // "Watch the ending" isn't a shorter story than the ending was.
+          const last = v.mornings.length > 0 ? v.mornings[v.mornings.length - 1] : null;
+          if (v.winner === "werebear" && !v.calledOff) {
+            const victory: FilmSpec = {
+              src: "/videos/bear_wins.mp4",
+              caption: `${v.bear ?? "The werebear"} has won. The village belongs to the bear.`,
+            };
+            const victim = last?.eaten ? v.players.find((p) => p.name === last.eaten) : undefined;
+            const kill: FilmSpec | undefined = victim?.character
+              ? {
+                  src: nightFilmSrc(victim.character),
+                  caption: `${last!.eaten} was taken in the night.`,
+                  next: victory,
+                  nextLabel: "🐻 How did it end?",
+                }
+              : undefined;
+            const banishee =
+              last?.banished && last.banished !== last.eaten
+                ? v.players.find((p) => p.name === last.banished)
+                : undefined;
+            const trialReel = banishee ? banishedFilmSrc(banishee.character ?? "") : null;
+            endingFilm.current = trialReel
+              ? {
+                  src: trialReel,
+                  caption: `${last!.banished} was banished.`,
+                  next: kill ?? victory,
+                  nextLabel: kill ? "🌙 And in the night?" : "🐻 How did it end?",
+                }
+              : (kill ?? victory);
+          } else {
+            endingFilm.current = v.bear
+              ? { src: nightFilmSrc("werebear"), caption: `${v.bear} was the werebear — and the village got them.` }
+              : null;
+          }
         }
         // A reply for the game we just LEFT must not touch anything: it would
         // snap the player back to their old seat the instant they switch.
@@ -343,14 +378,45 @@ export function PlayerApp() {
           const seenKey = `gerald:film:${gameId}:${filmMorning.round}`;
           if (!localStorage.getItem(seenKey)) {
             if (v.winner === "werebear" && !v.calledOff) {
-              // The bear wins — parity or the clock, one reel for both
-              // (Bri's film, 2026-08-06). Outranks the night's own film:
-              // this IS the ending.
+              // The bear wins. The victory dance used to REPLACE the night's
+              // own reels; now it CLOSES them (Bri, 2026-09-01), in the order
+              // the day actually happened: the trial by day, then the kill by
+              // night, then the dance. Nothing is skipped, and the ✕ only
+              // appears on the last reel so the story can't be cut short.
               localStorage.setItem(seenKey, "1");
-              setFilm({
+              const victory: FilmSpec = {
                 src: "/videos/bear_wins.mp4",
                 caption: `${v.bear ?? "The werebear"} has won. The village belongs to the bear.`,
-              });
+              };
+              const victim = filmMorning.eaten
+                ? v.players.find((p) => p.name === filmMorning.eaten)
+                : undefined;
+              const kill: FilmSpec | undefined = victim?.character
+                ? {
+                    src: nightFilmSrc(victim.character),
+                    caption:
+                      victim.address === wallet.address
+                        ? "You were taken in the night."
+                        : `${filmMorning.eaten} was taken in the night.`,
+                    next: victory,
+                    nextLabel: "🐻 How did it end?",
+                  }
+                : undefined;
+              const banishee =
+                filmMorning.banished && filmMorning.banished !== filmMorning.eaten
+                  ? v.players.find((p) => p.name === filmMorning.banished)
+                  : undefined;
+              const trialReel = banishee ? banishedFilmSrc(banishee.character ?? "") : null;
+              if (trialReel) {
+                setFilm({
+                  src: trialReel,
+                  caption: `${filmMorning.banished} was banished.`,
+                  next: kill ?? victory,
+                  nextLabel: kill ? "🌙 And in the night?" : "🐻 How did it end?",
+                });
+              } else {
+                setFilm(kill ?? victory);
+              }
             } else if (filmMorning.banishedRole === "werebear" && filmMorning.banished) {
               localStorage.setItem(seenKey, "1");
               setFilm({
@@ -365,6 +431,10 @@ export function PlayerApp() {
                 // the night's kill first, then "Who got banished?" swaps to
                 // the trial reel. Skip it when the bear ate the same corpse
                 // the rope left — one person, one reel.
+                // NOTE: ordinary mornings lead with the KILL (it's the news);
+                // the finale leads with the TRIAL and runs in chronological
+                // order to the victory dance. Both orders are deliberate
+                // (Bri, 2026-08-18 and 2026-09-01).
                 const banishee =
                   filmMorning.banished && filmMorning.banished !== filmMorning.eaten
                     ? v.players.find((p) => p.name === filmMorning.banished)
@@ -381,6 +451,7 @@ export function PlayerApp() {
                   next: trialReel
                     ? { src: trialReel, caption: `${filmMorning.banished} was banished.` }
                     : undefined,
+                  nextLabel: "⚖ Who got banished?",
                 });
               }
             } else if (
@@ -665,7 +736,7 @@ export function PlayerApp() {
                 className="primary"
                 onClick={() => setFilm({ ...film.next!, started: true })}
               >
-                ⚖ Who got banished?
+                {film.nextLabel ?? "▶ Next"}
               </button>
             )}
           </div>
