@@ -104,6 +104,17 @@ h2 { font-size: 1.25rem; margin: 24px 0 8px; color: var(--moon); }
 }
 
 .dim { color: var(--ink-dim); font-size: 0.9rem; }
+
+/* Links: the browser's default blue/purple is illegible on this dark theme
+   (Bri, 2026-09-01). Lantern gold, no visited-purple, underline on hover. */
+a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-decoration-color: rgba(212, 169, 78, 0.4);
+  text-underline-offset: 2px;
+}
+a:visited { color: var(--gold); }
+a:hover { color: var(--lantern); text-decoration-color: var(--lantern); }
 .mono { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
 
 .panel {
