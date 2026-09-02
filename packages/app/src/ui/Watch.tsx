@@ -354,6 +354,19 @@ export function Watch() {
               {view.players.filter((p) => p.alive).length}/{view.players.length} still alive
             </p>
           )}
+          {!view.dealt && (view.chat ?? []).length > 0 && (
+            <div className="panel lobby-chat">
+              <h3 className="composer-head">The square, while we wait</h3>
+              <div className="chat">
+                {(view.chat ?? []).slice(-30).map((m, i) => (
+                  <p key={i} className="chat-line">
+                    <b>{m.name}:</b> {m.text}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="villagers">
             {view.players.map((p) => {
               const c = p.character ? CHAR_BY_ID.get(p.character) : null;
