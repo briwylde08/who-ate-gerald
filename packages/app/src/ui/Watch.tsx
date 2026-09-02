@@ -407,7 +407,7 @@ export function Watch() {
       {view && tab === "village" && (
         <div className="shop-page">
           <div className="panel purse">
-            <div className="role-label">A villager's purse — example numbers</div>
+            <h2 style={{ margin: "0 0 12px" }}>A villager's purse — dummy data</h2>
             <div className="purse-block">
               <div className="purse-label">🔒 Confidential spending balance</div>
               <div className="purse-amount">{xlmDisplay(DEMO_BALANCES.spendable)} XLM</div>
@@ -615,7 +615,7 @@ export function Watch() {
         <aside className="six-aside">
           <div className="panel">
             <p className="dim" style={{ margin: "0 0 6px", fontSize: "0.72rem" }}>
-              Example numbers — a typical villager's view
+              Dummy data — a typical villager's view
             </p>
             <SixSteps
               balances={DEMO_BALANCES}
