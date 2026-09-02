@@ -184,7 +184,7 @@ export function Watch() {
   // ---------------------------------------------------------------- entry --
   if (!gameId) {
     return (
-      <div className="app-shell watch-page">
+      <div className="app-root watch-page">
         <div className="masthead">
           <h1 className="title">
             Who Ate <span className="title-accent">Gerald?</span>
@@ -217,7 +217,7 @@ export function Watch() {
   }
 
   return (
-    <div className="app-shell watch-page">
+    <div className="app-root watch-page">
       <div className="topbar">
         <h1>👁 watching “{gameId}”</h1>
         <span className="spacer" />
@@ -234,6 +234,8 @@ export function Watch() {
         <p className="subtitle">Trust is scarce. Gerald is dead.</p>
       </div>
 
+      <div className="app-shell">
+      <div className="app-main">
       <div className="tabs">
         <button className={tab === "town" ? "active" : ""} aria-current={tab === "town" ? "page" : undefined} onClick={() => setTab("town")}>
           Town Square
@@ -317,7 +319,12 @@ export function Watch() {
             </div>
           )}
 
-          <div className="v-grid">
+          {view.dealt && (
+            <p className="dim headcount">
+              {view.players.filter((p) => p.alive).length}/{view.players.length} still alive
+            </p>
+          )}
+          <div className="villagers">
             {view.players.map((p) => {
               const c = p.character ? CHAR_BY_ID.get(p.character) : null;
               const isBear = !!view.winner && view.bear === p.name;
@@ -565,6 +572,9 @@ export function Watch() {
           )}
         </>
       )}
+
+      </div>
+      </div>
 
       {/* Films — same overlay as the app, chain and all. */}
       {film && (
