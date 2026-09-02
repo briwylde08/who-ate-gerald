@@ -495,22 +495,56 @@ export function Watch() {
                   {shop.label}
                 </h3>
                 {shop.subtitle && <p className="shop-sub">“{shop.subtitle}”</p>}
+                {shop.address && (
+                  <p className="dim" style={{ fontFamily: "ui-monospace, Menlo, monospace", fontSize: "0.72rem", margin: "2px 0 8px" }}>
+                    {shop.address.slice(0, 6)}…{shop.address.slice(-6)}{" "}
+                    <a
+                      href={`https://stellar.expert/explorer/testnet/account/${shop.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      view on chain ↗
+                    </a>
+                  </p>
+                )}
                 {shut && (
                   <p className="shut-note">
                     🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
                   </p>
                 )}
                 <div className="items">
-                  {shop.items.map((item) => (
-                    <div key={item.id} className="item">
-                      <div className="item-main">
-                        <div className="item-name">{item.label}</div>
-                        {item.flavor && <p className="item-flavor">“{item.flavor}”</p>}
-                        <p className="item-effect">{item.effect}</p>
+                  {shop.items.map((item) => {
+                    const relics = graph?.relics ?? { fingers: 0, thumbs: 0, toes: 0 };
+                    const relicNote =
+                      item.id === "geralds_finger"
+                        ? relics.fingers >= 8
+                          ? "All eight claimed. Gerald's hands are bare."
+                          : `${relics.fingers} of 8 claimed by the village`
+                        : item.id === "geralds_thumb"
+                          ? relics.fingers < 8
+                            ? "Still attached — claim all eight fingers first"
+                            : relics.thumbs >= 2
+                              ? "Both thumbs claimed."
+                              : `${relics.thumbs} of 2 claimed by the village`
+                          : item.id === "geralds_toe"
+                            ? relics.thumbs < 2
+                              ? "Still in his boots — claim both thumbs first"
+                              : relics.toes >= 10
+                                ? "All ten toes claimed."
+                                : `${relics.toes} of 10 claimed by the village`
+                            : null;
+                    return (
+                      <div key={item.id} className="item">
+                        <div className="item-main">
+                          <div className="item-name">{item.label}</div>
+                          {item.flavor && <p className="item-flavor">“{item.flavor}”</p>}
+                          <p className="item-effect">{item.effect}</p>
+                          {relicNote && <p className="relic-note">{relicNote}</p>}
+                        </div>
+                        <div className="item-price">{item.priceXlm} XLM</div>
                       </div>
-                      <div className="item-price">{item.priceXlm} XLM</div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
