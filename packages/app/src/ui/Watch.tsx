@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { fetchGraph, fetchPublicView, pageHidden, type GraphView, type PublicView } from "../lib/player";
 import { CHARACTERS } from "../lib/profile";
-import { SHOPS } from "../lib/catalog";
+import { SHOPS, xlmDisplay } from "../lib/catalog";
+import type { VillagerBalances } from "../lib/wallet";
+import { SixSteps } from "./SixSteps";
 import { BearIcon, CharEmoji } from "./CharIcon";
 
 /**
@@ -42,6 +44,18 @@ interface FilmSpec {
   next?: FilmSpec;
   nextLabel?: string;
 }
+
+/** Example numbers for the demo's reference panels — a typical mid-game
+ *  villager: registered, 27.5 XLM spendable, today's 25 XLM income still
+ *  uncollected, friendbot XLM minus the buy-in in the public wallet. Spectators
+ *  hold no purse; these exist so the presenter can point at the shapes. */
+const DEMO_BALANCES: VillagerBalances = {
+  publicXlm: 9_948_60_00000n,
+  spendable: 27_50_00000n,
+  receiving: 25_00_00000n,
+  registered: true,
+};
+const DEMO_PURCHASES = 2;
 
 const GAME_KEY = "gerald:watch-game";
 type Tab = "town" | "village" | "maude" | "chatvote";
@@ -392,6 +406,29 @@ export function Watch() {
       {/* ------------------------------------------------- THE SHOPS ------ */}
       {view && tab === "village" && (
         <div className="shop-page">
+          <div className="panel purse">
+            <div className="role-label">A villager's purse — example numbers</div>
+            <div className="purse-block">
+              <div className="purse-label">🔒 Confidential spending balance</div>
+              <div className="purse-amount">{xlmDisplay(DEMO_BALANCES.spendable)} XLM</div>
+              <div className="purse-note">
+                Confidential claims that represent your share of the confidential token contract
+                pool
+              </div>
+            </div>
+            <div className="purse-block">
+              <div className="purse-label">📦 Uncollected</div>
+              <div className="purse-amount secondary">{xlmDisplay(DEMO_BALANCES.receiving)} XLM</div>
+              <div className="purse-note">
+                Payments land here first, so nobody can spoil a proof you're building
+              </div>
+            </div>
+            <div className="purse-block">
+              <div className="purse-label">👁 Public wallet</div>
+              <div className="purse-amount secondary">{xlmDisplay(DEMO_BALANCES.publicXlm)} XLM</div>
+              <div className="purse-note">Everyone can see this</div>
+            </div>
+          </div>
           <div className="panel shop-howto">
             {round >= 1 ? (
               <div className="role-label">Day {round}</div>
@@ -574,6 +611,20 @@ export function Watch() {
       )}
 
       </div>
+      {view && (
+        <aside className="six-aside">
+          <div className="panel">
+            <p className="dim" style={{ margin: "0 0 6px", fontSize: "0.72rem" }}>
+              Example numbers — a typical villager's view
+            </p>
+            <SixSteps
+              balances={DEMO_BALANCES}
+              purchases={DEMO_PURCHASES}
+              tills={view.tills ?? null}
+            />
+          </div>
+        </aside>
+      )}
       </div>
 
       {/* Films — same overlay as the app, chain and all. */}
