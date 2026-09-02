@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchGraph, fetchPublicView, pageHidden, type GraphView, type PublicView } from "../lib/player";
 import { CHARACTERS } from "../lib/profile";
 import { SHOPS, xlmDisplay } from "../lib/catalog";
+import { explorerTx } from "../lib/activity";
 import type { VillagerBalances } from "../lib/wallet";
 import { SixSteps } from "./SixSteps";
 import { BearIcon, CharEmoji } from "./CharIcon";
@@ -188,6 +189,21 @@ export function Watch() {
     if (e) return `🍽 eaten day ${e.round}`;
     return null;
   };
+
+  const feed = [
+    ...(graph?.edges ?? [])
+      .filter((e) => e.txHash)
+      .map((e) => ({
+        ledger: e.ledger,
+        txHash: e.txHash!,
+        label: `Day ${e.round} · ${e.from} paid ${e.to} — amount confidential`,
+      })),
+    ...(graph?.deposits ?? []).map((d) => ({
+      ledger: d.ledger,
+      txHash: d.txHash,
+      label: `${d.round < 1 ? "Lobby" : `Day ${d.round}`} · ${d.player} deposited ${d.amountXlm} XLM${d.round < 1 ? " (buy-in)" : ""} — public`,
+    })),
+  ].sort((a, b) => b.ledger - a.ledger);
 
   const lastMorning =
     view && view.mornings.length > 0 ? view.mornings[view.mornings.length - 1] : null;
@@ -499,6 +515,29 @@ export function Watch() {
               </div>
             );
           })}
+
+          <div className="panel activity-log">
+            <div className="activity-head">
+              <h3>Onchain activity</h3>
+            </div>
+            {feed.length === 0 && (
+              <p className="dim">
+                Nothing yet — the village's transactions appear here as they land on the chain.
+              </p>
+            )}
+            <div className="activity-rows">
+              {feed.map((a, i) => (
+                <div key={`${a.txHash}-${i}`} className="activity-row">
+                  <span className="activity-main">
+                    <span className="activity-label">{a.label}</span>
+                  </span>
+                  <a className="tx-link" href={explorerTx(a.txHash)} target="_blank" rel="noreferrer">
+                    {a.txHash.slice(0, 8)}… ↗
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
