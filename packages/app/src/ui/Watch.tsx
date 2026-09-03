@@ -409,13 +409,11 @@ export function Watch() {
                   <div className="v-role">{c?.title ?? "new in town"}</div>
                   <div className="v-status">
                     {p.alive
-                      ? p.drunkToday
-                        ? "🍺 dead drunk"
-                        : view.dealt
-                          ? "in the village"
-                          : p.ready
-                            ? "ready"
-                            : "not ready"
+                      ? view.dealt
+                        ? "in the village"
+                        : p.ready
+                          ? "ready"
+                          : "not ready"
                       : (fateOf(p.name) ?? "dead")}
                   </div>
                 </div>
@@ -644,9 +642,7 @@ export function Watch() {
                 <span className="dim">
                   {" "}
                   {p.alive
-                    ? p.drunkToday
-                      ? "🍺 dead drunk"
-                      : "alive"
+                    ? "alive"
                     : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
                 </span>
               </span>

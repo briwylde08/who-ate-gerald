@@ -225,9 +225,7 @@ export function ChatVote({ wallet, gameId, setError, onGoShops }: Props) {
             <span className="dim">
               {" "}
               {p.alive
-                ? p.drunkToday
-                  ? "🍺 dead drunk"
-                  : "alive"
+                ? "alive"
                 : `${fateOf(p.name) ?? "dead"}${p.ghostVoter ? " · 👻 votes" : ""}`}
             </span>
           </span>
