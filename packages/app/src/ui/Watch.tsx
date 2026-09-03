@@ -354,13 +354,23 @@ export function Watch() {
               {view.players.filter((p) => p.alive).length}/{view.players.length} still alive
             </p>
           )}
-          {!view.dealt && (view.chat ?? []).length > 0 && (
+          {(view.chat ?? []).length > 0 && (
             <div className="panel lobby-chat">
-              <h3 className="composer-head">The square, while we wait</h3>
+              <h3 className="composer-head">
+                {view.dealt ? "The square" : "The square, while we wait"}
+              </h3>
               <div className="chat">
-                {(view.chat ?? []).slice(-30).map((m, i) => (
-                  <p key={i} className="chat-line">
-                    <b>{m.name}:</b> {m.text}
+                {(view.chat ?? []).slice(-40).map((m, i) => (
+                  <p
+                    key={i}
+                    className="chat-line"
+                    style={m.ghost ? { opacity: 0.65, fontStyle: "italic" } : undefined}
+                  >
+                    <b>
+                      {m.ghost ? "👻 " : ""}
+                      {m.name}:
+                    </b>{" "}
+                    {m.text}
                   </p>
                 ))}
               </div>
