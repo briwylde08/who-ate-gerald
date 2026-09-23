@@ -90,7 +90,7 @@ export default {
     if (url.pathname === "/" || url.pathname === "") {
       return json({
         service: "gerald-auditor",
-        auditor: "Maude McLedger, Auditor of the Order (the village calls her the fortune teller)",
+        auditor: "Maude McLedger, the village's Auditor (the village calls her the fortune teller)",
         motto: "One seal per villager per day.",
         endpoints: [
           "GM:     /games/:id/{new,deal,round/start,eliminate,ask,resolve-day,state,god-view}",
@@ -214,7 +214,7 @@ export default {
 
       // ---- GM tier
       if (!gmAuthorized(req, env)) {
-        return json({ error: "the Order requires credentials (GM bearer token)" }, 401);
+        return json({ error: "the GM desk requires credentials (GM bearer token)" }, 401);
       }
       const body = req.method === "POST" ? await bodyOf(req) : {};
       switch (`${req.method} ${action}`) {

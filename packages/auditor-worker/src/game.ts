@@ -113,8 +113,8 @@ interface GameState {
   /** Aimed items: a purchase carries only an amount, so the target is stated
    *  separately and privately (p/aim), like a vote or a night pick. */
   aims: { round: number; by: string; item: string; target?: string; shop?: string }[];
-  /** Doors shut for a day: shop closures (everyone) and per-player locks. */
-  closures: { round: number; shop: string; player?: string }[];
+  /** Doors barred for a day: per-player locks from cold iron keys. */
+  closures: { round: number; shop: string; player: string }[];
   /** address → private dawn facts — readable only by that player. */
   privateNotes: Record<string, { round: number; text: string }[]>;
   mornings: MorningReport[];
@@ -166,8 +166,8 @@ const MIN_PLAYERS = 8;
 
 /**
  * Name an item in running prose. Catalog labels carry their own articles
- * ("A bottle", "The ledger book"), so a bare `the ${label}` produced "the a
- * bottle" and "the the ledger book" — swap the label's article for ours.
+ * ("The long candle", "The butcher's knife"), so a bare `the ${label}` produced
+ * "the the long candle" — swap the label's article for ours.
  */
 function itemPhrase(label: string): string {
   return `the ${label.toLowerCase().replace(/^(the|a|an)\s+/, "")}`;
@@ -668,11 +668,6 @@ export class GameRoom extends DurableObject<Env> {
   }
 
   /**
-   * Stand-accused disclosure: the accused PICKS the purchase (by tx hash),
-   * Maude does the revealing — the server decrypts that exact transaction,
-   * so the reveal cannot lie. Clears the accusation and unlocks their vote.
-   */
-  /**
    * Point an aimed item at its victim. The purchase itself carries only an
    * amount, so the target lives here — server-side and private, exactly like a
    * vote or the bear's night pick. Verified against the decrypted ledger: you
@@ -773,7 +768,7 @@ export class GameRoom extends DurableObject<Env> {
 
   /** Dawn comes by itself when the last vote and the bear's pick are in. */
   private async maybeResolve(): Promise<boolean> {
-    // Everyone with a hand to raise: the living, plus any ghost the Order
+    // Everyone with a hand to raise: the living, plus any ghost the Treasury
     // granted a vote. Dawn waits for all of them.
     const voters = this.state.players.filter(
       (p) => p.alive || this.state.ghostVote?.[p.address] === "granted",
@@ -1119,8 +1114,8 @@ export class GameRoom extends DurableObject<Env> {
     const boughtToday = (itemId: string): PlayerRef[] =>
       this.state.players.filter((p) => boughtThisRound(p.address, itemId));
 
-    // Locks and holidays take effect TOMORROW; the village sees the door, never
-    // the hand. A key names no one; a holiday shuts the shop for everybody.
+    // Locks take effect TOMORROW; the village sees the door, never the hand.
+    // A key names no one.
     for (const a of aimedToday("cold_iron_key")) {
       if (!a.shop || !a.target) continue;
       this.state.closures.push({ round: round + 1, shop: a.shop, player: a.target });
@@ -1130,9 +1125,9 @@ export class GameRoom extends DurableObject<Env> {
     }
 
 
-    // --- AUDITS: the Order notices. ----------------------------------------
+    // --- AUDITS: the Treasury notices. ----------------------------------------
     // Deposit audit: deposits made DURING THIS GAME vs the allowance
-    // schedule. Pre-game history is irrelevant (the Order's desk normalizes
+    // schedule. Pre-game history is irrelevant (the Treasury's desk normalizes
     // balances and the spend audit caps usage) — this tripwire exists for
     // mid-game top-ups only.
     const deposits = await this.loadDepositsCached();
@@ -1147,7 +1142,7 @@ export class GameRoom extends DurableObject<Env> {
         );
       }
       // THE fairness audit: in-game spending vs the allowance schedule.
-      // Surrenders to the Order don't count — that's old money going home.
+      // Surrenders to the Treasury don't count — that's old money going home.
       const spent = purchases
         .filter((x) => x.from === p.address && x.round >= 1 && !x.isSurrender)
         .reduce((a, x) => a + x.amountStroops, 0n);
@@ -1289,7 +1284,7 @@ export class GameRoom extends DurableObject<Env> {
       for (const v of violations.filter((x) => x.startsWith(`${p.name} `))) {
         ((this.state.privateNotes ??= {})[p.address] ??= []).push({
           round: round + 1,
-          text: `📕 The Order's audit named you: ${v}`,
+          text: `📕 Maude's audit named you: ${v}`,
         });
       }
     }
@@ -1529,7 +1524,7 @@ export class GameRoom extends DurableObject<Env> {
       takings: this.state.takings,
       winner: this.state.winner,
       calledOff: this.state.calledOff === true,
-      // The game is over: the masks come off. Until then, roles are sealed.
+      // The game is over: the masks come off. Until then, roles are hidden.
       bear:
         this.state.winner !== null && this.state.roles
           ? (this.state.players.find(
@@ -1546,7 +1541,7 @@ export class GameRoom extends DurableObject<Env> {
         doneToday: this.state.doneShopping[p.address]?.round === this.state.round,
         askedToday: (this.state.asked[p.address] ?? 0) >= this.state.round && this.state.round >= 1,
         recovering: this.state.recovering[p.address] === this.state.round,
-        /** A ghost the Order granted a vote — public by design. */
+        /** A ghost the Treasury granted a vote — public by design. */
         ghostVoter: this.state.ghostVote?.[p.address] === "granted",
         /** Declared a barrel today: no vote, and nothing can wake them. */
         drunkToday: this.drunkToday(p.address),
@@ -1576,14 +1571,10 @@ export class GameRoom extends DurableObject<Env> {
       stillShopping: this.state.players
         .filter((p) => p.alive && this.state.doneShopping[p.address]?.round !== this.state.round)
         .map((p) => p.name),
-      /** Shops shut for everyone today (a holiday). Per-player locks stay
-       *  secret: the barred villager finds out at the door. */
-      closedShops: this.state.closures
-        .filter((c) => c.round === this.state.round && !c.player)
-        .map((c) => c.shop),
+      /* Per-player locks stay secret: the barred villager finds out at the door. */
       /** Today's town-square thread (yesterday's arguments died at dawn). */
       chat: this.state.chat.filter((m) => m.round === this.state.round),
-      // Players get the story; the Order's audit findings (violations) are
+      // Players get the story; the Treasury's audit findings (violations) are
       // GM-only — resolve-day response + game state — announced at the GM's
       // discretion, in the GM's voice.
       mornings: this.state.mornings.map(({ violations: _violations, ...story }) => story),
@@ -1626,7 +1617,7 @@ export class GameRoom extends DurableObject<Env> {
         address: p.address,
         alive: p.alive,
       })),
-      // Round 0 is setup (funding, registration, settling up with the Order) —
+      // Round 0 is setup (funding, registration, settling up with the Treasury) —
       // not a sighting anyone should be reading tea leaves from.
       edges: purchases
         .filter((p) => p.round >= 1)
@@ -1668,7 +1659,7 @@ export class GameRoom extends DurableObject<Env> {
       p.round === round &&
       p.shopId !== null &&
       this.state.closures.some(
-        (c) => c.round === round && c.shop === p.shopId && (!c.player || c.player === p.player),
+        (c) => c.round === round && c.shop === p.shopId && c.player === p.player,
       )
     );
   }

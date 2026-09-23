@@ -29,7 +29,6 @@ skills-lock.json
 worker-configuration.d.ts
 .playwright-mcp/
 
-# Raw art originals: the app ships compressed copies from
-# packages/app/public/. Keeping the sources out of git stops each new
-# 20MB video from living in history forever. Backup: ~/gerald-originals
-design/videos/
+# Raw art originals live outside the repo; the app ships compressed copies
+# from packages/app/public/.
+design/

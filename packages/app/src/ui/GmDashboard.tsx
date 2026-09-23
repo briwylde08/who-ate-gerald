@@ -78,7 +78,7 @@ export function GmDashboard() {
   return (
     <div>
       <h1>Who Ate Gerald? — GM</h1>
-      <p className="tagline">The Order sees everything. You see the Order.</p>
+      <p className="tagline">Maude sees everything. You see Maude.</p>
 
       {error && (
         <div className="error">

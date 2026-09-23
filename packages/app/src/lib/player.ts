@@ -182,7 +182,7 @@ export interface PublicView {
   winner: "village" | "werebear" | null;
   /** The Order ended the game early — the bear won by default, not by play. */
   calledOff?: boolean;
-  /** Revealed only once the game has a winner; null while roles are sealed. */
+  /** Revealed only once the game has a winner; null while roles are hidden. */
   bear?: string | null;
   /** Latest morning whose tills were actually counted — the shopkeepers'
    *  own dawn merges (step 5 of a confidential payment, performed for real). */
@@ -199,15 +199,13 @@ export interface PublicView {
     doneToday?: boolean;
     askedToday?: boolean;
     recovering?: boolean;
-    /** A ghost the Order granted a vote (Unquiet rest). */
+    /** A ghost the Treasury granted a vote (Unquiet rest). */
     ghostVoter?: boolean;
     /** Declared a barrel today — cannot vote, cannot be killed tonight. */
     drunkToday?: boolean;
   }[];
   readyCount?: number;
   minPlayers?: number;
-  /** Stores shut for everyone today (Shopkeeper's holiday). */
-  closedShops?: string[];
   /** Who the trial is still waiting on. */
   awaitingVotes?: string[];
   /** Whether the night has been decided (never says by whom). */

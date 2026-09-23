@@ -63,10 +63,8 @@ no clock: the village wins by banishing the bear, and the bear wins at parity.
 - `config/` — committed: deployment addresses, shop addresses, `catalog.json`
   (the shelf). Gitignored `local.*`: auditor key, deployer, shop keypairs, GM
   token.
-- `design/` — original art (portraits, icons) before compression;
-  `packages/app/public/` ships the web-sized copies. The death films'
-  originals are gitignored and live outside the repo — only the compressed
-  copies in `packages/app/public/videos/` are tracked
+- `packages/app/public/` — web-sized art and the compressed films; the
+  originals live outside the repo
 - `docs/` — see below
 
 ## Docs
@@ -74,7 +72,6 @@ no clock: the village wins by banishing the bear, and the bear wins at parity.
 | Doc | What it's for |
 |---|---|
 | [docs/CATALOG.md](docs/CATALOG.md) | The shelf: every item, its price, and what it does |
-| [docs/CONFIDENTIAL-TOKENS.md](docs/CONFIDENTIAL-TOKENS.md) | How a confidential token transfer works on Stellar — the full explanation |
 
 ## Security notes
 

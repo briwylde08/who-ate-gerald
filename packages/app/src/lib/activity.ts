@@ -14,7 +14,7 @@ export interface ActivityEntry {
   at: string;
   /** What the transaction was, in the player's own terms. */
   label: string;
-  /** Public amounts (deposits) are shown; sealed ones are the item's price —
+  /** Public amounts (deposits) are shown; confidential ones are the item's price —
    *  private to this browser, exactly like the Ledger. */
   detail?: string;
   txHash: string;

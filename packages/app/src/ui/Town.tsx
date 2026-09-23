@@ -629,7 +629,7 @@ export function Town({ wallet, gameId, onPhase, setBusy, setError, refresh, onGo
                   Maude's office
                 </button>{" "}
                 is open. Maude McLedger is the Auditor: she holds the one key that can read
-                every sealed amount on the ledger. Ask her one question about today's
+                every confidential amount on the ledger. Ask her one question about today's
                 purchases, then take what you learn to <b>Chat &amp; Vote</b>.
               </p>
             </div>

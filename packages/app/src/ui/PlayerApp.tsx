@@ -24,9 +24,9 @@ import { loadHistory, treasuryOwed } from "../lib/history";
  * line below describes something the code is actually doing right then.
  */
 const PHASE_LABEL: Record<TxPhase, string> = {
-  reading: "Reading your sealed balance — the encrypted copy only you can open…",
+  reading: "Reading your confidential balance — the encrypted copy only you can open…",
   witness:
-    "Building the witness: your new balance, the shop's, and the Auditor's copy — all sealed…",
+    "Building the witness: your new balance, the shop's, and the Auditor's copy — all encrypted…",
   proving:
     "Proving it in your browser — real zero-knowledge cryptography, which is why this takes a moment…",
   submitting: "Submitting: the network verifies the proof without ever learning the amount…",
@@ -76,7 +76,7 @@ const STEP_COPY = {
   },
   deposit: {
     label: "Buy in: 50 XLM into the shared pool",
-    sub: "The amount is public on purpose — the whole village can verify everyone starts with the same 50. Inside the pool it becomes a sealed claim only you can spend.",
+    sub: "The amount is public on purpose — the whole village can verify everyone starts with the same 50. Inside the pool it becomes a confidential claim only you can spend.",
   },
   merge: {
     label: "Collect your budget into your purse",
@@ -818,7 +818,7 @@ export function PlayerApp() {
           <p className="dim mono">{wallet.address}</p>
           <p>
             Money here is a <b>confidential token</b>: real XLM sits in a shared pool, and what
-            you hold is a sealed claim on it. Everyone can see <i>who</i> pays <i>whom</i> —
+            you hold is a confidential claim on it. Everyone can see <i>who</i> pays <i>whom</i> —
             nobody can see <i>how much</i>. Since every price in the village is unique, hiding
             the amount hides what you bought. That one trick is the whole game.
           </p>

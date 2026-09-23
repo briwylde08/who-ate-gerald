@@ -541,56 +541,6 @@ th { color: var(--ink-dim); font-weight: normal; }
   text-transform: uppercase;
   color: var(--ink-dim);
 }
-/* The teaching row: public on the left, sealed on the right. The point is made
-   by the shape before anyone reads a word — one column is simply missing a
-   number that the other one has. */
-.chain-log-head { margin: 4px 0 10px; }
-.chain-log-head p { margin: 3px 0 0; font-size: 0.76rem; line-height: 1.45; }
-.chain-log { gap: 8px; }
-.chain-row {
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel-2);
-  padding: 8px 10px 10px;
-}
-.chain-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 7px;
-}
-.tx-link {
-  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  font-size: 0.63rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-dim);
-  text-decoration: none;
-  border-bottom: 1px dotted var(--line);
-  flex-shrink: 0;
-}
-.tx-link:hover { color: var(--parchment); border-bottom-color: currentColor; }
-.chain-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.chain-col { border-radius: 5px; padding: 7px 9px; min-width: 0; }
-.chain-public { background: rgba(255, 255, 255, 0.035); border: 1px solid var(--line); }
-.chain-private {
-  background: rgba(126, 106, 61, 0.13);
-  border: 1px solid rgba(176, 148, 84, 0.34);
-}
-.chain-fact {
-  margin: 3px 0 0;
-  font-size: 0.84rem;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-.chain-sealed {
-  margin: 2px 0 0;
-  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  font-size: 0.72rem;
-  color: var(--ink-dim);
-}
-.chain-private .entry-amount { display: block; margin-top: 2px; color: var(--parchment); }
-.chain-dare { margin: 12px 0 0; font-size: 0.74rem; line-height: 1.45; }
 
 /* The six steps: a checklist of the player's own transactions, not a diagram.
    Done steps read confident; the two that aren't theirs stay deliberately
@@ -639,26 +589,6 @@ th { color: var(--ink-dim); font-weight: normal; }
 }
 .six-foot { margin: 10px 0 0; font-size: 0.74rem; line-height: 1.45; }
 
-/* The receipt: the crux lesson at the crux moment. Shown right after a
-   purchase, when the player still has the decision in their head. */
-.receipt { border-left: 2px solid var(--gold); }
-.receipt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.receipt-line { margin: 7px 0 0; font-size: 0.86rem; line-height: 1.5; }
-.receipt-tag {
-  display: inline-block;
-  margin-right: 8px;
-  padding: 1px 7px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
-  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-.receipt-tag.sealed { border-color: rgba(176, 148, 84, 0.4); color: var(--lantern); }
-.receipt-why { margin: 10px 0 0; font-size: 0.76rem; line-height: 1.45; color: var(--ink-dim); }
 .answer-source {
   margin: 5px 0 0;
   font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;

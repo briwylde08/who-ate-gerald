@@ -1,9 +1,9 @@
 /**
- * Create + register Maude's office — "the Order" — a receive-only account
- * where players surrender excess old-wallet balance before shopping (the
- * budget-normalization sink). Same pattern as setup-shops.ts.
+ * Create + register Maude's office — the Town Treasury's sink — a receive-only
+ * account where players surrender excess old-wallet balance before shopping
+ * (budget normalization). Same pattern as setup-shops.ts.
  *
- * Usage: npx tsx scripts/setup-order.ts
+ * Usage: npm run setup:treasury
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -37,7 +37,7 @@ async function main() {
   const local = existsSync(localPath) ? JSON.parse(readFileSync(localPath, "utf8")) : {};
   const pub = JSON.parse(readFileSync(publicPath, "utf8"));
   if (pub.maudes_office) {
-    console.log(`the Order already has an office: ${pub.maudes_office}`);
+    console.log(`the Treasury already has an office: ${pub.maudes_office}`);
     return;
   }
 
@@ -62,7 +62,7 @@ async function main() {
   try {
     const existing = await client.confidentialBalance(address);
     if (!existing) {
-      console.log("registering the Order's office…");
+      console.log("registering the Treasury's office…");
       const keys = deriveKeys(fromHex(secrets.sk), addrF);
       const w = buildRegisterWitness(keys);
       const { proof } = await registerProver.prove(w.inputs);
@@ -76,7 +76,7 @@ async function main() {
 
   pub.maudes_office = address;
   writeFileSync(publicPath, JSON.stringify(pub, null, 2) + "\n");
-  console.log(`the Order's office: ${address}`);
+  console.log(`the Treasury's office: ${address}`);
 }
 
 main().catch((err) => {
