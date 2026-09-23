@@ -1,5 +1,5 @@
 {
-  "$comment": "Catalog v9 (2026-07-31, per Bri) — 12 items, prices globally unique. Each item ONCE PER DAY per player (UI-enforced; same-day repeats are audited); rebuying on later days is allowed and restocks single-use items. The barrel (45) is the personal save; the curfew bell (35) is the village's night off — it beats everything, sharpened teeth included. Six-day deadline. Aimed items via p/aim; the barrel needs no aim — buying it is drinking it. The werebear may buy anything. Economy: 50 XLM buy-in, +25/day.",
+  "$comment": "Catalog v9 — 14 items, prices globally unique. Each item ONCE PER DAY per player (UI-enforced; same-day repeats are audited); rebuying on later days is allowed and restocks single-use items. The barrel (45) is the personal save; the curfew bell (44) is a 50/50 village night off. No deadline: the game runs until the rope finds the bear or parity finds the village. Aimed items via p/aim; the barrel needs no aim — buying it is drinking it. The werebear may buy anything. Economy: 50 XLM buy-in, +25/day. docs/CATALOG.md is generated from this file.",
   "startingBudgetXlm": 50,
   "dailyIncomeXlm": 25,
   "shops": {
