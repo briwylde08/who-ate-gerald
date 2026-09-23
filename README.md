@@ -12,8 +12,6 @@ item. **Maude McLedger**, who holds the token's auditor key, answers one
 private question per villager per day.
 
 Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
-Watch: **https://who-ate-gerald.pages.dev/#/watch** (no wallet, no seat — a
-read-only view of any game, fed only by public endpoints)
 
 ## About this repository
 
