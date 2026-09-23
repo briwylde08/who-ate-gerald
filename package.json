@@ -16,7 +16,7 @@
     "health": "tsx scripts/health.ts",
     "test:catalog": "tsx scripts/test-catalog.ts",
     "test:auditor": "tsx scripts/test-auditor-facts.ts",
-    "setup:order": "tsx scripts/setup-order.ts",
+    "setup:treasury": "tsx scripts/setup-treasury.ts",
     "item-test": "tsx scripts/item-test.ts",
     "bots": "tsx scripts/bots.ts",
     "test:auth": "tsx scripts/test-auth.ts",

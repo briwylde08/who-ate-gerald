@@ -101,7 +101,7 @@ function synthetic() {
     purchases: [
       buy("Ron", "GRON", "general_store", "General Store", 45, 2, "Barrel of beer"),
       buy("Ron", "GRON", "chapel", "Chapel", 1, 2, "Gerald's finger"),
-      buy("Bri", "GBRI", "general_store", "General Store", 23, 2, "Shopkeeper's holiday"),
+      buy("Bri", "GBRI", "general_store", "General Store", 32, 2, "Sock in mouth"),
       buy("Bri", "GBRI", "chapel", "Chapel", 42, 2, "The long candle"),
       buy("Tyler", "GTYL", "blacksmith", "Blacksmith", 20, 2, "Horseshoe nail"),
       buy("Tyler", "GTYL", "chapel", "Chapel", 25, 2, "Unquiet rest"),

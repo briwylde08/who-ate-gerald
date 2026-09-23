@@ -160,7 +160,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
   /** The teaching moment: what the village just learned, and what it didn't. */
   // Aimed items need a second, private action after the purchase.
   const [others, setOthers] = useState<string[]>([]);
-  const [closedShops, setClosedShops] = useState<string[]>([]);
   const [myFate, setMyFate] = useState<string | null>(null);
   const [winner, setWinner] = useState<string | null>(null);
   /** Dawn has broken; the next day opens in ~60s. Aims are refused meanwhile. */
@@ -242,7 +241,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         setOthers(
           v.players.filter((p) => p.alive && p.address !== wallet.address).map((p) => p.name),
         );
-        setClosedShops(v.closedShops ?? []);
         // Which death was it? "banished or eaten" told a ghost nothing (Bri).
         const myName = me?.name;
         if (myName) {
@@ -528,7 +526,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         </div>
       )}
       {/* NOT gated on doneToday: aiming stays possible (and necessary!)
-          after Done, and hiding this cost the baker a 23 XLM holiday he
+          after Done, and hiding this cost the baker 23 XLM on an item he
           believed he'd aimed (game04, day 1). */}
       {!dead && round >= 1 && unaimed.length > 0 && !winner && (
         <div className="panel">
@@ -556,8 +554,8 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
           <button
             className={doneArmed ? "armed" : ""}
             onClick={() => {
-              // An unaimed item does NOTHING — the baker lost 23 XLM to a
-              // holiday he never pointed (game04). Make Done a deliberate
+              // An unaimed item does NOTHING — the baker lost 23 XLM to an
+              // item he never pointed (game04). Make Done a deliberate
               // second click while anything is still unaimed.
               if (unaimed.length > 0 && !doneArmed) {
                 setDoneArmed(true);
@@ -589,16 +587,15 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
         }
       >
         {SHOPS.map((shop) => {
-          const shut = closedShops.includes(shop.id);
           // A key pointed at YOU is no longer a blind trap (Bri, 2026-08-18):
           // the barred door wears a big X, and your coin stays in your purse.
           const barred = serverSpend?.lockedShops?.includes(shop.id) ?? false;
           // The two-stores custom, visible BEFORE the till refuses you: a
           // third store's card shutters instead of taking your confirm and
           // then scolding you (issue #13).
-          const capped = !shut && visitedToday.length >= 2 && !visitedToday.includes(shop.label);
+          const capped = visitedToday.length >= 2 && !visitedToday.includes(shop.label);
           return (
-          <div key={shop.id} className={`panel shop-card${shut || capped ? " shut" : ""}${barred ? " barred" : ""}`}>
+          <div key={shop.id} className={`panel shop-card${capped ? " shut" : ""}${barred ? " barred" : ""}`}>
             {barred && (
               <div className="shop-x" aria-hidden="true">
                 ✕
@@ -626,11 +623,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
               >
                 till: {shop.address.slice(0, 5)}…{shop.address.slice(-4)} ↗
               </a>
-            )}
-            {shut && (
-              <p className="shut-note">
-                🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
-              </p>
             )}
             {barred && (
               <p className="shut-note">
@@ -715,8 +707,6 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                         ? "Bought today ✓"
                         : barred
                           ? "🔑 Locked out"
-                          : shut
-                          ? "Shuttered"
                           : doneToday
                             ? "Market closed"
                             : tooRich
@@ -755,7 +745,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
                       <span className="price">{item.priceXlm} XLM</span>
                       <button
                         className={isArmed ? "armed" : ""}
-                        disabled={blocked || shut}
+                        disabled={blocked}
                         aria-label={`${label}: ${item.label}, ${item.priceXlm} XLM`}
                         onClick={() =>
                           isArmed ? void pay(shop, item, price) : setArmed(key)
@@ -833,7 +823,7 @@ export function Village({ wallet, balances, visitedShops, round, onPhase, setBus
       </div>
 
       {/* The whole village's public txs, newest first: transfers (amount
-          sealed) and deposits (amount visible — that's the boundary rule,
+          confidential) and deposits (amount visible — that's the boundary rule,
           demonstrated). Your own rows get your private detail, because this
           is your browser and it remembers what you bought. */}
       {/* ALWAYS present — no feed gate, no market gate. A box that hides

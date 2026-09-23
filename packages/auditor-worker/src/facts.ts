@@ -55,7 +55,7 @@ export interface Purchase {
   itemGuess: string | null;
   /** Sender's spendable balance AFTER this transfer (auditor channel). */
   senderBalanceStroops: bigint;
-  /** Payment to the Order's office (budget surrender) — not shopping. */
+  /** Payment to Maude's office (budget surrender) — not shopping. */
   isSurrender: boolean;
   /** Both auditor channels decrypted to the same amount (sanity flag). */
   channelsAgree: boolean;
@@ -190,7 +190,7 @@ export async function loadChain(
       from: t.from,
       player: player?.name ?? null,
       shopId: shop?.id ?? null,
-      toLabel: isSurrender ? "the Order" : (shop?.label ?? shortAddress(t.to)),
+      toLabel: isSurrender ? "the Town Treasury" : (shop?.label ?? shortAddress(t.to)),
       amountStroops: audit.amount,
       amountXlm: xlmString(audit.amount),
       itemGuess:

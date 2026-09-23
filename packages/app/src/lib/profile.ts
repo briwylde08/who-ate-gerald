@@ -11,7 +11,7 @@ export interface Character {
   emoji: string;
   title: string;
   blurb: string;
-  /** Portrait under public/characters/ — 512px web copies; originals in design/. */
+  /** Portrait under public/characters/ — 512px web copies; originals live outside the repo. */
   image: string;
   /** Optional small icon that replaces the emoji wherever it appears. */
   icon?: string;

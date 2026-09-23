@@ -380,29 +380,9 @@ function scoreSuspicion(
     }
   }
 
-  // Disclosures that smelled of meat.
-  for (const m of view.chat ?? []) {
-    if (m.name !== "the Order") continue;
-    for (const c of candidates) {
-      if (m.text.includes(c.name) && /tooth sharpener|musk salve/i.test(m.text)) {
-        scores.set(c.name, (scores.get(c.name) ?? 0) + 3);
-      }
-    }
-  }
-
-  // Certified innocents: a charm save proves villagerhood (the bear cannot
-  // buy silver). Never vote for the recovering or the once-saved.
+  // Never vote for the recovering.
   for (const c of candidates) {
     if (c.recovering) scores.set(c.name, -100);
-  }
-  for (const morning of view.mornings ?? []) {
-    for (const note of morning.notes ?? []) {
-      if (note.includes("silver charm")) {
-        for (const c of candidates) {
-          if (note.startsWith(c.name)) scores.set(c.name, -100);
-        }
-      }
-    }
   }
   return scores;
 }

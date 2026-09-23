@@ -225,7 +225,7 @@ export function Watch() {
           <h2>👁 Watch a game</h2>
           <p className="dim">
             No wallet needed. Everything here is the public view: who's alive, who shopped
-            where, the mornings, and the films. Amounts stay sealed, here and everywhere.
+            where, the mornings, and the films. Amounts stay confidential, here and everywhere.
           </p>
           <div className="row">
             <input
@@ -504,9 +504,8 @@ export function Watch() {
           )}
 
           {SHOPS.map((shop) => {
-            const shut = (view.closedShops ?? []).includes(shop.id);
             return (
-              <div key={shop.id} className={`panel shop-card${shut ? " shut" : ""}`}>
+              <div key={shop.id} className="panel shop-card">
                 <h3>
                   {shop.icon && (
                     <span className="shop-icon" aria-hidden="true">
@@ -526,11 +525,6 @@ export function Watch() {
                     >
                       view on chain ↗
                     </a>
-                  </p>
-                )}
-                {shut && (
-                  <p className="shut-note">
-                    🧳 Shuttered today — the shopkeeper is on holiday. Somebody paid for that.
                   </p>
                 )}
                 <div className="items">

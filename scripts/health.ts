@@ -136,7 +136,7 @@ async function main() {
   if (audit.amount !== TEST_AMOUNT || !audit.channelsAgree) {
     throw new Error("auditor decryption FAILED");
   }
-  console.log("auditor sees the hidden amount ✓ — the Order has eyes.");
+  console.log("auditor sees the hidden amount ✓ — Maude has eyes.");
 
   // 5. Indexer mirroring
   if (process.env.SKIP_INDEXER === "1") {
