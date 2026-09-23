@@ -51,6 +51,12 @@ const catalog = JSON.parse(readFileSync(join(repoRoot, "config/catalog.json"), "
 
 const AUDITOR_URL =
   process.env.AUDITOR_URL ?? "https://gerald-auditor.briana-761.workers.dev";
+if (!process.env.AUDITOR_URL) {
+  console.warn(
+    "⚠ AUDITOR_URL is not set — talking to the maintainer's PRODUCTION worker.\n" +
+      "  If you are running your own stack, export AUDITOR_URL=https://<your-worker>.",
+  );
+}
 const XLM = 10_000_000n;
 const START = BigInt(catalog.startingBudgetXlm) * XLM;
 const INCOME = BigInt(catalog.dailyIncomeXlm) * XLM;

@@ -11,6 +11,9 @@
   //   OPENAI_BASE_URL  — the gateway's OpenAI compat URL
   //   CF_AIG_TOKEN     — optional gateway auth
   //   GM_TOKEN         — bearer token for the GM endpoints
+  //   SHOP_SECRETS     — JSON { shopId: S...secret }: the shopkeepers' signing
+  //                      keys, used at dawn to merge each shop's till. A secret,
+  //                      never a var — vars are public in this file.
   "vars": {
     "INDEXER_URL": "https://ember-indexer.briana-761.workers.dev",
     "TOKEN_CONTRACT": "CCLDBRA5UVX6RMXSN44FMLK6RK4XMQ3XELL4TZC6XPL4D2JPPQNI4VSK",

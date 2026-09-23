@@ -53,8 +53,17 @@ const FRIENDBOT = "https://friendbot.stellar.org";
 
 const deploymentPath = join(configDir, "deployment.testnet.json");
 
-function cli(args: string[]): string {
-  return execFileSync("stellar", args, { encoding: "utf8" }).trim();
+/**
+ * Run the stellar CLI. The signing secret travels in STELLAR_ACCOUNT (the
+ * CLI's env alias for --source-account), never on argv: argv is visible to
+ * `ps` and gets echoed back in Node's spawn errors, and a pasted error log
+ * should never carry a key.
+ */
+function cli(args: string[], sourceSecret: string): string {
+  return execFileSync("stellar", args, {
+    encoding: "utf8",
+    env: { ...process.env, STELLAR_ACCOUNT: sourceSecret },
+  }).trim();
 }
 
 async function friendbot(address: string): Promise<void> {
@@ -97,20 +106,18 @@ async function main() {
   const auditorContract = cli([
     "contract", "deploy",
     "--wasm", AUDITOR_WASM,
-    "--source-account", deployer.secret,
     "--rpc-url", RPC_URL,
     "--network-passphrase", PASSPHRASE,
     "--",
     "--admin", kp.publicKey(),
     "--manager", kp.publicKey(),
-  ]).split("\n").pop()!;
+  ], deployer.secret).split("\n").pop()!;
   console.log(`auditor registry: ${auditorContract}`);
 
   console.log("registering key id 0…");
   cli([
     "contract", "invoke",
     "--id", auditorContract,
-    "--source-account", deployer.secret,
     "--rpc-url", RPC_URL,
     "--network-passphrase", PASSPHRASE,
     "--",
@@ -118,7 +125,7 @@ async function main() {
     "--auditor_id", "0",
     "--point", kAudHex,
     "--operator", kp.publicKey(),
-  ]);
+  ], deployer.secret);
   console.log("key registered");
 
   // 4. Deploy the game token via the SHARED factory, wired to OUR auditor.
@@ -169,7 +176,11 @@ async function main() {
   console.log("\nNEXT: npm run setup:shops · extend the indexer for this contract · npm run health");
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((err: unknown) => {
+  // Print the message and the CLI's stderr only. A raw spawn error carries the
+  // full command line and environment snapshot; keep both out of the log.
+  const e = err as { message?: string; stderr?: string | Buffer };
+  console.error(e?.message ?? String(err));
+  if (e?.stderr) console.error(String(e.stderr).trim());
   process.exit(1);
 });

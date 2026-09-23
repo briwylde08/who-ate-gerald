@@ -5,8 +5,18 @@ dist/
 # bb.js browser build is vendored from node_modules at predev/prebuild
 packages/*/public/vendor/
 
-# local secrets: auditor key, deployer, shop keypairs, GM token
-config/local*
+# config/ is an ALLOWLIST: everything in it is ignored unless named here.
+# The local.* files hold the auditor key, deployer, shop keypairs, GM token
+# and bot seats — a future config/secrets.json must never be committable.
+config/*
+!config/catalog.json
+!config/deployment.testnet.json
+!config/shops.testnet.json
+
+# per-machine agent tooling
+.claude/
+.agents/
+skills-lock.json
 .env
 .env.*
 # wrangler dev reads worker secrets from here, NOT from .env — AUDITOR_K,
