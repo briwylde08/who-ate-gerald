@@ -61,9 +61,9 @@ wrong amount never becomes a game fact.
 
 The in-browser UltraHonk prover from `@aztec/bb.js` downloads its common
 reference string from Aztec's CDN without a checksum, then caches it. This is
-ecosystem-wide Barretenberg behavior, not something the game configures. A
-tampered CRS could produce proofs the verifier rejects; it could not forge a
-proof the verifier accepts.
+ecosystem-wide Barretenberg behavior, not something the game configures. The
+practical exposure is availability: a tampered or unavailable CRS stops the
+browser from producing proofs the on-chain verifier accepts.
 
 ### The seat credential is a replayable bearer token
 
