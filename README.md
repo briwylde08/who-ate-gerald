@@ -12,6 +12,8 @@ item. **Maude McLedger**, who holds the token's auditor key, answers one
 private question per villager per day.
 
 Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
+Watch: **https://who-ate-gerald.pages.dev/#/watch** (no wallet, no seat — a
+read-only view of any game, fed only by public endpoints)
 
 ## About this repository
 
@@ -43,11 +45,12 @@ invent an amount.
 
 ## A day in the village
 
-Shop (at most two of four stores, each item once per day) → everyone presses Done →
-Maude opens for one question each → the square argues → the trial banishes on
-a plurality (a tie means nobody dies) → the werebear eats someone → the morning report says what the
-night's items did. The village wins by banishing the bear; the bear wins at
-parity, or by surviving to the end of day six.
+Shop (four stores; two is the custom, and Maude's dawn audit names anyone who
+visits more; each item once per day) → everyone presses Done → Maude opens for
+one question each → the square argues → the trial banishes on a plurality (a
+tie means nobody dies) → the werebear hunts, unless a bell or a barrel makes
+the night quiet → the morning report says what the night's items did. There is
+no clock: the village wins by banishing the bear, and the bear wins at parity.
 
 ## Repo tour
 
