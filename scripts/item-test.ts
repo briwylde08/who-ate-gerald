@@ -84,6 +84,12 @@ const CATALOG_VERSION = "v9";
 
 const AUDITOR_URL =
   process.env.AUDITOR_URL ?? "https://gerald-auditor.briana-761.workers.dev";
+if (!process.env.AUDITOR_URL) {
+  console.warn(
+    "⚠ AUDITOR_URL is not set — talking to the maintainer's PRODUCTION worker.\n" +
+      "  If you are running your own stack, export AUDITOR_URL=https://<your-worker>.",
+  );
+}
 const GAME_ID = `items-${Date.now().toString(36)}`;
 const XLM = 10_000_000n;
 

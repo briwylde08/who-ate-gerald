@@ -15,9 +15,9 @@ Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
 
 ## About this repository
 
-This repo is published as a **reference example** to accompany a written
-explanation of confidential-token transfers on Stellar — a real application you
-can read, not a template to fork. You're welcome to read any of it; the game's
+This repo is published as a **reference example** of confidential-token
+transfers on Stellar — a real application you can read, not a template to
+fork. You're welcome to read any of it; the game's
 own code (everything outside `packages/ctd-sdk` and `packages/ctd-disclosure`)
 is shared for reading and is not licensed for reuse or redistribution.
 
@@ -77,7 +77,8 @@ parity, or by surviving to the end of day six.
 
 This is a testnet game played for nothing, and some auth choices are
 deliberately simpler than anything holding value could accept. Read these
-before borrowing a pattern:
+before borrowing a pattern, and see [SECURITY.md](SECURITY.md) for the full
+list of known limitations, accepted risks, and how to report a problem:
 
 - **The seat credential is a static signature.** Proving your seat means
   signing one fixed per-(game, address) message
