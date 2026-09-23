@@ -38,14 +38,3 @@ win by accounting.
 
 Lobbies are open and not rate-limited. Games are run by invitation and start
 when the host says so, which is the control.
-
-## If you run your own stack
-
-- `npm run item-test` and `npm run bots` default to the maintainer's production
-  Worker and warn when they do. Set `AUDITOR_URL` to your own.
-- `config/` is an allowlist in `.gitignore`; every `config/local.*` file holds
-  a key.
-- Worker secrets belong in `wrangler secret put`, never in `vars`, which are
-  public in `wrangler.jsonc`.
-- `npm run bank-tills -- --for-real` withdraws every shop's balance. Read it
-  before running it against a stack you care about.
