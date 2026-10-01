@@ -4,6 +4,9 @@
   // SDF ecosystem Cloudflare account (legal, 2026-09-30: hosting moves off
   // personal accounts). Pinned so a deploy can never land elsewhere.
   "account_id": "ba55b7ae9acfb3ed152103e3497c0752",
+  // Front door. The stellar.buzz zone lives in the same account, so wrangler
+  // creates the DNS record and certificate. workers.dev stays on as a fallback.
+  "routes": [{ "pattern": "gerald-auditor.stellar.buzz", "custom_domain": true }],
   "main": "src/index.ts",
   "compatibility_date": "2026-07-28",
   "compatibility_flags": ["nodejs_compat"],
