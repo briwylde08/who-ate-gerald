@@ -1,6 +1,6 @@
 Who Ate Gerald? — Reference Example
 
-Copyright (c) 2026 briwylde08. All rights reserved.
+Copyright (c) 2026 Stellar Development Foundation. All rights reserved.
 
 This repository is published as a reference example of confidential-token
 transfers on Stellar. You are welcome to read this source and learn from how
@@ -8,7 +8,8 @@ it works.
 
 No license is granted to use, copy, modify, distribute, or create derivative
 works from the code in this repository, except as noted below. For any use
-beyond reading, contact the repository owner.
+beyond reading, contact the Stellar Development Foundation at
+frontier@stellar.org.
 
 ----------------------------------------------------------------------------
 Exception — vendored packages
