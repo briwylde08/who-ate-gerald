@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PlayerApp } from "./PlayerApp";
 import { GmDashboard } from "./GmDashboard";
 import { Watch } from "./Watch";
+import { LegalFooter, Privacy, Terms } from "./Legal";
 
 function useHashRoute(): string {
   const [route, setRoute] = useState(() => window.location.hash.replace(/^#\/?/, ""));
@@ -16,7 +17,22 @@ function useHashRoute(): string {
 
 export function App() {
   const route = useHashRoute();
-  if (route === "gm") return <GmDashboard />;
-  if (route.startsWith("watch")) return <Watch />;
-  return <PlayerApp />;
+  const page =
+    route === "gm" ? (
+      <GmDashboard />
+    ) : route.startsWith("watch") ? (
+      <Watch />
+    ) : route === "terms" ? (
+      <Terms />
+    ) : route === "privacy" ? (
+      <Privacy />
+    ) : (
+      <PlayerApp />
+    );
+  return (
+    <>
+      {page}
+      <LegalFooter />
+    </>
+  );
 }

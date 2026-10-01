@@ -1510,3 +1510,16 @@ summary { cursor: pointer; color: var(--ink-dim); }
 /* Numbered day sequence in the rules — room to breathe between steps. */
 ol.rules { margin: 8px 0 12px; padding-left: 1.4em; }
 ol.rules li { margin: 0 0 6px; }
+
+/* Legal pages (#/terms, #/privacy) and the footer that links them from every
+   page — SDF legal's ask, 2026-09-30. */
+.legal-panel p { line-height: 1.55; }
+.legal-back { margin-top: 20px; }
+.site-footer {
+  max-width: min(1000px, calc(100vw - 32px));
+  margin: 32px auto 20px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+.site-footer a { text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
