@@ -169,7 +169,7 @@ async function main() {
     deployedBy: kp.publicKey(),
     deployedAt: new Date().toISOString(),
     deployedAtLedger,
-    indexerUrl: "https://ember-indexer.briana-761.workers.dev",
+    indexerUrl: "https://ember-indexer.sdf-ecosystem.workers.dev",
   };
   writeFileSync(deploymentPath, JSON.stringify(deployment, null, 2) + "\n");
   console.log(`wrote ${deploymentPath}`);

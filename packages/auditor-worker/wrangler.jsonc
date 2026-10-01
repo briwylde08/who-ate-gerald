@@ -22,7 +22,7 @@
   //                      keys, used at dawn to merge each shop's till. A secret,
   //                      never a var — vars are public in this file.
   "vars": {
-    "INDEXER_URL": "https://ember-indexer.briana-761.workers.dev",
+    "INDEXER_URL": "https://ember-indexer.sdf-ecosystem.workers.dev",
     "TOKEN_CONTRACT": "CCLDBRA5UVX6RMXSN44FMLK6RK4XMQ3XELL4TZC6XPL4D2JPPQNI4VSK",
     "OPENAI_MODEL": "gpt-5.5",
     // The gateway pays OpenAI from the SDF account's credits (no OpenAI key).
