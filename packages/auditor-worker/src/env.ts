@@ -22,5 +22,6 @@ export interface Env {
   OPENAI_BASE_URL?: string;
   /** Optional gateway auth (cf-aig-authorization). */
   CF_AIG_TOKEN?: string;
+  AIG_UNIFIED_BILLING?: string;
   GM_TOKEN: string;
 }

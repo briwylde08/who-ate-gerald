@@ -10,9 +10,9 @@
 
   // Public, non-secret configuration. The secrets live in wrangler secrets:
   //   AUDITOR_K        — the auditor scalar k (hex) from config/local.auditor.json
-  //   OPENAI_API_KEY   — Maude's voice (via a Cloudflare AI Gateway)
-  //   OPENAI_BASE_URL  — the gateway's OpenAI compat URL
-  //   CF_AIG_TOKEN     — optional gateway auth
+  //   OPENAI_API_KEY   — unused under Unified Billing (set to a placeholder)
+  //   OPENAI_BASE_URL  — the gateway's URL, …/{account}/{gateway}/compat
+  //   CF_AIG_TOKEN     — the gateway's auth token (config/local.aig.json)
   //   GM_TOKEN         — bearer token for the GM endpoints
   //   SHOP_SECRETS     — JSON { shopId: S...secret }: the shopkeepers' signing
   //                      keys, used at dawn to merge each shop's till. A secret,
@@ -21,6 +21,8 @@
     "INDEXER_URL": "https://ember-indexer.briana-761.workers.dev",
     "TOKEN_CONTRACT": "CCLDBRA5UVX6RMXSN44FMLK6RK4XMQ3XELL4TZC6XPL4D2JPPQNI4VSK",
     "OPENAI_MODEL": "gpt-5.5",
+    // The gateway pays OpenAI from the SDF account's credits (no OpenAI key).
+    "AIG_UNIFIED_BILLING": "true",
     // Freeze-proofing deadlines (ms). These are BACKSTOPS, not a game clock:
     // a day still resolves the instant everyone acts. They only bound how long
     // the game waits on someone who has genuinely gone away.
