@@ -71,6 +71,12 @@ no clock: the village wins by banishing the bear, and the bear wins at parity.
 |---|---|
 | [docs/CATALOG.md](docs/CATALOG.md) | The shelf: every item, its price, and what it does |
 
+## Disclaimer
+
+This code is an unaudited testnet demonstration, provided as is and without
+warranty. It is not intended for deployment on mainnet or use with assets of
+real value.
+
 ## Security notes
 
 This is a testnet game played for nothing, and some auth choices are
@@ -83,8 +89,8 @@ list of known limitations, accepted risks, and how to report a problem:
   ([`auth.ts`](packages/auditor-worker/src/auth.ts)) — no nonce, no expiry —
   so the signature is a bearer credential for that game's duration and is
   replayable if it ever leaks. The worker's CORS allowlist is the compensating
-  control against a hostile page; a challenge–response scheme is the real fix
-  (tracked in issue #10).
+  control against a hostile page (issue #10 closed the open-CORS half); a
+  challenge–response scheme is the real fix and is not implemented.
 - **The confidential spending key is cached in localStorage.** It's derived
   from a deterministic Freighter signature so any device can re-derive it —
   that determinism is the feature — and the browser keeps it in plain text.
