@@ -26,7 +26,7 @@ export const FRIENDBOT_URL = "https://friendbot.stellar.org";
 /** Maude's front door. Override for local dev via localStorage "gerald:auditor-url". */
 export const AUDITOR_URL =
   (typeof localStorage !== "undefined" && localStorage.getItem("gerald:auditor-url")) ||
-  "https://gerald-auditor.briana-761.workers.dev";
+  "https://gerald-auditor.stellar.buzz";
 
 export function chainClient(d: Deployment = DEPLOYMENT): ChainClient {
   return new ChainClient({

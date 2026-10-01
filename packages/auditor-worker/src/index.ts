@@ -25,14 +25,21 @@ export { GameRoom, LobbyRegistry };
 // player. CORS is browser-enforced, so echoing the Origin only for the real
 // game (and localhost dev) closes the one realistic attack — a malicious page.
 // Scripts ignore CORS entirely; that's the deferred nonce-auth problem, not
-// this one. Preview deploys live under *.who-ate-gerald.pages.dev, which only
+// this one. Preview deploys live under *.gerald-b02.pages.dev, which only
 // this project can create, so a suffix match is safe.
 function allowedOrigin(origin: string | null): string | null {
   if (!origin) return null;
   if (origin === "http://localhost:5173" || origin === "http://127.0.0.1:5173") return origin;
   try {
     const host = new URL(origin).hostname;
-    if (host === "who-ate-gerald.pages.dev" || host.endsWith(".who-ate-gerald.pages.dev")) {
+    if (
+      host === "gerald.stellar.buzz" ||
+      host === "gerald-b02.pages.dev" ||
+      host.endsWith(".gerald-b02.pages.dev") ||
+      // The pre-move home (personal account); retire once the redirect is up.
+      host === "who-ate-gerald.pages.dev" ||
+      host.endsWith(".who-ate-gerald.pages.dev")
+    ) {
       return origin;
     }
   } catch {

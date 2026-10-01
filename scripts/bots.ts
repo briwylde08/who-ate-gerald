@@ -50,7 +50,7 @@ const shopsAddr = JSON.parse(readFileSync(join(repoRoot, "config/shops.testnet.j
 const catalog = JSON.parse(readFileSync(join(repoRoot, "config/catalog.json"), "utf8"));
 
 const AUDITOR_URL =
-  process.env.AUDITOR_URL ?? "https://gerald-auditor.briana-761.workers.dev";
+  process.env.AUDITOR_URL ?? "https://gerald-auditor.stellar.buzz";
 if (!process.env.AUDITOR_URL) {
   console.warn(
     "⚠ AUDITOR_URL is not set — talking to the maintainer's PRODUCTION worker.\n" +

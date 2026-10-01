@@ -10,9 +10,16 @@
  * The model can neither choose what to reveal beyond one tool's scope nor
  * invent a number: step 1 sees no amounts, step 3 sees only the one fact.
  *
- * Runs on OpenAI through a Cloudflare AI Gateway. The gateway's OpenAI-compat
- * endpoint doesn't proxy /v1/responses; the provider passthrough at …/openai
- * does, so we derive it from OPENAI_BASE_URL.
+ * Runs on OpenAI through a Cloudflare AI Gateway's provider passthrough
+ * (…/{gateway}/openai, which serves /v1/responses; the compat endpoint does
+ * not, so passthroughUrl() maps …/compat → …/openai). Two ways to pay:
+ *   - AIG_UNIFIED_BILLING=true: the gateway pays OpenAI from the Cloudflare
+ *     account's credits. CF_AIG_TOKEN authenticates to the gateway, no OpenAI
+ *     key exists anywhere, and the SDK's Authorization header is dropped
+ *     (the gateway would forward it as a provider key). The SDF-hosted
+ *     configuration, matching stellar-raven.
+ *   - Otherwise OPENAI_API_KEY is a real OpenAI key forwarded through the
+ *     gateway — the original wiring.
  */
 import OpenAI from "openai";
 
@@ -28,6 +35,10 @@ export interface AskEnv {
   OPENAI_BASE_URL?: string;
   CF_AIG_TOKEN?: string;
   OPENAI_MODEL?: string;
+  /** "true" = Unified Billing: the gateway pays OpenAI from the account's
+   *  credit balance. No OpenAI key exists; the SDK's Authorization header is
+   *  suppressed because the gateway forwards any provider key it sees. */
+  AIG_UNIFIED_BILLING?: string;
 }
 
 export interface AskOutcome {
@@ -130,8 +141,9 @@ export async function answerQuestion(
   question: string,
   asker: string,
 ): Promise<AskOutcome> {
+  const unified = env.AIG_UNIFIED_BILLING === "true";
   const client = new OpenAI({
-    apiKey: env.OPENAI_API_KEY,
+    apiKey: unified ? "unified-billing" : env.OPENAI_API_KEY,
     baseURL: passthroughUrl(env.OPENAI_BASE_URL),
     defaultHeaders: {
       // Privacy posture (matches stellar-raven): the gateway keeps no
@@ -142,6 +154,7 @@ export async function answerQuestion(
       "cf-aig-collect-log": "false",
       "cf-aig-collect-log-payload": "false",
       ...(env.CF_AIG_TOKEN ? { "cf-aig-authorization": `Bearer ${env.CF_AIG_TOKEN}` } : {}),
+      ...(unified ? { Authorization: null } : {}),
     },
   });
   const model = env.OPENAI_MODEL || DEFAULT_MODEL;
