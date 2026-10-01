@@ -11,7 +11,7 @@ much** — and because every price in the game is unique, the amount *is* the
 item. **Maude McLedger**, who holds the token's auditor key, answers one
 private question per villager per day.
 
-Play: **https://who-ate-gerald.pages.dev** (needs Freighter, set to Testnet)
+Play: **https://gerald.stellar.buzz** (needs Freighter, set to Testnet)
 
 ## About this repository
 
