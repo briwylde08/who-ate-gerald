@@ -1,5 +1,9 @@
 # Security
 
+> This code is an unaudited testnet demonstration, provided as is and without
+> warranty. It is not intended for deployment on mainnet or use with assets of
+> real value.
+
 **Who Ate Gerald?** is a testnet game played for nothing. It exists to show a
 real confidential-token payment lifecycle on Stellar, with the game as the
 vehicle. Some choices below would be wrong for anything that holds value. They
