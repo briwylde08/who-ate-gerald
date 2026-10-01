@@ -33,6 +33,18 @@ SIL Open Font License 1.1. Nothing is vendored.
 
 ## Game art, films and audio
 
-Original to this project. A per-asset provenance record (tool, plan tier,
-terms) is kept outside the repository and will be summarised here once
-complete. The full-resolution originals are not in this repository.
+Original to this project, generated with AI tools on paid plans whose terms
+assign the output to the account holder with no restriction on public use:
+
+| Assets | Tool |
+|---|---|
+| Character portraits, Maude, and the item icons | ChatGPT image generation (OpenAI) |
+| Village background, satchel, Gerald's hand, bear icon, favicon | Nano Banana via Runway |
+| The films (video) | Seedance via Runway |
+| Film audio | Seedance's own audio, plus ElevenLabs Sound Effects (the bear) and Eleven Music in a few films |
+
+Sources: OpenAI Terms of Use (you own Output, free or paid); Runway usage
+rights (you retain ownership on any plan, no credit required); ElevenLabs
+(paid plans include a commercial license, content made during a paid
+subscription stays licensed). The per-asset record and the full-resolution
+originals are kept outside this repository.
