@@ -67,9 +67,14 @@ export function Privacy() {
         intended recipients and to SDF personnel with game-master access.
       </p>
       <p>
-        Questions to Maude and relevant game context are sent through Cloudflare AI Gateway to a
-        third-party AI provider, currently OpenAI, to produce an answer. Do not include sensitive
-        personal information in chat, whispers, or questions.
+        When you ask Maude a question, the game makes two requests through Cloudflare AI Gateway
+        to OpenAI. The first sends your display name, question, the player roster, and the item
+        catalog so Maude can choose one fact to look up; it contains no transfer amounts. The
+        second sends your question and the computed fact so Maude can phrase an answer. That fact
+        may include amounts and other players&rsquo; display names. Chat, whispers, and wallet
+        addresses are not sent to OpenAI. Questions and answers to Maude are kept with the game
+        record after the game ends. Do not include sensitive personal information in chat,
+        whispers, or questions.
       </p>
     </LegalFrame>
   );
