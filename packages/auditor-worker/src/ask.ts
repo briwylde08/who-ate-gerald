@@ -133,9 +133,16 @@ export async function answerQuestion(
   const client = new OpenAI({
     apiKey: env.OPENAI_API_KEY,
     baseURL: passthroughUrl(env.OPENAI_BASE_URL),
-    defaultHeaders: env.CF_AIG_TOKEN
-      ? { "cf-aig-authorization": `Bearer ${env.CF_AIG_TOKEN}` }
-      : undefined,
+    defaultHeaders: {
+      // Privacy posture (matches stellar-raven): the gateway keeps no
+      // prompt/response logs for Maude's calls, regardless of the gateway's
+      // dashboard-side "collect logs" default, which is mutable. Both the
+      // question and the computed fact (which can carry amounts and other
+      // players' names) ride these requests.
+      "cf-aig-collect-log": "false",
+      "cf-aig-collect-log-payload": "false",
+      ...(env.CF_AIG_TOKEN ? { "cf-aig-authorization": `Bearer ${env.CF_AIG_TOKEN}` } : {}),
+    },
   });
   const model = env.OPENAI_MODEL || DEFAULT_MODEL;
 
