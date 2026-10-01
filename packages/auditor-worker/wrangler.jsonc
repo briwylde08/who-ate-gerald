@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "gerald-auditor",
+  // SDF ecosystem Cloudflare account (legal, 2026-09-30: hosting moves off
+  // personal accounts). Pinned so a deploy can never land elsewhere.
+  "account_id": "ba55b7ae9acfb3ed152103e3497c0752",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-28",
   "compatibility_flags": ["nodejs_compat"],
