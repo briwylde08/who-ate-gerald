@@ -7,6 +7,7 @@
   // Front door. The stellar.buzz zone lives in the same account, so wrangler
   // creates the DNS record and certificate. workers.dev stays on as a fallback.
   "routes": [{ "pattern": "gerald-auditor.stellar.buzz", "custom_domain": true }],
+  "workers_dev": true,
   "main": "src/index.ts",
   "compatibility_date": "2026-07-28",
   "compatibility_flags": ["nodejs_compat"],
